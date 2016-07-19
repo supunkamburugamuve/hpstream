@@ -4,11 +4,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <stdint.h>
 
 #include "buffer.h"
 
 Buffer::Buffer(uint8_t *buf, uint64_t buf_size, uint32_t no_bufs) {
-  this->buf = buf;
+  this->buf = buf;6
   this->buf_size = buf_size;
   this->no_bufs = no_bufs;
   this->head = 0;
