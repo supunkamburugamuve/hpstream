@@ -5,7 +5,7 @@
 
 class Buffer {
 public:
-  Buffer(void *buf, uint64_t buf_size, uint32_t no_bufs);
+  Buffer(uint_t *buf, uint64_t buf_size, uint32_t no_bufs);
 
   virtual ~Buffer();
 

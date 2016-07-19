@@ -7,7 +7,7 @@
 
 #include "buffer.h"
 
-Buffer::Buffer(void *buf, uint64_t buf_size, uint32_t no_bufs) {
+Buffer::Buffer(uint8_t *buf, uint64_t buf_size, uint32_t no_bufs) {
   this->buf = buf;
   this->buf_size = buf_size;
   this->no_bufs = no_bufs;
@@ -98,7 +98,6 @@ bool Buffer::IncrementTail() {
 }
 
 void Buffer::Free() {
-  int i = 0;
   if (this->buffers) {
     free(this->buffers);
   }
