@@ -1,11 +1,11 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
-#include <unistd.h>
+#include <cstdint>
 
 class Buffer {
 public:
-  Buffer(uint_t *buf, uint64_t buf_size, uint32_t no_bufs);
+  Buffer(uint8_t *buf, uint64_t buf_size, uint32_t no_bufs);
 
   virtual ~Buffer();
 

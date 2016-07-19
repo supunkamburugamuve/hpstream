@@ -15,10 +15,8 @@ Buffer::Buffer(uint8_t *buf, uint64_t buf_size, uint32_t no_bufs) {
   this->tail = 0;
   this->data_head = 0;
   this->content_sizes = NULL;
-  this->buffers = NULL;
-  if (Init()) {
-    throw;
-  }
+  this->buffers = NULL; // do error handling
+  Init();
 }
 
 uint8_t * Buffer::GetBuffer(int i) {
