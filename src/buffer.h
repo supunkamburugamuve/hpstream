@@ -44,10 +44,10 @@ public:
 
 private:
   // part of the buffer allocated to this buffer
-  void *buf;
+  uint8_t *buf;
   // the list of buffer pointers, these are pointers to
   // part of a large buffer allocated
-  void **buffers;
+  uint8_t **buffers;
   // list of buffer sizes
   uint32_t buf_size;
   // array of actual data sizes

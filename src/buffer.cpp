@@ -61,7 +61,7 @@ void Buffer::SetTail(uint32_t tail) {
 
 int Buffer::Init() {
   uint32_t i = 0;
-  this->buffers = (void **)malloc(sizeof(void *) * no_bufs);
+  this->buffers = (uint8_t **)malloc(sizeof(uint8_t *) * no_bufs);
   this->content_sizes = (uint32_t *)malloc(sizeof(uint32_t) * no_bufs);
   this->buf_size = this->buf_size / this->no_bufs;
   for (i = 0; i < no_bufs; i++) {
