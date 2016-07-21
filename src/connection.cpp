@@ -1,144 +1,91 @@
-#ifndef CONNECTION_H_
-#define CONNECTION_H_
+#include "connection.h"
 
-#include "buffer.h"
+#define HPS_POST(post_fn, comp_fn, seq, op_str, ...)        \
+  do {                  \
+    int timeout_save;            \
+    int ret, rc;              \
+                    \
+    while (1) {              \
+      ret = post_fn(__VA_ARGS__);        \
+      if (!ret)            \
+        break;            \
+                    \
+      if (ret != -FI_EAGAIN) {        \
+        printf("%s %d\n", op_str, ret);      \
+        return ret;          \
+      }              \
+                    \
+      timeout_save = timeout;          \
+      timeout = 0;            \
+      rc = comp_fn(seq);          \
+      if (rc && rc != -FI_EAGAIN) {        \
+        HPS_ERR("Failed to get %s completion\n", op_str);  \
+        return rc;          \
+      }              \
+      timeout = timeout_save;          \
+    }                \
+    seq++;                \
+  } while (0)
 
-class Connection {
-public:
-  Connection(RDMAOptions *opts, struct fi_info *info_hints,
-             struct fi_info *info, struct fid_fabric *fabric,
-             struct fid_domain *domain, struct fid_eq *eq);
-  /**
-   * Allocate the resources for this connection
-   */
-  int AllocateActiveResources();
-  /**
-   * Set and initialize the end point
-   */
-  int InitEp(struct fid_ep *ep, struct fid_eq *eq);
-  virtual ~Connection();
+Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info *info,
+                       struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
+  this->options = opts;
+  this->info = info;
+  this->info_hints = info_hints;
+  this->fabric = fabric;
+  this->domain = domain;
 
-  /**
-   * Exchange keys with the peer
-   */
-  int ExchangeServerKeys();
-  int ExchangeClientKeys();
-  int sync();
-  /**
-   * Post a message
-   */
-  ssize_t PostRMA(enum rdma_rma_opcodes op, size_t size);
-  ssize_t PostRMA(enum rdma_rma_opcodes op, size_t size, void *buf);
-  ssize_t RMA(enum rdma_rma_opcodes op, size_t size);
+  this->txcq = NULL;
+  this->rxcq = NULL;
+  this->txcntr = NULL;
+  this->rxcntr = NULL;
 
-  ssize_t TX(size_t size);
-  ssize_t RX(size_t size);
-  /**
-   * Send the content in the buffer. Use multiple buffers if needed to send
-   */
-  int WriteData(uint8_t *buf, size_t size);
+  this->ep = NULL;
+  this->alias_ep = NULL;
+  this->av = NULL;
+  this->mr = NULL;
+  this->no_mr = {};
 
-  /**
-   * Write the current buffers
-   */
-  int WriteBuffers();
+  this->rx_fd = -1;
+  this->tx_fd = -1;
 
-  int CopyDataFromBuffer(int buf_no, void *buf, uint32_t size, uint32_t *read) ;
+  this->tx_buf = NULL;
+  this->buf = NULL;
+  this->rx_buf = NULL;
 
-  inline Buffer *RecevBuffer() {
-    return this->recv_buf;
-  }
+  this->buf_size = 0;
+  this->tx_size = 0;
+  this->rx_size = 0;
+  this->recv_buf = NULL;
+  this->send_buf = NULL;
 
-  inline Buffer *SendBuffer() {
-    return this->send_buf;
-  }
+  this->remote_cq_data = 0;
+  this->waitset = NULL;
 
-  /**
-   * Receive content in to the buffer.
-   */
-  int receive();
-  int Finalize(void);
-private:
-  // options for initialization
-  RDMAOptions *options;
-  // fabric information obtained
-  struct fi_info *info;
-  // hints to be used to obtain fabric information
-  struct fi_info *info_hints;
-  // the fabric
-  struct fid_fabric *fabric;
-  // fabric domain we are working with
-  struct fid_domain *domain;
-  // end point
-  struct fid_ep *ep, *alias_ep;
-  // address vector
-  struct fid_av *av;
+  this->cq_attr = {};
+  this->cntr_attr = {};
+  this->av_attr = {};
+  this->tx_ctx = {};
+  this->rx_ctx = {};
 
-  // cq attribute for getting completion notifications
-  struct fi_cq_attr cq_attr;
-  // cntr attribute for getting counter notifications
-  struct fi_cntr_attr cntr_attr;
-  // vector attribute for getting completion notifications
-  struct fi_av_attr av_attr;
+  this->tx_seq = 0;
+  this->rx_seq = 0;
+  this->tx_cq_cntr = 0;
+  this->rx_cq_cntr = 0;
 
-  // transfer cq and receive cq
-  struct fid_cq *txcq, *rxcq;
-  // transfer counter and receive counter
-  struct fid_cntr *txcntr, *rxcntr;
+  this->ft_skip_mr = 0;
 
-  struct fid_wait *waitset;
+  this->cq_attr.wait_obj = FI_WAIT_NONE;
+  this->cntr_attr.events = FI_CNTR_EVENTS_COMP;
+  this->cntr_attr.wait_obj = FI_WAIT_NONE;
 
-  // receive fd and transmit fd
-  int rx_fd = -1, tx_fd = -1;
+  this->av_attr.type = FI_AV_MAP;
+  this->av_attr.count = 1;
 
-  struct fi_context tx_ctx, rx_ctx;
+  this->remote_fi_addr = FI_ADDR_UNSPEC;
+  this->remote = {};
 
-  // buffer used for communication
-  void *buf, *tx_buf, *rx_buf;
-  size_t buf_size, tx_size, rx_size;
-  Buffer *recv_buf;
-  Buffer *send_buf;
+  this->timeout = -1;
+}
 
-  int ft_skip_mr = 0;
-
-  uint64_t remote_cq_data;
-  struct fid_mr *mr;
-  struct fid_mr no_mr;
-
-  // sequence numbers for messages posted and received
-  // transfer sequence number
-  uint64_t tx_seq;
-  // completed transfer requests
-  uint64_t tx_cq_cntr;
-  // receives posted
-  uint64_t rx_seq;
-  // receive completed
-  uint64_t rx_cq_cntr;
-
-  // remote address
-  fi_addr_t remote_fi_addr;
-  // remote address keys
-  struct fi_rma_iov remote;
-
-  int timeout;
-
-  ssize_t PostTX(size_t size, struct fi_context* ctx);
-  ssize_t PostRX(size_t size, struct fi_context* ctx);
-  int GetTXComp(uint64_t total);
-  int GetRXComp(uint64_t total);
-  int GetCQComp(struct fid_cq *cq, uint64_t *cur,
-                uint64_t total, int timeout);
-  int FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
-                    uint64_t total, int timeout);
-  int WaitForCompletion(struct fid_cq *cq, uint64_t *cur,
-                        uint64_t total, int timeout);
-  int SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
-                        uint64_t total, int timeout);
-  int ReceiveCompletions(uint64_t min, uint64_t max);
-  int SendCompletions(uint64_t min, uint64_t max);
-  int AllocMsgs(void);
-  int AllocateBuffers(void);
-};
-
-#endif /* CONNECTION_H_ */
 
