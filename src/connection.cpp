@@ -115,18 +115,16 @@ Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info
 }
 
 void Connection::Free() {
-  if (mr != &no_mr)
+  if (mr != &no_mr) {
     HPS_CLOSE_FID(mr);
+  }
   HPS_CLOSE_FID(alias_ep);
   HPS_CLOSE_FID(ep);
-  HPS_CLOSE_FID(pep);
-  HPS_CLOSE_FID(pollset);
   HPS_CLOSE_FID(rxcq);
   HPS_CLOSE_FID(txcq);
   HPS_CLOSE_FID(rxcntr);
   HPS_CLOSE_FID(txcntr);
   HPS_CLOSE_FID(av);
-  HPS_CLOSE_FID(eq);
   HPS_CLOSE_FID(domain);
   HPS_CLOSE_FID(waitset);
   HPS_CLOSE_FID(fabric);
