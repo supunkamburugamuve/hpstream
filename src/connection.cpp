@@ -52,17 +52,6 @@
 		}							\
 	} while (0)
 
-#define HPS_CLOSE_FID(fd)					\
-	do {							\
-		int ret;					\
-		if ((fd)) {					\
-			ret = fi_close(&(fd)->fid);		\
-			if (ret)				\
-				printf("fi_close (%d) fid %d",	\
-					ret, (int) (fd)->fid.fclass);	\
-			fd = NULL;				\
-		}						\
-	} while (0)
 
 Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info *info,
                        struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
@@ -123,6 +112,24 @@ Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info
   this->remote = {};
 
   this->timeout = -1;
+}
+
+void Connection::Free() {
+  if (mr != &no_mr)
+    HPS_CLOSE_FID(mr);
+  HPS_CLOSE_FID(alias_ep);
+  HPS_CLOSE_FID(ep);
+  HPS_CLOSE_FID(pep);
+  HPS_CLOSE_FID(pollset);
+  HPS_CLOSE_FID(rxcq);
+  HPS_CLOSE_FID(txcq);
+  HPS_CLOSE_FID(rxcntr);
+  HPS_CLOSE_FID(txcntr);
+  HPS_CLOSE_FID(av);
+  HPS_CLOSE_FID(eq);
+  HPS_CLOSE_FID(domain);
+  HPS_CLOSE_FID(waitset);
+  HPS_CLOSE_FID(fabric);
 }
 
 int Connection::AllocateActiveResources() {

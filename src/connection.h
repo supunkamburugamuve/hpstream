@@ -23,6 +23,7 @@ public:
   Connection(Options *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
              struct fid_domain *domain, struct fid_eq *eq);
+  void Free();
   /**
    * Allocate the resources for this connection
    */

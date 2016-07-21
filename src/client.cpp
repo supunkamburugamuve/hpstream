@@ -1,16 +1,11 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
-#include <unistd.h>
-#include <cstdlib>
-#include <cstring>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_cm.h>
-#include <rdma/fi_tagged.h>
-#include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
 
 #include "client.h"
@@ -26,7 +21,8 @@ Client::Client(Options *opts, fi_info *hints) {
 }
 
 void Client::Free() {
-
+	HPS_CLOSE_FID(eq);
+	HPS_CLOSE_FID(fabric);
 }
 
 Connection* Client::GetConnection() {
@@ -102,7 +98,7 @@ int Client::Connect(void) {
 	}
 
 	if (event != FI_CONNECTED || entry.fid != &ep->fid) {
-		HPS_ERR(stderr, "Unexpected CM event %d fid %p (ep %p)",
+		HPS_ERR("Unexpected CM event %d fid %p (ep %p)",
 						event, entry.fid, ep);
 		ret = -FI_EOTHER;
 		return ret;

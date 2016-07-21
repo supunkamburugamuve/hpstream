@@ -14,6 +14,10 @@ Server::Server(Options *opts, fi_info *hints) {
 }
 
 void Server::Free() {
+  HPS_CLOSE_FID(pep);
+  HPS_CLOSE_FID(eq);
+  HPS_CLOSE_FID(fabric);
+
   if (this->options) {
     options->Free();
   }

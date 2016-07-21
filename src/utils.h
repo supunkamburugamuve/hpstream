@@ -20,6 +20,18 @@
 #include "hps.h"
 #include "options.h"
 
+#define HPS_CLOSE_FID(fd)					\
+	do {							\
+		int ret;					\
+		if ((fd)) {					\
+			ret = fi_close(&(fd)->fid);		\
+			if (ret)				\
+				HPS_ERR("fi_close (%d) fid %d",	\
+					ret, (int) (fd)->fid.fclass);	\
+			fd = NULL;				\
+		}						\
+	} while (0)
+
 /**
  * Given the options, create node, service, hints and flags
  */
@@ -38,8 +50,6 @@ uint64_t hps_utils_caps_to_mr_access(uint64_t caps);
 int hps_utils_check_opts(Options *opts, uint64_t flags) ;
 int hps_utils_poll_fd(int fd, int timeout);
 int hps_utils_cq_readerr(struct fid_cq *cq);
-
-
 
 int hps_utils_check_buf(void *buf, int size);
 #define INTEG_SEED 7
