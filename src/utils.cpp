@@ -5,11 +5,12 @@
 #include <rdma/fi_tagged.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
+#include <poll.h>
 
 #include "utils.h"
 #include "options.h"
 
-uint8_t default_port[8] = "9228";
+char default_port[8] = "9228";
 
 int hps_utils_set_rma_caps(struct fi_info *fi) {
   fi->caps |= FI_REMOTE_READ;
@@ -265,7 +266,7 @@ int hps_utils_poll_fd(int fd, int timeout) {
 
 int hps_utils_cq_readerr(struct fid_cq *cq){
   struct fi_cq_err_entry cq_err;
-  int ret;
+  ssize_t ret;
 
   ret = fi_cq_readerr(cq, &cq_err, 0);
   if (ret < 0) {
@@ -275,6 +276,6 @@ int hps_utils_cq_readerr(struct fid_cq *cq){
                                   cq_err.err_data, NULL, 0));
     ret = -cq_err.err;
   }
-  return ret;
+  return (int) ret;
 }
 

@@ -1,12 +1,21 @@
 #ifndef HPS_UTILS_H_
 #define HPS_UTILS_H_
 
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
+#include <string>
+
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h>
+#include <rdma/fi_endpoint.h>
+#include <rdma/fi_cm.h>
+#include <rdma/fi_tagged.h>
+#include <rdma/fi_rma.h>
+#include <rdma/fi_errno.h>
+
+#include <assert.h>
+#include <netdb.h>
+#include <poll.h>
 #include <unistd.h>
-#include <cstdlib>
-#include <cstring>
+#include <sys/wait.h>
 
 #include "hps.h"
 #include "options.h"

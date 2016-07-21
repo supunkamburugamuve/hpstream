@@ -1,14 +1,11 @@
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <unistd.h>
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
+#include <iostream>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
-#include <rdma/fi_cm.h>
 #include <rdma/fi_tagged.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
@@ -573,16 +570,11 @@ ssize_t Connection::RX(size_t size) {
     return ret;
 
   if (hps_utils_check_opts(options, HPS_OPT_VERIFY_DATA | HPS_OPT_ACTIVE)) {
-    ret = hps_utils_check_buf((char *) rx_buf + hps_utils_rx_prefix_size(info), size);
+    ret = hps_utils_check_buf((char *) rx_buf + hps_utils_rx_prefix_size(info), (int) size);
     if (ret)
       return ret;
   }
-  /* TODO: verify CQ data, if available */
 
-  /* Ignore the size arg. Post a buffer large enough to handle all message
-   * sizes. ft_sync() makes use of ft_rx() and gets called in tests just before
-   * message size is updated. The recvs posted are always for the next incoming
-   * message */
   ret = PostRX(this->rx_size, &this->rx_ctx);
   return ret;
 }
