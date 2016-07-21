@@ -83,7 +83,7 @@ int Client::Connect(void) {
 	}
 
 	// initialize the endpoint
-	ret = con->InitEp(ep, this->eq);
+	ret = con->InitEndPoint(ep, this->eq);
 	if (ret) {
 		return ret;
 	}

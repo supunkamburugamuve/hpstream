@@ -26,7 +26,7 @@
         break;            \
                     \
       if (ret != -FI_EAGAIN) {        \
-        printf("%s %d\n", op_str, ret);      \
+        HPS_ERR("%s %d", op_str, ret);      \
         return ret;          \
       }              \
                     \
@@ -49,7 +49,7 @@
 		if ((fd)) {						\
 			ret = fi_ep_bind((ep), &(fd)->fid, (flags));	\
 			if (ret) {					\
-				printf("fi_ep_bind %d\n", ret);		\
+				HPS_ERR("fi_ep_bind %d", ret);		\
 				return ret;				\
 			}						\
 		}							\
@@ -155,7 +155,7 @@ int Connection::AllocateActiveResources() {
     cq_attr.size = info->tx_attr->size;
     ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
     if (ret) {
-      printf("fi_cq_open %d", ret);
+      HPS_ERR("fi_cq_open %d", ret);
       return ret;
     }
   }
@@ -164,7 +164,7 @@ int Connection::AllocateActiveResources() {
     hps_utils_cntr_set_wait_attr(this->options, this->waitset, &this->cntr_attr);
     ret = fi_cntr_open(domain, &cntr_attr, &txcntr, &txcntr);
     if (ret) {
-      printf("fi_cntr_open %d", ret);
+      HPS_ERR("fi_cntr_open %d", ret);
       return ret;
     }
   }
@@ -174,7 +174,7 @@ int Connection::AllocateActiveResources() {
     cq_attr.size = info->rx_attr->size;
     ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);
     if (ret) {
-      printf("fi_cq_open %d", ret);
+      HPS_ERR("fi_cq_open %d", ret);
       return ret;
     }
   }
@@ -221,13 +221,14 @@ int Connection::AllocateBuffers(void) {
 
   if (opts->options & HPS_OPT_ALIGN) {
     alignment = sysconf(_SC_PAGESIZE);
-    if (alignment < 0)
+    if (alignment < 0) {
       return -errno;
+    }
     buf_size += alignment;
 
     ret = posix_memalign((void **)&buf, (size_t) alignment, buf_size);
     if (ret) {
-      printf("posix_memalign %d\n", ret);
+      HPS_ERR("posix_memalign %d", ret);
       return ret;
     }
   } else {
@@ -249,7 +250,7 @@ int Connection::AllocateBuffers(void) {
     ret = fi_mr_reg(domain, buf, buf_size, hps_utils_caps_to_mr_access(info->caps),
                     0, HPS_MR_KEY, 0, &mr, NULL);
     if (ret) {
-      printf("fi_mr_reg %d\n", ret);
+      HPS_ERR("fi_mr_reg %d", ret);
       return ret;
     }
   } else {
@@ -281,13 +282,14 @@ int Connection::AllocMsgs(void) {
 
   if (opts->options & HPS_OPT_ALIGN) {
     alignment = sysconf(_SC_PAGESIZE);
-    if (alignment < 0)
+    if (alignment < 0) {
       return -errno;
+    }
     buf_size += alignment;
 
     ret = posix_memalign((void **)&buf, (size_t) alignment, buf_size);
     if (ret) {
-      printf("posix_memalign %d\n", ret);
+      HPS_ERR("posix_memalign %d", ret);
       return ret;
     }
   } else {
@@ -308,7 +310,7 @@ int Connection::AllocMsgs(void) {
     ret = fi_mr_reg(domain, buf, buf_size, hps_utils_caps_to_mr_access(info->caps),
                     0, HPS_MR_KEY, 0, &mr, NULL);
     if (ret) {
-      printf("fi_mr_reg %d\n", ret);
+      HPS_ERR("fi_mr_reg %d", ret);
       return ret;
     }
   } else {
@@ -360,13 +362,13 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   HPS_EP_BIND(ep, rxcntr, flags);
   ret = fi_enable(ep);
   if (ret) {
-    printf("fi_enable %d\n", ret);
+    HPS_ERR("fi_enable %d", ret);
     return ret;
   }
   if (this->info->rx_attr->op_flags != FI_MULTI_RECV) {
     /* Initial receive will get remote address for unconnected EPs */
-    ret = PostRX(MAX(rx_size, HPS_MAX_CTRL_MSG), &rx_ctx);
-    if (ret) {
+    if (PostRX(MAX(rx_size, HPS_MAX_CTRL_MSG), &rx_ctx)) {
+      HPS_ERR("PostRX %d", ret);
       return ret;
     }
   }
@@ -380,7 +382,7 @@ int Connection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
                                   uint64_t total, int timeout) {
   struct fi_cq_err_entry comp;
   struct timespec a, b;
-  int ret;
+  ssize_t ret;
 
   if (timeout >= 0) {
     clock_gettime(CLOCK_MONOTONIC, &a);
@@ -395,7 +397,7 @@ int Connection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
 
       (*cur)++;
     } else if (ret < 0 && ret != -FI_EAGAIN) {
-      return ret;
+      return (int) ret;
     } else if (timeout >= 0) {
       clock_gettime(CLOCK_MONOTONIC, &b);
       if ((b.tv_sec - a.tv_sec) > timeout) {
@@ -414,18 +416,16 @@ int Connection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
 int Connection::WaitForCompletion(struct fid_cq *cq, uint64_t *cur,
                                   uint64_t total, int timeout) {
   struct fi_cq_err_entry comp;
-  int ret;
-
+  ssize_t ret;
   while (total - *cur > 0) {
     ret = fi_cq_sread(cq, &comp, 1, NULL, timeout);
     if (ret > 0) {
       (*cur)++;
     }
     else if (ret < 0 && ret != -FI_EAGAIN) {
-      return ret;
+      return (int) ret;
     }
   }
-
   return 0;
 }
 
@@ -440,7 +440,6 @@ int Connection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
 
   fd = cq == txcq ? tx_fd : rx_fd;
   fids[0] = &cq->fid;
-
   while (total - *cur > 0) {
     ret = fi_trywait(fabric, fids, 1);
     if (ret == FI_SUCCESS) {
@@ -449,15 +448,13 @@ int Connection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
         return ret;
       }
     }
-
-    ret = fi_cq_read(cq, &comp, 1);
-    if (ret > 0) {
+    ssize_t cq_ret = fi_cq_read(cq, &comp, 1);
+    if (cq_ret > 0) {
       (*cur)++;
-    } else if (ret < 0 && ret != -FI_EAGAIN) {
-      return ret;
+    } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
+      return (int) cq_ret;
     }
   }
-
   return 0;
 }
 
@@ -482,7 +479,7 @@ int Connection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
       ret = hps_utils_cq_readerr(cq);
       (*cur)++;
     } else {
-      printf("ft_get_cq_comp %d\n", ret);
+      HPS_ERR("ft_get_cq_comp %d", ret);
     }
   }
   return ret;
@@ -496,13 +493,14 @@ int Connection::GetRXComp(uint64_t total) {
   } else if (rxcntr) {
     while (fi_cntr_read(rxcntr) < total) {
       ret = fi_cntr_wait(rxcntr, total, timeout);
-      if (ret)
-        printf("fi_cntr_wait %d\n", ret);
-      else
+      if (ret) {
+        HPS_ERR("fi_cntr_wait %d", ret);
+      } else {
         break;
+      }
     }
   } else {
-    printf("Trying to get a RX completion when no RX CQ or counter were opened");
+    HPS_ERR("Trying to get a RX completion when no RX CQ or counter were opened");
     ret = -FI_EOTHER;
   }
   return ret;
@@ -515,10 +513,11 @@ int Connection::GetTXComp(uint64_t total) {
     ret = GetCQComp(txcq, &tx_cq_cntr, total, -1);
   } else if (txcntr) {
     ret = fi_cntr_wait(txcntr, total, -1);
-    if (ret)
-      printf("fi_cntr_wait %d\n", ret);
+    if (ret) {
+      HPS_ERR("fi_cntr_wait %d", ret);
+    }
   } else {
-    printf("Trying to get a TX completion when no TX CQ or counter were opened \n");
+    HPS_ERR("Trying to get a TX completion when no TX CQ or counter were opened");
     ret = -FI_EOTHER;
   }
   return ret;
@@ -540,8 +539,9 @@ ssize_t Connection::PostTX(size_t size, struct fi_context* ctx) {
 ssize_t Connection::TX(size_t size) {
   ssize_t ret;
 
-  if (hps_utils_check_opts(options, HPS_OPT_VERIFY_DATA | HPS_OPT_ACTIVE))
+  if (hps_utils_check_opts(options, HPS_OPT_VERIFY_DATA | HPS_OPT_ACTIVE)) {
     hps_utils_fill_buf((char *) tx_buf + hps_utils_tx_prefix_size(info), size);
+  }
 
   ret = PostTX(size, &this->tx_ctx);
   if (ret) {
@@ -607,7 +607,7 @@ ssize_t Connection::PostRMA(enum hps_rma_opcodes op, size_t size) {
               remote->addr, remote->key, ep);
       break;
     default:
-      printf("Unknown RMA op type\n");
+      HPS_ERR("Unknown RMA op type");
       return EXIT_FAILURE;
   }
 
@@ -633,15 +633,15 @@ ssize_t Connection::PostRMA(enum hps_rma_opcodes op, size_t size, void *buf) {
               remote.addr, remote.key, ep);
       break;
     default:
-      printf("Unknown RMA op type\n");
+      HPS_ERR("Unknown RMA op type");
       return EXIT_FAILURE;
   }
 
   return 0;
 }
 
-ssize_t Connection::RMA(enum rdma_rma_opcodes op, size_t size) {
-  int ret;
+ssize_t Connection::RMA(enum hps_rma_opcodes op, size_t size) {
+  ssize_t ret;
 
   ret = PostRMA(op, size, &remote);
   if (ret)
@@ -663,12 +663,12 @@ ssize_t Connection::RMA(enum rdma_rma_opcodes op, size_t size) {
 int Connection::ExchangeServerKeys() {
   struct fi_rma_iov *peer_iov = &this->remote;
   struct fi_rma_iov *rma_iov;
-  int ret;
+  ssize_t ret;
 
   ret = GetRXComp(rx_seq);
   if (ret) {
     HPS_ERR("Failed to RX Completion");
-    return ret;
+    return (int) ret;
   }
 
   rma_iov = (fi_rma_iov *)(static_cast<char *>(rx_buf) + hps_utils_rx_prefix_size(info));
@@ -676,7 +676,7 @@ int Connection::ExchangeServerKeys() {
   ret = PostRX(rx_size, &rx_ctx);
   if (ret) {
     HPS_ERR("Failed to post RX");
-    return ret;
+    return (int) ret;
   }
   rma_iov = (fi_rma_iov *)(static_cast<char *>(tx_buf) + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
@@ -685,15 +685,15 @@ int Connection::ExchangeServerKeys() {
   ret = TX(sizeof *rma_iov);
   if (ret) {
     HPS_ERR("Failed to TX");
-    return ret;
+    return (int) ret;
   }
-  return ret;
+  return (int) ret;
 }
 
 int Connection::ExchangeClientKeys(){
   struct fi_rma_iov *peer_iov = &this->remote;
   struct fi_rma_iov *rma_iov;
-  int ret;
+  ssize_t ret;
 
   rma_iov = (fi_rma_iov *)(static_cast<char *>(tx_buf) + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
@@ -701,39 +701,39 @@ int Connection::ExchangeClientKeys(){
   rma_iov->key = fi_mr_key(mr);
   ret = TX(sizeof *rma_iov);
   if (ret) {
-    printf("Failed to TX\n");
-    return ret;
+    HPS_ERR("Failed to TX");
+    return (int) ret;
   }
 
   ret = GetRXComp(rx_seq);
   if (ret) {
-    printf("Failed to get rx completion\n");
-    return ret;
+    HPS_ERR("Failed to get rx completion");
+    return (int) ret;
   }
 
   rma_iov = (fi_rma_iov *)(static_cast<char *>(rx_buf) + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
   ret = PostRX(rx_size, &rx_ctx);
   if (ret) {
-    printf("Failed to post RX\n");
-    return ret;
+    HPS_ERR("Failed to post RX");
+    return (int) ret;
   }
-  return ret;
+  return (int) ret;
 }
 
 int Connection::sync() {
-  int ret;
+  ssize_t ret;
   ret = RX(1);
   if (ret) {
-    return ret;
+    return (int) ret;
   }
 
   ret = TX(1);
-  return ret;
+  return (int) ret;
 }
 
 int Connection::SendCompletions(uint64_t min, uint64_t max) {
-  int ret;
+  ssize_t ret = 0;
   struct fi_cq_err_entry comp;
   struct timespec a, b;
 
@@ -753,14 +753,14 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
           break;
         }
       } else if (ret < 0 && ret != -FI_EAGAIN) {
-        return ret;
+        return (int) ret;
       } else if (min <= tx_cq_cntr && ret == -FI_EAGAIN) {
         // we have read enough to return
         break;
       } else if (timeout >= 0) {
         clock_gettime(CLOCK_MONOTONIC, &b);
         if ((b.tv_sec - a.tv_sec) > timeout) {
-          fprintf(stderr, "%ds timeout expired\n", timeout);
+          HPS_ERR("%ds timeout expired", timeout);
           return -FI_ENODATA;
         }
       }
@@ -768,13 +768,13 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
   } else if (txcntr) {
     ret = fi_cntr_wait(txcntr, min, -1);
     if (ret) {
-      printf("fi_cntr_wait %d\n", ret);
+      HPS_ERR("fi_cntr_wait %d", ret);
     }
   } else {
-    printf("Trying to get a TX completion when no TX CQ or counter were opened \n");
+    HPS_ERR("Trying to get a TX completion when no TX CQ or counter were opened");
     ret = -FI_EOTHER;
   }
-  return ret;
+  return (int) ret;
 }
 
 /**
@@ -782,7 +782,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
  * completions
  */
 int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
-  int ret = FI_SUCCESS;
+  ssize_t ret = FI_SUCCESS;
   struct fi_cq_err_entry comp;
   struct timespec a, b;
   uint64_t read;
@@ -811,7 +811,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
       } else if (timeout >= 0) {
         clock_gettime(CLOCK_MONOTONIC, &b);
         if ((b.tv_sec - a.tv_sec) > timeout) {
-          fprintf(stderr, "%ds timeout expired\n", timeout);
+          HPS_ERR("%ds timeout expired", timeout);
           ret = -FI_ENODATA;
           break;
         }
@@ -823,7 +823,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
         ret = hps_utils_cq_readerr(rxcq);
         rx_cq_cntr++;
       } else {
-        printf("ft_get_cq_comp %d\n", ret);
+        HPS_ERR("ft_get_cq_comp %d", ret);
       }
     }
     return 0;
@@ -834,7 +834,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
         ret = fi_cntr_wait(rxcntr, min, timeout);
         rx_cq_cntr = read;
         if (ret) {
-          printf("fi_cntr_wait %d\n", ret);
+          HPS_ERR("fi_cntr_wait %d", ret);
           break;
         } else {
           // we read up to min
@@ -851,10 +851,10 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
       }
     }
   } else {
-    printf("Trying to get a RX completion when no RX CQ or counter were opened");
+    HPS_ERR("Trying to get a RX completion when no RX CQ or counter were opened");
     ret = -FI_EOTHER;
   }
-  return ret;
+  return (int) ret;
 }
 
 int Connection::receive() {
@@ -865,7 +865,7 @@ int Connection::receive() {
   // now wait until a receive is completed
   ret = ReceiveCompletions(rx_cq_cntr + 1, rx_seq);
   if (ret < 0) {
-    printf("Failed to retrieve\n");
+    HPS_ERR("Failed to retrieve");
     return 1;
   }
   // ok a receive is completed
@@ -897,7 +897,7 @@ int Connection::CopyDataFromBuffer(int buf_no, void *buf, uint32_t size, uint32_
 }
 
 int Connection::WriteBuffers() {
-  int ret = 0;
+  ssize_t ret = 0;
   uint32_t i = 0;
   uint32_t size = 0;
 
@@ -948,7 +948,7 @@ int Connection::WriteData(uint8_t *buf, size_t size) {
       // we should wait for at least one completion
       ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
       if (ret) {
-        printf("Failed to get tx completion %d\n", ret);
+        HPS_ERR("Failed to get tx completion %d", ret);
         return 1;
       }
       // now free the buffer

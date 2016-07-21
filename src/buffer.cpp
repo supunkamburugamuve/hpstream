@@ -24,7 +24,7 @@ uint8_t * Buffer::GetBuffer(int i) {
   return buffers[i];
 }
 
-int64_t Buffer::BufferSize() {
+uint64_t Buffer::BufferSize() {
   return buf_size;
 };
 

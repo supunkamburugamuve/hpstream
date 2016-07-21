@@ -28,6 +28,11 @@ public:
    */
   int AllocateActiveResources();
 
+  /**
+   * Set and initialize the end point
+   */
+  int InitEndPoint(fid_ep *ep, fid_eq *eq);
+
   virtual ~Connection();
 
   /**
@@ -39,9 +44,9 @@ public:
   /**
    * Post a message
    */
-  ssize_t PostRMA(enum rdma_rma_opcodes op, size_t size);
-  ssize_t PostRMA(enum rdma_rma_opcodes op, size_t size, void *buf);
-  ssize_t RMA(enum rdma_rma_opcodes op, size_t size);
+  ssize_t PostRMA(enum hps_rma_opcodes op, size_t size);
+  ssize_t PostRMA(enum hps_rma_opcodes op, size_t size, void *buf);
+  ssize_t RMA(enum hps_rma_opcodes op, size_t size);
 
   ssize_t TX(size_t size);
   ssize_t RX(size_t size);
@@ -151,10 +156,7 @@ private:
   int AllocMsgs(void);
   int AllocateBuffers(void);
 
-  /**
-   * Set and initialize the end point
-  */
-  int InitEndPoint(fid_ep *ep, fid_eq *eq);
+
 };
 
 #endif /* HPS_CONNECTION_H_ */

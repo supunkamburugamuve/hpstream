@@ -29,7 +29,7 @@ public:
 
   /** Getters and setters */
   uint8_t *GetBuffer(int i);
-  int64_t BufferSize();
+  uint64_t BufferSize();
   uint32_t NoOfBuffers();
   uint32_t Head();
   uint32_t Tail();
