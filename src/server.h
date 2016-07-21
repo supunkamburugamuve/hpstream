@@ -17,19 +17,11 @@ public:
    * Accept new connections
    */
   int Connect(void);
-  /**
-   * Exchange the keys
-   */
-  int ExchangeKeys();
 
-  /**
-   * Sync
-   */
-  int sync();
   /**
    * RMA
    */
-  ssize_t RMA(enum rdma_rma_opcodes op, size_t size);
+  ssize_t RMA(enum hps_rma_opcodes op, size_t size);
 
   inline Connection *GetConnection() {
     return con;
