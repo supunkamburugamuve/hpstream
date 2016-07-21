@@ -42,26 +42,26 @@ int Client::Connect(void) {
 	struct fid_domain *domain = NULL;
 	Connection *con = NULL;
 
-	printf("Client connect \n");
+	HPS_ERR("Client connect");
 	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
 	if (ret)
 		return ret;
 
 	ret = fi_fabric(this->info->fabric_attr, &this->fabric, NULL);
 	if (ret) {
-		printf("fi_fabric %d\n", ret);
+		HPS_ERR("fi_fabric %d", ret);
 		return ret;
 	}
 
 	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
 	if (ret) {
-		printf("fi_eq_open %d\n", ret);
+		HPS_ERR("fi_eq_open %d", ret);
 		return ret;
 	}
 
 	ret = fi_domain(this->fabric, this->info, &domain, NULL);
 	if (ret) {
-		printf("fi_domain %d\n", ret);
+		HPS_ERR("fi_domain %d", ret);
 		return ret;
 	}
 
@@ -78,7 +78,7 @@ int Client::Connect(void) {
 	// create the end point for this connection
 	ret = fi_endpoint(domain, this->info, &ep, NULL);
 	if (ret) {
-		printf("fi_endpoint %d\n", ret);
+		HPS_ERR("fi_endpoint %d", ret);
 		return ret;
 	}
 
@@ -90,23 +90,30 @@ int Client::Connect(void) {
 
 	ret = fi_connect(ep, this->info->dest_addr, NULL, 0);
 	if (ret) {
-		printf("fi_connect %d\n", ret);
+		HPS_ERR("fi_connect %d", ret);
 		return ret;
 	}
 
 	rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
 	if (rd != sizeof entry) {
-		printf("fi_eq_sread connect\n");
+		HPS_ERR("fi_eq_sread connect");
 		ret = (int) rd;
 		return ret;
 	}
 
 	if (event != FI_CONNECTED || entry.fid != &ep->fid) {
-		fprintf(stderr, "Unexpected CM event %d fid %p (ep %p)\n",
+		HPS_ERR(stderr, "Unexpected CM event %d fid %p (ep %p)",
 						event, entry.fid, ep);
 		ret = -FI_EOTHER;
 		return ret;
 	}
+
+	// noe exchange keys
+	if ((ret = this->con->ExchangeClientKeys())) {
+		HPS_ERR("Failed to exchange keys with server");
+		return ret;
+	}
+
 	this->con = con;
 	printf("Connection established\n");
 	return 0;

@@ -1,3 +1,8 @@
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <cstring>
+
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
@@ -279,3 +284,43 @@ int hps_utils_cq_readerr(struct fid_cq *cq){
   return (int) ret;
 }
 
+void rdma_utils_fill_buf(void *buf, int size) {
+  char *msg_buf;
+  int msg_index;
+  static unsigned int iter = 0;
+  int i;
+
+  msg_index = ((iter++)*INTEG_SEED) % integ_alphabet_length;
+  msg_buf = (char *)buf;
+  for (i = 0; i < size; i++) {
+    msg_buf[i] = integ_alphabet[msg_index++];
+    if (msg_index >= integ_alphabet_length)
+      msg_index = 0;
+  }
+}
+
+int rdma_utils_check_buf(void *buf, int size) {
+  char *recv_data;
+  char c;
+  static unsigned int iter = 0;
+  int msg_index;
+  int i;
+
+  msg_index = ((iter++)*INTEG_SEED) % integ_alphabet_length;
+  recv_data = (char *)buf;
+
+  for (i = 0; i < size; i++) {
+    c = integ_alphabet[msg_index++];
+    if (msg_index >= integ_alphabet_length)
+      msg_index = 0;
+    if (c != recv_data[i])
+      break;
+  }
+  if (i != size) {
+    printf("Error at iteration=%d size=%d byte=%d\n",
+           iter, size, i);
+    return 1;
+  }
+
+  return 0;
+}

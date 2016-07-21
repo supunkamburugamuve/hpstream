@@ -123,7 +123,7 @@ int Server::Connect(void) {
   }
 
   // initialize the EP
-  ret = con->InitEp(ep, this->eq);
+  ret = con->InitEndPoint(ep, this->eq);
   if (ret) {
     goto err;
   }
@@ -146,6 +146,11 @@ int Server::Connect(void) {
   if (event != FI_CONNECTED || entry.fid != &ep->fid) {
     HPS_ERR("Unexpected CM event %d fid %p (ep %p)", event, entry.fid, ep);
     ret = -FI_EOTHER;
+    goto err;
+  }
+
+  if ((ret = this->con->ExchangeServerKeys())) {
+    HPS_ERR("Failed to exchange keys with client");
     goto err;
   }
 

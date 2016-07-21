@@ -38,8 +38,15 @@ uint64_t hps_utils_caps_to_mr_access(uint64_t caps);
 int hps_utils_check_opts(Options *opts, uint64_t flags) ;
 int hps_utils_poll_fd(int fd, int timeout);
 int hps_utils_cq_readerr(struct fid_cq *cq);
-int hps_utils_check_buf(void *buf, int size);
 
+
+
+int hps_utils_check_buf(void *buf, int size);
+#define INTEG_SEED 7
+static const char integ_alphabet[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const int integ_alphabet_length = (sizeof(integ_alphabet)/sizeof(*integ_alphabet)) - 1;
+
+void rdma_utils_fill_buf(void *buf, int size);
 
 #endif /* end HPS_UTILS */
 
