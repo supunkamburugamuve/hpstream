@@ -22,7 +22,7 @@ int hps_utils_set_rma_caps(struct fi_info *fi) {
   return 0;
 }
 
-int ft_get_cq_fd(Options *opts, struct fid_cq *cq, int *fd) {
+int hps_utils_get_cq_fd(Options *opts, struct fid_cq *cq, int *fd) {
   int ret = FI_SUCCESS;
 
   if (cq && opts->comp_method == HPS_COMP_WAIT_FD) {

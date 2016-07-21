@@ -7,12 +7,12 @@
 
 class Options {
 public:
-  uint8_t *src_port;
-  uint8_t *dst_port;
-  uint8_t *src_addr;
-  uint8_t *dst_addr;
-  uint8_t *fname;
-  uint8_t *av_name;
+  char *src_port;
+  char *dst_port;
+  char *src_addr;
+  char *dst_addr;
+  char *fname;
+  char *av_name;
   int transfer_size;
   int options;
   hps_rma_opcodes rma_op;
@@ -20,9 +20,9 @@ public:
   // buffer size of a individual buffer, if it is
   // smaller than minimum or greater that maximum supported,
   // it will be adjusted to the minimum
-  int buf_size;
+  size_t buf_size;
   // no of buffers
-  int no_buffers;
+  uint32_t no_buffers;
   /**
    * Computation method, spin, wait or wait-set
    */

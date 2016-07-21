@@ -27,10 +27,7 @@ public:
    * Allocate the resources for this connection
    */
   int AllocateActiveResources();
-  /**
-   * Set and initialize the end point
-   */
-  int InitEp(struct fid_ep *ep, struct fid_eq *eq);
+
   virtual ~Connection();
 
   /**
@@ -109,7 +106,7 @@ private:
   struct fi_context tx_ctx, rx_ctx;
 
   // buffer used for communication
-  void *buf, *tx_buf, *rx_buf;
+  uint8_t *buf, *tx_buf, *rx_buf;
   size_t buf_size, tx_size, rx_size;
   Buffer *recv_buf;
   Buffer *send_buf;
@@ -153,6 +150,11 @@ private:
   int SendCompletions(uint64_t min, uint64_t max);
   int AllocMsgs(void);
   int AllocateBuffers(void);
+
+  /**
+   * Set and initialize the end point
+  */
+  int InitEndPoint(fid_ep *ep, fid_eq *eq);
 };
 
 #endif /* HPS_CONNECTION_H_ */
