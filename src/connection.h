@@ -107,7 +107,7 @@ private:
   struct fid_wait *waitset;
 
   // receive fd and transmit fd
-  int rx_fd = -1, tx_fd = -1;
+  int rx_fd, tx_fd;
 
   struct fi_context tx_ctx, rx_ctx;
 

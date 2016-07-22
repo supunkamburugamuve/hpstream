@@ -56,7 +56,7 @@ int hps_utils_check_buf(void *buf, int size);
 static const char integ_alphabet[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const int integ_alphabet_length = (sizeof(integ_alphabet)/sizeof(*integ_alphabet)) - 1;
 
-void rdma_utils_fill_buf(void *buf, int size);
+void hps_utils_fill_buf(void *buf, int size);
 
 #endif /* end HPS_UTILS */
 

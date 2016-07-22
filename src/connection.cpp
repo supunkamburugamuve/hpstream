@@ -668,14 +668,14 @@ int Connection::ExchangeServerKeys() {
     return (int) ret;
   }
 
-  rma_iov = (fi_rma_iov *)(static_cast<char *>(rx_buf) + hps_utils_rx_prefix_size(info));
+  rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
   ret = PostRX(rx_size, &rx_ctx);
   if (ret) {
     HPS_ERR("Failed to post RX");
     return (int) ret;
   }
-  rma_iov = (fi_rma_iov *)(static_cast<char *>(tx_buf) + hps_utils_tx_prefix_size(info));
+  rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
   rma_iov->key = fi_mr_key(mr);
@@ -692,7 +692,7 @@ int Connection::ExchangeClientKeys(){
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
 
-  rma_iov = (fi_rma_iov *)(static_cast<char *>(tx_buf) + hps_utils_tx_prefix_size(info));
+  rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
   rma_iov->key = fi_mr_key(mr);
@@ -708,7 +708,7 @@ int Connection::ExchangeClientKeys(){
     return (int) ret;
   }
 
-  rma_iov = (fi_rma_iov *)(static_cast<char *>(rx_buf) + hps_utils_rx_prefix_size(info));
+  rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
   ret = PostRX(rx_size, &rx_ctx);
   if (ret) {
@@ -820,7 +820,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
         ret = hps_utils_cq_readerr(rxcq);
         rx_cq_cntr++;
       } else {
-        HPS_ERR("ft_get_cq_comp %d", ret);
+        HPS_ERR("ft_get_cq_comp %ld", ret);
       }
     }
     return 0;
@@ -831,7 +831,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
         ret = fi_cntr_wait(rxcntr, min, timeout);
         rx_cq_cntr = read;
         if (ret) {
-          HPS_ERR("fi_cntr_wait %d", ret);
+          HPS_ERR("fi_cntr_wait %ld", ret);
           break;
         } else {
           // we read up to min
@@ -932,7 +932,7 @@ int Connection::WriteData(uint8_t *buf, size_t size) {
     // we have space in the buffers
     if (free_space > 0) {
       head = sbuf->Head();
-      void *current_buf = sbuf->GetBuffer(head);
+      uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
       memcpy(current_buf, &current_size, 8);
@@ -957,12 +957,12 @@ int Connection::WriteData(uint8_t *buf, size_t size) {
 
 
 int Connection::Finalize(void) {
-  struct iovec iov;
+  /*struct iovec iov;
   int ret;
   struct fi_context ctx;
   void *desc = fi_mr_desc(mr);
 
-  strcpy((char *)(static_cast<char *>(tx_buf) + hps_utils_tx_prefix_size(info)), "fin");
+  strcpy(tx_buf + hps_utils_tx_prefix_size(info), "fin");
   iov.iov_base = tx_buf;
   iov.iov_len = 4 + hps_utils_tx_prefix_size(info);
 
@@ -1004,7 +1004,7 @@ int Connection::Finalize(void) {
   ret = GetRXComp(rx_seq);
   if (ret)
     return ret;
-
+  */
   return 0;
 }
 

@@ -3,15 +3,24 @@ include(CheckCXXCompilerFlag)
 cmake_minimum_required(VERSION 2.8)
 
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
 
 project (hpstream)
 
 set (hpstream_VERSION_MAJOR 1)
 set (hpstream_VERSION_MINOR 0)
 set(CMAKE_BUILD_TYPE Release)
+set(SOURCE_FILES src/buffer.cpp src/connection.cpp src/client.cpp src/options.cpp src/utils.cpp src/server.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include /home/supun/dev/projects/stream/fabric-build/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
-add_library(hpstream SHARED src/buffer.cpp src/connection.cpp src/client.cpp src/options.cpp src/utils.cpp src/server.cpp)
+add_library(hpstream SHARED ${SOURCE_FILES})
 
 add_executable(hps_server test/main.cpp)
 target_link_libraries (hps_server hpstream)

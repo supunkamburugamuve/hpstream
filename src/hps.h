@@ -1,6 +1,9 @@
 #ifndef HPS_H_
 #define HPS_H_
 
+#include <cstdio>
+#include <cstdlib>
+
 #define HPS_LOG(level, fmt, ...) \
 	do { fprintf(stderr, "[%s] hps:%s:%d: " fmt "\n", level, __FILE__, \
 			__LINE__, ##__VA_ARGS__); } while (0)

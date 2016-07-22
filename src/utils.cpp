@@ -275,7 +275,7 @@ int hps_utils_cq_readerr(struct fid_cq *cq){
 
   ret = fi_cq_readerr(cq, &cq_err, 0);
   if (ret < 0) {
-    HPS_ERR("fi_cq_readerr %d", ret);
+    HPS_ERR("fi_cq_readerr %ld", ret);
   } else {
     printf("%s\n", fi_cq_strerror(cq, cq_err.prov_errno,
                                   cq_err.err_data, NULL, 0));
@@ -284,7 +284,7 @@ int hps_utils_cq_readerr(struct fid_cq *cq){
   return (int) ret;
 }
 
-void rdma_utils_fill_buf(void *buf, int size) {
+void hps_utils_fill_buf(void *buf, int size) {
   char *msg_buf;
   int msg_index;
   static unsigned int iter = 0;
@@ -299,7 +299,7 @@ void rdma_utils_fill_buf(void *buf, int size) {
   }
 }
 
-int rdma_utils_check_buf(void *buf, int size) {
+int hps_utils_check_buf(void *buf, int size) {
   char *recv_data;
   char c;
   static unsigned int iter = 0;
