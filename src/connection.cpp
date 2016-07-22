@@ -236,7 +236,7 @@ int Connection::AllocateBuffers(void) {
   } else {
     buf = (uint8_t *)malloc(buf_size);
     if (!buf) {
-      perror("malloc");
+      HPS_ERR("No memory %d", ret);
       return -FI_ENOMEM;
     }
   }
