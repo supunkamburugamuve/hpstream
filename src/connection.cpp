@@ -765,7 +765,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
   } else if (txcntr) {
     ret = fi_cntr_wait(txcntr, min, -1);
     if (ret) {
-      HPS_ERR("fi_cntr_wait %d", ret);
+      HPS_ERR("fi_cntr_wait %ld", ret);
     }
   } else {
     HPS_ERR("Trying to get a TX completion when no TX CQ or counter were opened");
@@ -873,15 +873,15 @@ int Connection::receive() {
   return 0;
 }
 
-int Connection::CopyDataFromBuffer(int buf_no, void *buf, uint32_t size, uint32_t *read) {
+int Connection::CopyDataFromBuffer(uint32_t buf_no, uint8_t *buf, uint32_t size, uint32_t *read) {
   // go through the buffers
   Buffer *rbuf = this->recv_buf;
 
   // get the tail
   if (buf_no <= rbuf->DataHead() && buf_no > rbuf->Tail()) {
     // skip the first 4 bytes
-    void *b = rbuf->GetBuffer(buf_no);
-    uint64_t r;
+    uint8_t *b = rbuf->GetBuffer(buf_no);
+    uint32_t r;
     // first read the size
     memcpy(&r, b, sizeof(r));
     // next copy the buffer

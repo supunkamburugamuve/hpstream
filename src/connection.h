@@ -61,7 +61,7 @@ public:
    */
   int WriteBuffers();
 
-  int CopyDataFromBuffer(int buf_no, void *buf, uint32_t size, uint32_t *read) ;
+  int CopyDataFromBuffer(uint32_t buf_no, uint8_t *buf, uint32_t size, uint32_t *read);
 
   inline Buffer *RecevBuffer() {
     return this->recv_buf;
