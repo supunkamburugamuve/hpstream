@@ -54,7 +54,7 @@ public:
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
    */
-  int WriteData(uint8_t *buf, size_t size);
+  int WriteData(uint8_t *buf, uint32_t size);
 
   /**
    * Write the current buffers

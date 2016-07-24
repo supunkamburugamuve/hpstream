@@ -96,6 +96,11 @@ bool Buffer::IncrementTail() {
   }
 }
 
+bool Buffer::IncrementDataHead() {
+
+  return true;
+}
+
 void Buffer::Free() {
   if (this->buffers) {
     free(this->buffers);

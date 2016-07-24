@@ -7,8 +7,6 @@ class Buffer {
 public:
   Buffer(uint8_t *buf, uint64_t buf_size, uint32_t no_bufs);
 
-  virtual ~Buffer();
-
   // increment the head
   bool IncrementHead();
 

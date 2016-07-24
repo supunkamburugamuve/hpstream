@@ -10,7 +10,7 @@
 #define INFO_OPTS "n:f:e:"
 
 struct test_size_param {
-  int size;
+  uint32_t size;
   int enable_flags;
 };
 

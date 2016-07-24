@@ -868,7 +868,7 @@ int Connection::receive() {
   // ok a receive is completed
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
-  data_head = rx_cq_cntr % buffers;
+  data_head = (uint32_t) (rx_cq_cntr % buffers);
   sbuf->SetDataHead(data_head);
   return 0;
 }
@@ -916,12 +916,12 @@ int Connection::WriteBuffers() {
   return 0;
 }
 
-int Connection::WriteData(uint8_t *buf, size_t size) {
+int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
   // first lets get the available buffer
   Buffer *sbuf = this->send_buf;
   // now determine the buffer no to use
-  uint64_t sent_size = 0;
+  uint32_t sent_size = 0;
   uint64_t current_size = 0;
   uint32_t head = 0;
 
@@ -938,9 +938,12 @@ int Connection::WriteData(uint8_t *buf, size_t size) {
       memcpy(current_buf, &current_size, 8);
       memcpy(current_buf + 8, buf + sent_size, current_size);
       // send the current buffer
-      PostRMA(HPS_RMA_WRITE, current_size, current_buf);
-      // increment the head
-      sbuf->IncrementHead();
+      if (!PostRMA(HPS_RMA_WRITE, current_size, current_buf)) {
+        sent_size += current_size;
+        // increment the head
+        sbuf->IncrementHead();
+      }
+          ;
     } else {
       // we should wait for at least one completion
       ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
