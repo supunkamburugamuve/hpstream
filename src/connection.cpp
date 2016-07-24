@@ -683,6 +683,7 @@ int Connection::ExchangeServerKeys() {
     HPS_ERR("Failed to post RX");
     return (int) ret;
   }
+  HPS_ERR("Received keys");
   rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
@@ -692,10 +693,11 @@ int Connection::ExchangeServerKeys() {
     HPS_ERR("Failed to TX");
     return (int) ret;
   }
+  HPS_ERR("Sent keys");
   return (int) ret;
 }
 
-int Connection::ExchangeClientKeys(){
+int Connection::ExchangeClientKeys() {
   struct fi_rma_iov *peer_iov = &this->remote;
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
@@ -705,6 +707,7 @@ int Connection::ExchangeClientKeys(){
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
   rma_iov->key = fi_mr_key(mr);
   ret = TX(sizeof *rma_iov);
+  HPS_ERR("Sent keys");
   if (ret) {
     HPS_ERR("Failed to TX");
     return (int) ret;
@@ -723,6 +726,7 @@ int Connection::ExchangeClientKeys(){
     HPS_ERR("Failed to post RX");
     return (int) ret;
   }
+  HPS_ERR("Received keys");
   return (int) ret;
 }
 
