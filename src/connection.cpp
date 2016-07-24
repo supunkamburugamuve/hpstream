@@ -130,6 +130,14 @@ void Connection::Free() {
   HPS_CLOSE_FID(fabric);
 }
 
+Buffer * Connection::ReceiveBuffer() {
+  return this->recv_buf;
+}
+
+Buffer * Connection::SendBuffer() {
+  return this->send_buf;
+}
+
 int Connection::AllocateActiveResources() {
   int ret;
   printf("Allocate recv\n");

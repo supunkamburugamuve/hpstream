@@ -63,14 +63,10 @@ public:
 
   int CopyDataFromBuffer(uint32_t buf_no, uint8_t *buf, uint32_t size, uint32_t *read);
 
-  inline Buffer *RecevBuffer() {
-    return this->recv_buf;
-  }
-
-  inline Buffer *SendBuffer() {
-    return this->send_buf;
-  }
-
+  /** Get the receive buffer */
+  Buffer *ReceiveBuffer();
+  /** GEt the send buffer */
+  Buffer *SendBuffer();
   /**
    * Receive content in to the buffer.
    */
