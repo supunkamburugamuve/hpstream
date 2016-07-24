@@ -1,7 +1,7 @@
 #ifndef HPS_OPTIONS_H_
 #define HPS_OPTIONS_H_
 
-#include <stdint-gcc.h>
+#include <cstdint>
 
 #include "hps.h"
 

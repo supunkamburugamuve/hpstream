@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <unistd.h>
 #include <stdio.h>
-#include <stdint-gcc.h>
+//#include <stdint-gcc.h>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
@@ -113,7 +113,7 @@ private:
   Buffer *recv_buf;
   Buffer *send_buf;
 
-  int ft_skip_mr = 0;
+  int ft_skip_mr;
 
   uint64_t remote_cq_data;
   struct fid_mr *mr;
