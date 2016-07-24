@@ -9,26 +9,7 @@ class Client {
 public:
   Client(Options *opts, fi_info *hints);
   int Connect(void);
-  /**
-   * Exchange keys with the peer
-   */
-  int ExchangeKeys();
-  /**
-   * Sync
-   */
-  int sync();
-  /**
-   * RMA
-   */
-  ssize_t RMA(enum hps_rma_opcodes op, size_t size);
-
-  size_t Send(char *buf, size_t size);
-  int Receive(char *buf, size_t *size);
-
-  int Finalize(void);
-
   Connection *GetConnection();
-
   void Free();
 private:
   // options for initialization

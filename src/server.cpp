@@ -31,6 +31,10 @@ void Server::Free() {
   }
 }
 
+Connection* Server::GetConnection() {
+  return this->con;
+}
+
 /**
  * Initialize the server
  */

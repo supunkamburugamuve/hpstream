@@ -18,16 +18,9 @@ public:
    */
   int Connect(void);
 
-  /**
-   * RMA
-   */
-  ssize_t RMA(enum hps_rma_opcodes op, size_t size);
-
-  inline Connection *GetConnection() {
-    return con;
-  }
-
-  int Finalize(void);
+  Connection * GetConnection();
+  // connections
+  Connection *con;
 private:
   Options *options;
   // hints to be used to obtain fabric information
@@ -42,8 +35,6 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
-  // connections
-  Connection *con;
 };
 
 

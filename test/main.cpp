@@ -3,9 +3,10 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
-#include <client.h>
 
+#include "client.h"
 #include "server.h"
+
 #define ADDR_OPTS "b:p:s:a:r:"
 #define INFO_OPTS "n:f:e:"
 
@@ -41,10 +42,6 @@ struct test_size_param test_size[] = {
     { 1 << 22, 0 }, { (1 << 22) + (1 << 21), 0 },
     { 1 << 23, 0 },
 };
-
-int main(int argc, char **argv) {
-
-}
 
 void rdma_parseinfo(int op, char *optarg, struct fi_info *hints) {
   switch (op) {
@@ -140,14 +137,15 @@ int rma(int argc, char **argv) {
   if (options.dst_addr) {
     Client client(&options, hints);
     client.Connect();
-    ret = client.ExchangeKeys();
+    Connection *con = client.GetConnection();
+    ret = con->ExchangeClientKeys();
     if (ret) {
       printf("Failed to exchange %d\n", ret);
     } else {
       printf("Exchanged keys\n");
     }
 
-    ret = client.sync();
+    ret = con->sync();
     if (ret) {
       printf("Failed to sync\n");
     } else {
@@ -156,16 +154,16 @@ int rma(int argc, char **argv) {
 
     for (int i = 0; i < 10000; i++) {
       options.transfer_size = test_size[0].size;
-      if (client.RMA(options.rma_op, options.transfer_size)) {
+      if (con->RMA(options.rma_op, options.transfer_size)) {
         printf("Failed to RMA \n");
       }
     }
     printf("Done rma\n");
-    ret = client.sync();
+    ret = con->sync();
     if (ret) {
       printf("Failed second sync");
     }
-    ret = client.Finalize();
+    ret = con->Finalize();
     if (ret) {
       printf("Failed Finalize");
     }
@@ -173,7 +171,7 @@ int rma(int argc, char **argv) {
     Server server(&options, hints);
     server.Start();
     server.Connect();
-    Connection *con = server.GetConnection();
+    Connection *con = server.con;
     ret = con->ExchangeServerKeys();
     if (ret) {
       printf("Failed to exchange %d\n", ret);
@@ -188,7 +186,7 @@ int rma(int argc, char **argv) {
     }
     for (int i = 0; i < 10000; i++) {
       options.transfer_size = test_size[0].size;
-      if (server.RMA(options.rma_op, options.transfer_size)) {
+      if (con->RMA(options.rma_op, options.transfer_size)) {
         printf("Failed to RMA \n");
       }
     }
@@ -197,11 +195,15 @@ int rma(int argc, char **argv) {
     if (ret) {
       printf("Failed second sync");
     }
-    ret = server.Finalize();
+    ret = con->Finalize();
     if (ret) {
       printf("Failed Finalize");
     }
   }
 
   return 0;
+}
+
+int main(int argc, char **argv) {
+  rma(argc, argv);
 }
