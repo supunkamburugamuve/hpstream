@@ -221,7 +221,7 @@ int Connection::AllocateBuffers(void) {
   long alignment = 1;
   Options *opts = this->options;
 
-  tx_size = opts->buf_size;
+  tx_size = opts->buf_size / 2;
   if (tx_size > info->ep_attr->max_msg_size) {
     tx_size = info->ep_attr->max_msg_size;
   }

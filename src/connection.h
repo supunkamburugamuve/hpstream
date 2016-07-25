@@ -108,7 +108,8 @@ private:
   struct fi_context tx_ctx, rx_ctx;
 
   // buffer used for communication
-  uint8_t *buf, *tx_buf, *rx_buf;
+  uint8_t *buf;
+  uint8_t *tx_buf, *rx_buf;
   size_t buf_size, tx_size, rx_size;
   Buffer *recv_buf;
   Buffer *send_buf;
