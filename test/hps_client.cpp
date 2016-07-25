@@ -8,7 +8,7 @@ int connect() {
   int ret;
   Client client(&options, hints);
   client.Connect();
-  Connection *con = client.GetConnection();
+  con = client.GetConnection();
   ret = con->ExchangeClientKeys();
   if (ret) {
     printf("Failed to exchange %d\n", ret);

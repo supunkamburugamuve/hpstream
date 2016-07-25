@@ -9,7 +9,7 @@ int connect() {
   Server server(&options, hints);
   server.Start();
   server.Connect();
-  Connection *con = server.con;
+  con = server.con;
   ret = con->ExchangeServerKeys();
   if (ret) {
     printf("Failed to exchange %d\n", ret);
