@@ -652,7 +652,7 @@ ssize_t Connection::PostRMA(enum hps_rma_opcodes op, size_t size, void *buf) {
 ssize_t Connection::RMA(enum hps_rma_opcodes op, size_t size) {
   ssize_t ret;
 
-  ret = PostRMA(op, size, &remote);
+  ret = PostRMA(op, size);
   if (ret)
     return ret;
 
