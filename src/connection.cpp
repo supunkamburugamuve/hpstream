@@ -673,6 +673,9 @@ int Connection::ExchangeServerKeys() {
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
   printf("Exchange key\n");
+  if (this->info == NULL) {
+    printf("NULLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
+  }
   print_short_info(this->info);
   HPS_ERR("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
   ret = GetRXComp(rx_seq);
@@ -708,6 +711,9 @@ int Connection::ExchangeClientKeys() {
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
   printf("Exchange key\n");
+  if (this->info == NULL) {
+    printf("NULLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
+  }
   print_short_info(this->info);
   HPS_ERR("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
   rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
