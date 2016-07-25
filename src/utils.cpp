@@ -172,7 +172,7 @@ int hps_utils_read_addr_opts(char **node, char **service, struct fi_info *hints,
   return 0;
 }
 
-static int print_short_info(struct fi_info *info) {
+int print_short_info(struct fi_info *info) {
   for (struct fi_info *cur = info; cur; cur = cur->next) {
     printf("provider: %s\n", cur->fabric_attr->prov_name);
     printf("    fabric: %s\n", cur->fabric_attr->name),
@@ -192,6 +192,7 @@ int hps_utils_get_info(Options *options, struct fi_info *hints, struct fi_info *
   char *fi_str;
   char *node, *service;
   uint64_t flags = 0;
+
   // read the parameters from the options
   hps_utils_read_addr_opts(&node, &service, hints, &flags, options);
 
@@ -199,6 +200,11 @@ int hps_utils_get_info(Options *options, struct fi_info *hints, struct fi_info *
   if (!hints->ep_attr->type) {
     hints->ep_attr->type = FI_EP_RDM;
   }
+
+  std::cout << "First ******************" << std::endl;
+  fi_str = fi_tostr(hints, FI_TYPE_INFO);
+  std::cout << "FI" << fi_str << std::endl;
+  print_short_info(hints);
 
   // now lets retrieve the available network services
   // according to hints

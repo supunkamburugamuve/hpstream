@@ -58,5 +58,7 @@ static const int integ_alphabet_length = (sizeof(integ_alphabet)/sizeof(*integ_a
 
 void hps_utils_fill_buf(void *buf, int size);
 
+int print_short_info(struct fi_info *info);
+
 #endif /* end HPS_UTILS */
 
