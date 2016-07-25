@@ -670,7 +670,7 @@ int Connection::ExchangeServerKeys() {
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
   printf("Exchange key\n");
-  HPS_ERR("Exchange key 2 \n");
+  HPS_ERR("Exchange key 2 %d\n", hps_utils_tx_prefix_size(info));
   ret = GetRXComp(rx_seq);
   if (ret) {
     HPS_ERR("Failed to RX Completion");
@@ -704,7 +704,7 @@ int Connection::ExchangeClientKeys() {
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
   printf("Exchange key\n");
-  HPS_ERR("Exchange key 2 \n");
+  HPS_ERR("Exchange key 2 %d\n", hps_utils_tx_prefix_size(info));
   rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
