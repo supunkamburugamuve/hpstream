@@ -18,8 +18,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include /home/supun/dev/projects
 add_library(hpstream SHARED ${SOURCE_FILES})
 target_link_libraries(hpstream fabric rt pthread ibverbs)
 
-add_executable(hps_server test/main.cpp)
+add_executable(hps_server test/hps_utils.cpp test/hps_server.cpp)
 target_link_libraries(hps_server fabric rt pthread ibverbs libhpstream.so)
 
-add_executable(hps_client test/main.cpp)
+add_executable(hps_client test/hps_utils.cpp test/hps_client.cpp)
 target_link_libraries(hps_client hpstream fabric rt pthread ibverbs libhpstream.so)
