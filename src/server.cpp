@@ -157,10 +157,10 @@ int Server::Connect(void) {
     goto err;
   }
 
-  if ((ret = this->con->ExchangeServerKeys())) {
-    HPS_ERR("Failed to exchange keys with client");
-    goto err;
-  }
+//  if ((ret = this->con->ExchangeServerKeys())) {
+//    HPS_ERR("Failed to exchange keys with client");
+//    goto err;
+//  }
 
   printf("Connection established\n");
   this->con = con;

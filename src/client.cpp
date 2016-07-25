@@ -105,10 +105,10 @@ int Client::Connect(void) {
 	}
 
 	// noe exchange keys
-	if ((ret = this->con->ExchangeClientKeys())) {
-		HPS_ERR("Failed to exchange keys with server");
-		return ret;
-	}
+//	if ((ret = this->con->ExchangeClientKeys())) {
+//		HPS_ERR("Failed to exchange keys with server");
+//		return ret;
+//	}
 
 	this->con = con;
 	printf("Connection established\n");
