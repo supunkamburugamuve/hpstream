@@ -110,6 +110,8 @@ int rma(int argc, char **argv) {
   Options options;
   options.transfer_size = 100;
   options.rma_op = HPS_RMA_WRITE;
+  options.buf_size = 1024 * 1024 * 10;
+  options.no_buffers = 10;
   struct fi_info *hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
