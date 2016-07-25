@@ -55,6 +55,9 @@
 
 Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info *info,
                        struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
+
+  print_short_info(info);
+
   this->options = opts;
   this->info = info;
   this->info_hints = info_hints;
