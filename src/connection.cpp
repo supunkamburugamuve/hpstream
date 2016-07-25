@@ -562,6 +562,7 @@ ssize_t Connection::TX(size_t size) {
   }
 
   ret = GetTXComp(tx_seq);
+  printf("Waiting tx %ld with size %ld\n", tx_seq, size);
   return ret;
 }
 
@@ -580,7 +581,7 @@ ssize_t Connection::PostRX(size_t size, struct fi_context* ctx) {
 
 ssize_t Connection::RX(size_t size) {
   ssize_t ret;
-
+  printf("Waiting rx %ld with size %ld\n", rx_seq, size);
   ret = GetRXComp(rx_seq);
   if (ret)
     return ret;
