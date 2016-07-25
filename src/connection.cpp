@@ -745,7 +745,18 @@ int Connection::ExchangeClientKeys() {
   return (int) ret;
 }
 
-int Connection::sync() {
+int Connection::ClientSync() {
+  ssize_t ret;
+  ret = TX(1);
+  if (ret) {
+    return (int) ret;
+  }
+
+  ret = RX(1);
+  return (int) ret;
+}
+
+int Connection::ServerSync() {
   ssize_t ret;
   ret = RX(1);
   if (ret) {

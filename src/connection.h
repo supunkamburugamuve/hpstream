@@ -41,7 +41,8 @@ public:
    */
   int ExchangeServerKeys();
   int ExchangeClientKeys();
-  int sync();
+  int ServerSync();
+  int ClientSync();
   /**
    * Post a message
    */

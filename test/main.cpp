@@ -147,7 +147,7 @@ int rma(int argc, char **argv) {
       printf("Exchanged keys\n");
     }
 
-    ret = con->sync();
+    ret = con->ClientSync();
     if (ret) {
       printf("Failed to sync\n");
     } else {
@@ -180,7 +180,7 @@ int rma(int argc, char **argv) {
     } else {
       printf("Exchanged keys\n");
     }
-    ret = con->sync();
+    ret = con->ServerSync();
     if (ret) {
       printf("Failed to sync\n");
     } else {
