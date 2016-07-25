@@ -139,68 +139,68 @@ int rma(int argc, char **argv) {
   if (options.dst_addr) {
     Client client(&options, hints);
     client.Connect();
-    Connection *con = client.GetConnection();
-    ret = con->ExchangeClientKeys();
-    if (ret) {
-      printf("Failed to exchange %d\n", ret);
-    } else {
-      printf("Exchanged keys\n");
-    }
-
-    ret = con->sync();
-    if (ret) {
-      printf("Failed to sync\n");
-    } else {
-      printf("synced\n");
-    }
-
-    for (int i = 0; i < 10000; i++) {
-      options.transfer_size = test_size[0].size;
-      if (con->RMA(options.rma_op, options.transfer_size)) {
-        printf("Failed to RMA \n");
-      }
-    }
-    printf("Done rma\n");
-    ret = con->sync();
-    if (ret) {
-      printf("Failed second sync");
-    }
-    ret = con->Finalize();
-    if (ret) {
-      printf("Failed Finalize");
-    }
+//    Connection *con = client.GetConnection();
+//    ret = con->ExchangeClientKeys();
+//    if (ret) {
+//      printf("Failed to exchange %d\n", ret);
+//    } else {
+//      printf("Exchanged keys\n");
+//    }
+//
+//    ret = con->sync();
+//    if (ret) {
+//      printf("Failed to sync\n");
+//    } else {
+//      printf("synced\n");
+//    }
+//
+//    for (int i = 0; i < 10000; i++) {
+//      options.transfer_size = test_size[0].size;
+//      if (con->RMA(options.rma_op, options.transfer_size)) {
+//        printf("Failed to RMA \n");
+//      }
+//    }
+//    printf("Done rma\n");
+//    ret = con->sync();
+//    if (ret) {
+//      printf("Failed second sync");
+//    }
+//    ret = con->Finalize();
+//    if (ret) {
+//      printf("Failed Finalize");
+//    }
   } else {
     Server server(&options, hints);
     server.Start();
     server.Connect();
-    Connection *con = server.con;
-    ret = con->ExchangeServerKeys();
-    if (ret) {
-      printf("Failed to exchange %d\n", ret);
-    } else {
-      printf("Exchanged keys\n");
-    }
-    ret = con->sync();
-    if (ret) {
-      printf("Failed to sync\n");
-    } else {
-      printf("synced\n");
-    }
-    for (int i = 0; i < 10000; i++) {
-      options.transfer_size = test_size[0].size;
-      if (con->RMA(options.rma_op, options.transfer_size)) {
-        printf("Failed to RMA \n");
-      }
-    }
-    printf("Done rma\n");
-    ret = con->sync();
-    if (ret) {
-      printf("Failed second sync");
-    }
-    ret = con->Finalize();
-    if (ret) {
-      printf("Failed Finalize");
-    }
+//    Connection *con = server.con;
+//    ret = con->ExchangeServerKeys();
+//    if (ret) {
+//      printf("Failed to exchange %d\n", ret);
+//    } else {
+//      printf("Exchanged keys\n");
+//    }
+//    ret = con->sync();
+//    if (ret) {
+//      printf("Failed to sync\n");
+//    } else {
+//      printf("synced\n");
+//    }
+//    for (int i = 0; i < 10000; i++) {
+//      options.transfer_size = test_size[0].size;
+//      if (con->RMA(options.rma_op, options.transfer_size)) {
+//        printf("Failed to RMA \n");
+//      }
+//    }
+//    printf("Done rma\n");
+//    ret = con->sync();
+//    if (ret) {
+//      printf("Failed second sync");
+//    }
+//    ret = con->Finalize();
+//    if (ret) {
+//      printf("Failed Finalize");
+//    }
   }
 
   return 0;
