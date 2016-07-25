@@ -676,9 +676,10 @@ int Connection::ExchangeServerKeys() {
     HPS_ERR("Failed to RX Completion");
     return (int) ret;
   }
-
+  HPS_ERR("Exchange key 3 \n");
   rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
+  HPS_ERR("Exchange key 4 \n");
   ret = PostRX(rx_size, &rx_ctx);
   if (ret) {
     HPS_ERR("Failed to post RX");
