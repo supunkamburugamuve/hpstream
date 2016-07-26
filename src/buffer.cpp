@@ -10,7 +10,7 @@
 
 Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->buf = buf;
-  this->buf_size = buf_size;
+  this->buf_size = buf_size / no_bufs;
   this->no_bufs = no_bufs;
   this->head = 0;
   this->tail = 0;
@@ -24,7 +24,7 @@ uint8_t * Buffer::GetBuffer(int i) {
   return buffers[i];
 }
 
-uint64_t Buffer::BufferSize() {
+uint32_t Buffer::BufferSize() {
   return buf_size;
 };
 
@@ -60,11 +60,14 @@ void Buffer::SetTail(uint32_t tail) {
   this->tail = tail;
 }
 
+uint32_t Buffer::CurrentReadIndex() {
+  return this->current_read_index;
+}
+
 int Buffer::Init() {
   uint32_t i = 0;
   this->buffers = (uint8_t **)malloc(sizeof(uint8_t *) * no_bufs);
   this->content_sizes = (uint32_t *)malloc(sizeof(uint32_t) * no_bufs);
-  this->buf_size = this->buf_size / this->no_bufs;
   for (i = 0; i < no_bufs; i++) {
     this->buffers[i] = this->buf + buf_size * i;
   }

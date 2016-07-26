@@ -937,22 +937,49 @@ int Connection::receive() {
   return 0;
 }
 
-int Connection::CopyDataFromBuffer(uint32_t buf_no, uint8_t *buf, uint32_t size, uint32_t *read) {
+int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   // go through the buffers
   Buffer *rbuf = this->recv_buf;
 
-  // get the tail
-  if (buf_no <= rbuf->DataHead() && buf_no > rbuf->Tail()) {
-    // skip the first 4 bytes
-    uint8_t *b = rbuf->GetBuffer(buf_no);
-    uint32_t r;
-    // first read the size
-    memcpy(&r, b, sizeof(r));
-    // next copy the buffer
-    memcpy(buf, b + sizeof(uint64_t), r);
-    *read = r;
-  } else {
+  // nothing to read
+  if (rbuf->Tail() == rbuf->DataHead()) {
     *read = 0;
+    return 0;
+  }
+
+  uint32_t tail = rbuf->Tail();
+  uint32_t head = rbuf->Head();
+  uint32_t current_read_indx = rbuf->CurrentReadIndex();
+  // need to copy
+  uint32_t need_copy = 0;
+  // number of bytes copied
+  uint32_t read_size = 0;
+  while (read_size < size &&  tail != head) {
+    uint8_t *b = rbuf->GetBuffer(tail);
+    uint32_t *r;
+    // first read the amount of data in the buffer
+    r = (uint32_t *) b;
+    // now lets see how much data we need to copy from this buffer
+    need_copy = (*r) - current_read_indx;
+    // now lets see how much we can copy
+    uint32_t can_copy = 0;
+    uint32_t tmp_index = current_read_indx;
+    // we can copy everything from this buffer
+    if (size - read_size > need_copy) {
+      can_copy = need_copy;
+      current_read_indx = 0;
+      // advance the tail pointer
+      rbuf->IncrementTail();
+      tail = rbuf->Tail();
+    } else {
+      // we cannot copy everything from this buffer
+      can_copy = size - read_size;
+      current_read_indx += can_copy;
+    }
+    // next copy the buffer
+    memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
+    // now update
+    read_size += can_copy;
   }
   return 0;
 }
@@ -986,11 +1013,11 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   Buffer *sbuf = this->send_buf;
   // now determine the buffer no to use
   uint32_t sent_size = 0;
-  uint64_t current_size = 0;
+  uint32_t current_size = 0;
   uint32_t head = 0;
   uint32_t error_count = 0;
 
-  uint64_t buf_size = sbuf->BufferSize() - 4;
+  uint32_t buf_size = sbuf->BufferSize() - 4;
   // we need to send everything buy using the buffers available
   while (sent_size < size) {
     uint64_t free_space = sbuf->GetFreeSpace();
@@ -1000,8 +1027,8 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
-      memcpy(current_buf, &current_size, 8);
-      memcpy(current_buf + 8, buf + sent_size, current_size);
+      memcpy(current_buf, &current_size, sizeof(uint32_t));
+      memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       // send the current buffer
       if (!PostTX(current_size, current_buf, &this->tx_ctx)) {
         sent_size += current_size;

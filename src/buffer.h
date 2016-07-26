@@ -27,7 +27,7 @@ public:
 
   /** Getters and setters */
   uint8_t *GetBuffer(int i);
-  uint64_t BufferSize();
+  uint32_t BufferSize();
   uint32_t NoOfBuffers();
   uint32_t Head();
   uint32_t Tail();
@@ -36,11 +36,15 @@ public:
   void SetDataHead(uint32_t head);
   void SetHead(uint32_t head);
   void SetTail(uint32_t tail);
+  uint32_t CurrentReadIndex();
 
   /** Free the buffer */
   void Free();
 
 private:
+  // place in the current buffer we read up to, this is needed to get the data out
+  // of the buffers
+  uint32_t current_read_index;
   // part of the buffer allocated to this buffer
   uint8_t *buf;
   // the list of buffer pointers, these are pointers to

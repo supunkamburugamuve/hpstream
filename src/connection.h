@@ -62,7 +62,7 @@ public:
    */
   int WriteBuffers();
 
-  int CopyDataFromBuffer(uint32_t buf_no, uint8_t *buf, uint32_t size, uint32_t *read);
+  int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 
   /** Get the receive buffer */
   Buffer *ReceiveBuffer();
