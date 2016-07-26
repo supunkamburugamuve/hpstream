@@ -11,6 +11,8 @@
 #define HPS_ERR(fmt, ...) HPS_LOG("error", fmt, ##__VA_ARGS__)
 #define HPS_WARN(fmt, ...) HPS_LOG("warn", fmt, ##__VA_ARGS__)
 
+#define MAX_ERRORS 10
+
 enum hps_comp_method {
   HPS_COMP_SPIN = 0,
   HPS_COMP_SREAD,

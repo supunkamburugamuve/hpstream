@@ -5,7 +5,7 @@
 
 class Buffer {
 public:
-  Buffer(uint8_t *buf, uint64_t buf_size, uint32_t no_bufs);
+  Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs);
 
   // increment the head
   bool IncrementHead();

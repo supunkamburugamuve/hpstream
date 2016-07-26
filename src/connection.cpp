@@ -220,7 +220,7 @@ int Connection::AllocateActiveResources() {
 }
 
 int Connection::AllocateBuffers(void) {
-  int ret;
+  int ret = 0;
   long alignment = 1;
   Options *opts = this->options;
 
@@ -247,7 +247,7 @@ int Connection::AllocateBuffers(void) {
   } else {
     buf = (uint8_t *)malloc(buf_size);
     if (!buf) {
-      HPS_ERR("No memory %d", ret);
+      HPS_ERR("No memory");
       return -FI_ENOMEM;
     }
   }
@@ -549,6 +549,19 @@ ssize_t Connection::PostTX(size_t size, struct fi_context* ctx) {
   return 0;
 }
 
+ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+  if (info_hints->caps & FI_TAGGED) {
+    HPS_POST(fi_tsend, GetTXComp, tx_seq, "transmit", ep,
+             buf, size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
+             this->remote_fi_addr, tx_seq, ctx);
+  } else {
+    HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
+             buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
+             this->remote_fi_addr, ctx);
+  }
+  return 0;
+}
+
 ssize_t Connection::TX(size_t size) {
   ssize_t ret;
 
@@ -575,6 +588,19 @@ ssize_t Connection::PostRX(size_t size, struct fi_context* ctx) {
     HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, rx_buf,
             MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
             fi_mr_desc(mr),	0, ctx);
+  }
+  return 0;
+}
+
+ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+  if (info_hints->caps & FI_TAGGED) {
+    HPS_POST(fi_trecv, GetRXComp, rx_seq, "receive", this->ep, buf,
+             MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
+             fi_mr_desc(mr), 0, rx_seq, 0, ctx);
+  } else {
+    HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
+             MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
+             fi_mr_desc(mr),	0, ctx);
   }
   return 0;
 }
@@ -962,6 +988,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   uint32_t sent_size = 0;
   uint64_t current_size = 0;
   uint32_t head = 0;
+  uint32_t error_count = 0;
 
   uint64_t buf_size = sbuf->BufferSize() - 4;
   // we need to send everything buy using the buffers available
@@ -976,12 +1003,17 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       memcpy(current_buf, &current_size, 8);
       memcpy(current_buf + 8, buf + sent_size, current_size);
       // send the current buffer
-      if (!PostRMA(HPS_RMA_WRITE, current_size, current_buf)) {
+      if (!PostTX(current_size, current_buf, &this->tx_ctx)) {
         sent_size += current_size;
         // increment the head
         sbuf->IncrementHead();
+      } else {
+        error_count++;
+        if (error_count > MAX_ERRORS) {
+          HPS_ERR("Failed to send the buffer completely. sent %d", sent_size);
+          return sent_size;
+        }
       }
-          ;
     } else {
       // we should wait for at least one completion
       ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
