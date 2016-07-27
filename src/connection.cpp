@@ -941,6 +941,7 @@ int Connection::Receive() {
 }
 
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
+  ssize_t ret = 0;
   // go through the buffers
   Buffer *rbuf = this->recv_buf;
 
@@ -974,6 +975,11 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       // advance the tail pointer
       rbuf->IncrementTail();
       tail = rbuf->Tail();
+      // now post the freed buffer
+      ret = PostRX(rbuf->BufferSize(), b, &this->rx_ctx);
+      if (ret) {
+        return (int) ret;
+      }
     } else {
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
