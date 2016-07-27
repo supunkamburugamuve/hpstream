@@ -844,6 +844,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
  */
 int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
   ssize_t ret = FI_SUCCESS;
+  ssize_t cq_read = 0;
   struct fi_cq_err_entry comp;
   struct timespec a, b;
   uint64_t read;
@@ -854,17 +855,18 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
     }
 
     while (rx_cq_cntr < max	) {
-      ret = fi_cq_read(rxcq, &comp, 1);
-      if (ret > 0) {
+      cq_read = fi_cq_read(rxcq, &comp, 1);
+      if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
         }
-        rx_cq_cntr += ret;
+        rx_cq_cntr += cq_read;
         // we've reached max
         if (rx_cq_cntr >= max) {
           break;
         }
-      } else if (ret < 0 && ret != -FI_EAGAIN) {
+      } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
+        ret = cq_read;
         break;
       } else if (min <= rx_cq_cntr && ret == -FI_EAGAIN) {
         // we have read enough to return
