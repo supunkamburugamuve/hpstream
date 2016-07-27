@@ -54,12 +54,15 @@ int exchange2() {
 //  } else {
 //    printf("synced\n");
 //  }
+
   for (int i = 0; i < 1000; i++) {
     values[i] = 1000 - i;
   }
   con->SetupBuffers();
-  con->WriteData((uint8_t *)values, sizeof(values));
-  con->WriteBuffers();
+  for (int i = 0; i < 10; i++) {
+    con->WriteData((uint8_t *) values, sizeof(values));
+    con->WriteBuffers();
+  }
 
   printf("Done rma\n");
 //  ret = con->ClientSync();
