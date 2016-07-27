@@ -68,6 +68,7 @@ int exchange2() {
       HPS_INFO("read amount %d", current_read);
       read += current_read;
     }
+    read = 0;
     for (int j = 0; j < 1000; j++) {
       printf("%d ", values[j]);
     }
