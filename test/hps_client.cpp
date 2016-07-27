@@ -106,6 +106,6 @@ int main(int argc, char **argv) {
   hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
 
   connect();
-  exchange();
+  exchange2();
   return 0;
 }
