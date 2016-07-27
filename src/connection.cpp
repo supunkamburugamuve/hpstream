@@ -630,7 +630,7 @@ ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
 ssize_t Connection::RX(size_t size) {
   ssize_t ret;
   printf("Waiting rx %ld with size %ld\n", rx_seq, size);
-  ret = GetRXComp(rx_seq);
+  ret = GetRXComp(rx_cq_cntr + 1);
   if (ret)
     return ret;
 
