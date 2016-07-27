@@ -944,6 +944,7 @@ int Connection::Receive() {
   // ok a receive is completed
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
+  HPS_INFO("Data head, tail and head at %ld %ld %ld", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
   data_head = (uint32_t) (rx_cq_cntr % buffers);
   sbuf->SetDataHead(data_head);
   return 0;
