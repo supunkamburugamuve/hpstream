@@ -63,11 +63,13 @@ int exchange2() {
       values[j] = 0;
     }
     read = 0;
-    while (read < 1000) {
+    int count = 0;
+    while (read < 1000 && count < 10) {
       con->Receive();
       con->ReadData((uint8_t *) values + read, sizeof(values) - read, &current_read);
       HPS_INFO("read amount %d", current_read);
       read += current_read;
+      count++;
     }
     for (int j = 0; j < 1000; j++) {
       printf("%d ", values[j]);
