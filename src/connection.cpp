@@ -980,6 +980,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       current_read_indx += can_copy;
     }
     // next copy the buffer
+    HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
     memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
     read_size += can_copy;
