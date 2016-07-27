@@ -58,7 +58,7 @@ int exchange2() {
   con->SetupBuffers();
   uint32_t read = 0;
   uint32_t current_read = 0;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     for (int j = 0; j < 1000; j++) {
       values[j] = 0;
     }
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
   int ret = 0;
   options.rma_op = HPS_RMA_WRITE;
   options.buf_size = 1024 * 1024 * 40;
-  options.no_buffers = 10;
+  options.no_buffers = 4;
   hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {

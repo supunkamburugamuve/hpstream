@@ -59,7 +59,7 @@ int exchange2() {
     values[i] = 1000 - i;
   }
   con->SetupBuffers();
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     con->WriteData((uint8_t *) values, sizeof(values));
     con->WriteBuffers();
   }
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
   int ret = 0;
   options.rma_op = HPS_RMA_WRITE;
   options.buf_size = 1024 * 1024 * 40;
-  options.no_buffers = 10;
+  options.no_buffers = 4;
   hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
