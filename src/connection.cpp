@@ -985,6 +985,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // now update
     read_size += can_copy;
   }
+
   *read = read_size;
   return 0;
 }

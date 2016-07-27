@@ -37,6 +37,7 @@ public:
   void SetHead(uint32_t head);
   void SetTail(uint32_t tail);
   uint32_t CurrentReadIndex();
+  void SetCurrentReadIndex(uint32_t indx);
 
   /** Free the buffer */
   void Free();

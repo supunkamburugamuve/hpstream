@@ -16,6 +16,7 @@ Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->tail = 0;
   this->data_head = 0;
   this->content_sizes = NULL;
+  this->current_read_index = 0;
   this->buffers = NULL; // do error handling
   Init();
 }
@@ -62,6 +63,10 @@ void Buffer::SetTail(uint32_t tail) {
 
 uint32_t Buffer::CurrentReadIndex() {
   return this->current_read_index;
+}
+
+void Buffer::SetCurrentReadIndex(uint32_t indx) {
+  this->current_read_index = indx;
 }
 
 int Buffer::Init() {
