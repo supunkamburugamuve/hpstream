@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdio>
 #include <iostream>
+#include <cinttypes>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
@@ -935,7 +936,7 @@ int Connection::Receive() {
   Buffer *sbuf = this->recv_buf;
   uint32_t data_head;
   uint32_t buffers = sbuf->NoOfBuffers();
-  HPS_INFO("1 Data head, tail and head at %ld %ld %ld", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
+  HPS_INFO("1 Data head, tail and head at %" PRIu32 "%" PRIu32 "%" PRIu32 "", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
   // now wait until a receive is completed
   HPS_INFO("Receive with %ld %ld", rx_cq_cntr + 1, rx_seq);
   ret = ReceiveCompletions(rx_cq_cntr + 1, rx_seq);
