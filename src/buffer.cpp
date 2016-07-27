@@ -97,7 +97,7 @@ bool Buffer::IncrementHead() {
 
 bool Buffer::IncrementTail() {
   if (this->head != this->tail) {
-    this->tail = this->tail != 0 ? this->tail + 1 : this->no_bufs -1;
+    this->tail = this->tail != this->no_bufs - 1 ? this->tail + 1 : 0;
     return true;
   } else {
     return false;
