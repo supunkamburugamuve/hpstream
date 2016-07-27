@@ -388,6 +388,25 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   return 0;
 }
 
+int Connection::SetupBuffers() {
+  this->rx_seq = 0;
+  this->rx_cq_cntr = 0;
+  this->tx_cq_cntr = 0;
+  this->tx_seq = 0;
+  ssize_t ret = 0;
+  Buffer *rBuf = this->recv_buf;
+  uint32_t noBufs = rBuf->NoOfBuffers();
+  for (int i = 0; i < noBufs; i++) {
+    uint8_t *buf = rBuf->GetBuffer(i);
+    ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
+    if (ret) {
+      HPS_ERR("PostRX %d", ret);
+      return (int) ret;
+    }
+  }
+  return 0;
+}
+
 /*
  * fi_cq_err_entry can be cast to any CQ entry format.
  */

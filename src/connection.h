@@ -49,6 +49,7 @@ public:
   ssize_t PostRMA(enum hps_rma_opcodes op, size_t size);
   ssize_t PostRMA(enum hps_rma_opcodes op, size_t size, void *buf);
   ssize_t RMA(enum hps_rma_opcodes op, size_t size);
+  int SetupBuffers();
 
   ssize_t TX(size_t size);
   ssize_t RX(size_t size);

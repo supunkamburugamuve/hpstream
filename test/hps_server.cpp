@@ -54,7 +54,8 @@ int exchange2() {
   } else {
     printf("synced\n");
   }
-
+  // this should be moved to connection
+  con->SetupBuffers();
   uint32_t read = 0;
   uint32_t current_read = 0;
   while (read < 1000) {

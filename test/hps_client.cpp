@@ -57,7 +57,7 @@ int exchange2() {
   for (int i = 0; i < 1000; i++) {
     values[i] = i;
   }
-
+  con->SetupBuffers();
   con->WriteData((uint8_t *)values, sizeof(values));
 
   printf("Done rma\n");
