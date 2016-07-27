@@ -1012,6 +1012,7 @@ int Connection::WriteBuffers() {
 
 int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
+  HPS_ERR("Start writing");
   // first lets get the available buffer
   Buffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -1026,6 +1027,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
     uint64_t free_space = sbuf->GetFreeSpace();
     // we have space in the buffers
     if (free_space > 0) {
+      HPS_ERR("Free space %d", free_space);
       head = sbuf->Head();
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
@@ -1045,6 +1047,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         }
       }
     } else {
+      HPS_ERR("Wait for free space %d", free_space);
       // we should wait for at least one completion
       ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
       if (ret) {
