@@ -28,8 +28,7 @@ int exchange() {
     printf("synced\n");
   }
   for (int i = 0; i < 10000; i++) {
-    options.transfer_size = test_size[0].size;
-    if (con->RMA(options.rma_op, options.transfer_size)) {
+    if (con->RMA(options.rma_op, test_size[0].size)) {
       printf("Failed to RMA \n");
     }
   }
@@ -45,10 +44,45 @@ int exchange() {
   return 0;
 }
 
+int exchange2() {
+  int ret;
+  int values[1000];
+
+  ret = con->ServerSync();
+  if (ret) {
+    printf("Failed to sync\n");
+  } else {
+    printf("synced\n");
+  }
+
+  uint32_t read = 0;
+  uint32_t current_read = 0;
+  while (read < 1000) {
+    con->receive();
+    con->ReadData((uint8_t *)values + read, sizeof(values) - read, &current_read);
+    read += current_read;
+  }
+
+  for (int i = 0; i < 1000; i++) {
+    printf("%d ", values[i]);
+  }
+  printf("\n");
+
+  printf("Done rma\n");
+  ret = con->ServerSync();
+  if (ret) {
+    printf("Failed second sync");
+  }
+  ret = con->Finalize();
+  if (ret) {
+    printf("Failed Finalize");
+  }
+  return 0;
+}
+
 int main(int argc, char **argv) {
   int op;
   int ret = 0;
-  options.transfer_size = 100;
   options.rma_op = HPS_RMA_WRITE;
   options.buf_size = 1024 * 1024 * 20;
   options.no_buffers = 10;

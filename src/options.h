@@ -13,7 +13,6 @@ public:
   char *dst_addr;
   char *fname;
   char *av_name;
-  size_t transfer_size;
   int options;
   hps_rma_opcodes rma_op;
 

@@ -13,7 +13,6 @@ Options::Options() {
   this->options = HPS_OPT_RX_CQ | HPS_OPT_TX_CQ;
   this->rma_op = HPS_RMA_WRITE;
   this->comp_method = HPS_COMP_SPIN;
-  this->transfer_size = 0;
   this->fname = NULL;
   this->buf_size = 0;
   this->no_buffers = 4;

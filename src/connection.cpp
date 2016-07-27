@@ -627,18 +627,18 @@ ssize_t Connection::PostRMA(enum hps_rma_opcodes op, size_t size) {
   switch (op) {
     case HPS_RMA_WRITE:
       HPS_POST(fi_write, GetTXComp, tx_seq, "fi_write", ep, tx_buf,
-              options->transfer_size, fi_mr_desc(mr), remote_fi_addr,
+              size, fi_mr_desc(mr), remote_fi_addr,
               remote->addr, remote->key, ep);
       break;
     case HPS_RMA_WRITEDATA:
       HPS_POST(fi_writedata, GetTXComp, tx_seq, "fi_writedata", ep,
-              tx_buf, options->transfer_size, fi_mr_desc(mr),
+              tx_buf, size, fi_mr_desc(mr),
               remote_cq_data,	remote_fi_addr,	remote->addr,
               remote->key, ep);
       break;
     case HPS_RMA_READ:
       HPS_POST(fi_read, GetTXComp, tx_seq, "fi_read", ep, rx_buf,
-              options->transfer_size, fi_mr_desc(mr), remote_fi_addr,
+              size, fi_mr_desc(mr), remote_fi_addr,
               remote->addr, remote->key, ep);
       break;
     default:
