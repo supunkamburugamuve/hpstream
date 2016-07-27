@@ -58,7 +58,7 @@ int exchange2() {
   con->SetupBuffers();
   uint32_t read = 0;
   uint32_t current_read = 0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 1000; j++) {
       values[j] = 0;
     }
