@@ -951,7 +951,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   }
 
   uint32_t tail = rbuf->Tail();
-  uint32_t head = rbuf->Head();
+  uint32_t head = rbuf->DataHead();
   uint32_t current_read_indx = rbuf->CurrentReadIndex();
   // need to copy
   uint32_t need_copy = 0;
@@ -984,6 +984,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // now update
     read_size += can_copy;
   }
+  *read = read_size;
   return 0;
 }
 
