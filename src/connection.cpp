@@ -396,7 +396,7 @@ int Connection::SetupBuffers() {
   ssize_t ret = 0;
   Buffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->NoOfBuffers();
-  HPS_INFO("No of buffers %d", noBufs);
+  HPS_INFO("Head, tail, datahead %ld %ld %ld", rBuf->Head(), rBuf->Tail(), rBuf->DataHead());
   for (uint32_t i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
@@ -954,10 +954,7 @@ int Connection::Receive() {
 
 bool Connection::DataAvailableForRead() {
   Buffer *sbuf = this->recv_buf;
-  if (sbuf->DataHead() != sbuf->Tail()) {
-    return true;
-  }
-  return false;
+  return sbuf->DataHead() != sbuf->Tail();
 }
 
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
