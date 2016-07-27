@@ -987,6 +987,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // now lets see how much we can copy
     uint32_t can_copy = 0;
     uint32_t tmp_index = current_read_indx;
+    HPS_INFO("Copy size=%lu read_size=%lu need_copy=%lu", size, read_size, need_copy);
     // we can copy everything from this buffer
     if (size - read_size > need_copy) {
       HPS_INFO("Moving tail");
