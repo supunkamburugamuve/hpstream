@@ -826,21 +826,25 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
       clock_gettime(CLOCK_MONOTONIC, &a);
     }
 
+    HPS_INFO("CQ_Read for txcq tx_seq=%ld tx_cntr=%ld", tx_seq, tx_cq_cntr);
     while (tx_cq_cntr < max) {
       cq_read = fi_cq_read(txcq, &comp, 1);
-      HPS_INFO("CQ_Read for txcq read=%ld tx_seq=%ld tx_cntr=%ld", cq_read, tx_seq, tx_cq_cntr);
+
       if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
         }
         tx_cq_cntr += ret;
         if (tx_cq_cntr >= max) {
+          HPS_INFO("Done completion %ld", rx_cq_cntr);
           break;
         }
       } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
+        HPS_INFO("Failed %ld %ld", rx_cq_cntr, cq_read);
         return (int) cq_read;
       } else if (min <= tx_cq_cntr && cq_read == -FI_EAGAIN) {
         // we have read enough to return
+        HPS_INFO("Done completion %ld", rx_cq_cntr);
         break;
       } else if (timeout >= 0) {
         clock_gettime(CLOCK_MONOTONIC, &b);
@@ -878,9 +882,9 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
       clock_gettime(CLOCK_MONOTONIC, &a);
     }
 
+    HPS_INFO("CQ_Read for rxcq rx_seq=%ld rx_cntr=%ld", rx_seq, rx_cq_cntr);
     while (rx_cq_cntr < max	) {
       cq_read = fi_cq_read(rxcq, &comp, 1);
-      HPS_INFO("CQ_Read for txcq read=%ld tx_seq=%ld tx_cntr=%ld", cq_read, rx_seq, rx_cq_cntr);
       if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
@@ -888,13 +892,16 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
         rx_cq_cntr += cq_read;
         // we've reached max
         if (rx_cq_cntr >= max) {
+          HPS_INFO("Done completion %ld", rx_cq_cntr);
           break;
         }
       } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
         ret = cq_read;
+        HPS_INFO("Failed %ld %ld", rx_cq_cntr, cq_read);
         break;
       } else if (min <= rx_cq_cntr && cq_read == -FI_EAGAIN) {
         // we have read enough to return
+        HPS_INFO("Done looping %ld %ld", rx_cq_cntr, cq_read);
         break;
       } else if (timeout >= 0) {
         clock_gettime(CLOCK_MONOTONIC, &b);
@@ -915,29 +922,6 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
       }
     }
     return 0;
-  } else if (rxcntr) { // we re using the counter
-    while (1) {
-      read = fi_cntr_read(rxcntr);
-      if (read < min) {
-        ret = fi_cntr_wait(rxcntr, min, timeout);
-        rx_cq_cntr = read;
-        if (ret) {
-          HPS_ERR("fi_cntr_wait %ld", ret);
-          break;
-        } else {
-          // we read up to min
-          rx_cq_cntr = min;
-        }
-      } else {
-        // we read something
-        if (read > rx_cq_cntr) {
-          rx_cq_cntr = read;
-        } else {
-          // nothing new is read, so break
-          break;
-        }
-      }
-    }
   } else {
     HPS_ERR("Trying to get a RX completion when no RX CQ or counter were opened");
     ret = -FI_EOTHER;
