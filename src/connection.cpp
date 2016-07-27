@@ -838,7 +838,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
         }
       } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
         return (int) cq_read;
-      } else if (min <= tx_cq_cntr && ret == -FI_EAGAIN) {
+      } else if (min <= tx_cq_cntr && cq_read == -FI_EAGAIN) {
         // we have read enough to return
         break;
       } else if (timeout >= 0) {
@@ -891,7 +891,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
       } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
         ret = cq_read;
         break;
-      } else if (min <= rx_cq_cntr && ret == -FI_EAGAIN) {
+      } else if (min <= rx_cq_cntr && cq_read == -FI_EAGAIN) {
         // we have read enough to return
         break;
       } else if (timeout >= 0) {
