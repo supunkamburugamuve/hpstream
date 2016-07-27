@@ -55,7 +55,7 @@ int exchange2() {
     printf("synced\n");
   }
   for (int i = 0; i < 1000; i++) {
-    values[i] = i;
+    values[i] = 1000 - i;
   }
   con->SetupBuffers();
   con->WriteData((uint8_t *)values, sizeof(values));
