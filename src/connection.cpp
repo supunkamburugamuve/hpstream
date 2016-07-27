@@ -828,6 +828,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
 
     while (tx_cq_cntr < max) {
       cq_read = fi_cq_read(txcq, &comp, 1);
+      HPS_INFO("CQ_Read for txcq %ld", cq_read);
       if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
@@ -1023,7 +1024,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
 int Connection::WriteBuffers() {
   int ret;
-  Buffer *sbuf = this->recv_buf;
+  Buffer *sbuf = this->send_buf;
   uint32_t data_head;
   uint32_t buffers = sbuf->NoOfBuffers();
   // now wait until a receive is completed
@@ -1036,7 +1037,7 @@ int Connection::WriteBuffers() {
   // ok a receive is completed
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
-  data_head = (uint32_t) (rx_cq_cntr % buffers);
+  data_head = (uint32_t) (tx_cq_cntr % buffers);
   sbuf->SetTail(data_head);
   return 0;
 }
