@@ -396,6 +396,7 @@ int Connection::SetupBuffers() {
   ssize_t ret = 0;
   Buffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->NoOfBuffers();
+  HPS_INFO("No of buffers %d", noBufs);
   for (int i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
