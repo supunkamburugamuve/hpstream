@@ -949,6 +949,7 @@ int Connection::Receive() {
   uint32_t data_head;
   uint32_t buffers = sbuf->NoOfBuffers();
   // now wait until a receive is completed
+  HPS_INFO("Receive with %ld %ld", rx_cq_cntr + 1, rx_seq);
   ret = ReceiveCompletions(rx_cq_cntr + 1, rx_seq);
   if (ret < 0) {
     HPS_ERR("Failed to retrieve");
