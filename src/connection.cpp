@@ -989,6 +989,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     uint32_t tmp_index = current_read_indx;
     // we can copy everything from this buffer
     if (size - read_size > need_copy) {
+      HPS_INFO("Moving tail");
       can_copy = need_copy;
       current_read_indx = 0;
       // advance the tail pointer
@@ -1000,6 +1001,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
         return (int) ret;
       }
     } else {
+      HPS_INFO("Not Moving tail");
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
       current_read_indx += can_copy;
