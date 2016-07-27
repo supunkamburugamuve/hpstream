@@ -397,15 +397,16 @@ int Connection::SetupBuffers() {
   Buffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->NoOfBuffers();
   HPS_INFO("No of buffers %d", noBufs);
-  for (int i = 0; i < noBufs; i++) {
+  for (uint32_t i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
     if (ret) {
       HPS_ERR("PostRX %d", ret);
       return (int) ret;
     }
-    rBuf->SetHead((uint32_t) i);
+    rBuf->SetHead(i);
   }
+  HPS_INFO("Head, tail, datahead %ld %ld %ld", rBuf->Head(), rBuf->Tail(), rBuf->DataHead());
   return 0;
 }
 
