@@ -79,11 +79,6 @@ int exchange2() {
     printf("\n");
   }
 
-  for (int i = 0; i < 1000; i++) {
-    printf("%d ", values[i]);
-  }
-  printf("\n");
-
   printf("Done rma\n");
 //  ret = con->ServerSync();
 //  if (ret) {
