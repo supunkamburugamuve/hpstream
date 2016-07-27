@@ -65,6 +65,8 @@ public:
 
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 
+  bool DataAvailableForRead();
+
   /** Get the receive buffer */
   Buffer *ReceiveBuffer();
   /** GEt the send buffer */

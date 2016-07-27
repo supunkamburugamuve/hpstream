@@ -951,6 +951,14 @@ int Connection::Receive() {
   return 0;
 }
 
+bool Connection::DataAvailableForRead() {
+  Buffer *sbuf = this->recv_buf;
+  if (sbuf->DataHead() != sbuf->Tail()) {
+    return true;
+  }
+  return false;
+}
+
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   // go through the buffers
