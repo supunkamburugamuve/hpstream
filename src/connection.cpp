@@ -1061,7 +1061,9 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
-      memcpy(current_buf, &current_size, sizeof(uint32_t));
+      //memcpy(current_buf, &current_size, sizeof(uint32_t));
+      uint32_t *length = (uint32_t *)current_buf;
+      *length = current_size;
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       // send the current buffer
       if (!PostTX(current_size, current_buf, &this->tx_ctx)) {
