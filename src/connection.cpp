@@ -978,6 +978,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t need_copy = 0;
   // number of bytes copied
   uint32_t read_size = 0;
+  HPS_INFO("Reading, tail= %d, head= %d", tail, head);
   while (read_size < size &&  tail != head) {
     uint8_t *b = rbuf->GetBuffer(tail);
     uint32_t *r;
@@ -1009,6 +1010,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
     memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
+    HPS_INFO("Reading, tail= %d, head= %d", tail, head);
     read_size += can_copy;
   }
 
