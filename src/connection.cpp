@@ -936,7 +936,7 @@ int Connection::Receive() {
   Buffer *sbuf = this->recv_buf;
   uint32_t data_head;
   uint32_t buffers = sbuf->NoOfBuffers();
-  HPS_INFO("1 Data head, tail and head at %" PRIu32 "%" PRIu32 "%" PRIu32 "", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
+  HPS_INFO("1 Data head, tail and head at %" PRIu32 " %" PRIu32 " %" PRIu32 "", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
   // now wait until a receive is completed
   HPS_INFO("Receive with %ld %ld", rx_cq_cntr + 1, rx_seq);
   ret = ReceiveCompletions(rx_cq_cntr + 1, rx_seq);
@@ -947,7 +947,7 @@ int Connection::Receive() {
   // ok a receive is completed
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
-  HPS_INFO("2 Data head, tail and head at %ld %ld %ld", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
+  HPS_INFO("1 Data head, tail and head at %" PRIu32 " %" PRIu32 " %" PRIu32 "", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
   data_head = (uint32_t) (rx_cq_cntr % buffers);
   sbuf->SetDataHead(data_head);
   return 0;
