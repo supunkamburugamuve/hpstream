@@ -795,6 +795,7 @@ int Connection::ServerSync() {
 
 int Connection::SendCompletions(uint64_t min, uint64_t max) {
   ssize_t ret = 0;
+  ssize_t cq_read = 0;
   struct fi_cq_err_entry comp;
   struct timespec a, b;
 
@@ -804,8 +805,8 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
     }
 
     while (tx_cq_cntr < max) {
-      ret = fi_cq_read(txcq, &comp, 1);
-      if (ret > 0) {
+      cq_read = fi_cq_read(txcq, &comp, 1);
+      if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
         }
@@ -813,8 +814,8 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
         if (tx_cq_cntr >= max) {
           break;
         }
-      } else if (ret < 0 && ret != -FI_EAGAIN) {
-        return (int) ret;
+      } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
+        return (int) cq_read;
       } else if (min <= tx_cq_cntr && ret == -FI_EAGAIN) {
         // we have read enough to return
         break;
