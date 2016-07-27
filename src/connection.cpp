@@ -834,7 +834,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
         }
-        tx_cq_cntr += ret;
+        tx_cq_cntr += cq_read;
         if (tx_cq_cntr >= max) {
           HPS_INFO("Done completion %ld", rx_cq_cntr);
           break;
