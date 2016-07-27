@@ -58,9 +58,7 @@ int exchange2() {
     values[i] = i;
   }
 
-  for (int i = 0; i < 10000; i++) {
-    con->WriteData((uint8_t *)values, sizeof(values));
-  }
+  con->WriteData((uint8_t *)values, sizeof(values));
 
   printf("Done rma\n");
   ret = con->ClientSync();

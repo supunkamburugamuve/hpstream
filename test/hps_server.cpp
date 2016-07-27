@@ -58,7 +58,7 @@ int exchange2() {
   uint32_t read = 0;
   uint32_t current_read = 0;
   while (read < 1000) {
-    con->receive();
+    con->Receive();
     con->ReadData((uint8_t *)values + read, sizeof(values) - read, &current_read);
     read += current_read;
   }

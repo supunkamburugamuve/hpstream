@@ -921,7 +921,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
   return (int) ret;
 }
 
-int Connection::receive() {
+int Connection::Receive() {
   int ret;
   Buffer *sbuf = this->recv_buf;
   uint32_t data_head;

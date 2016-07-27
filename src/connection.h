@@ -71,7 +71,7 @@ public:
   /**
    * Receive content in to the buffer.
    */
-  int receive();
+  int Receive();
   int Finalize(void);
 private:
   // options for initialization
