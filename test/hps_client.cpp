@@ -48,12 +48,12 @@ int exchange() {
 int exchange2() {
   int ret;
   int values[1000];
-  ret = con->ClientSync();
-  if (ret) {
-    printf("Failed to sync\n");
-  } else {
-    printf("synced\n");
-  }
+//  ret = con->ClientSync();
+//  if (ret) {
+//    printf("Failed to sync\n");
+//  } else {
+//    printf("synced\n");
+//  }
   for (int i = 0; i < 1000; i++) {
     values[i] = 1000 - i;
   }
@@ -62,10 +62,10 @@ int exchange2() {
   con->WriteBuffers();
 
   printf("Done rma\n");
-  ret = con->ClientSync();
-  if (ret) {
-    printf("Failed second sync");
-  }
+//  ret = con->ClientSync();
+//  if (ret) {
+//    printf("Failed second sync");
+//  }
 
   ret = con->Finalize();
   if (ret) {

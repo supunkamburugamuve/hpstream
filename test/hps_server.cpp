@@ -48,12 +48,12 @@ int exchange2() {
   int ret;
   int values[1000];
 
-  ret = con->ServerSync();
-  if (ret) {
-    printf("Failed to sync\n");
-  } else {
-    printf("synced\n");
-  }
+  //ret = con->ServerSync();
+//  if (ret) {
+//    printf("Failed to sync\n");
+//  } else {
+//    printf("synced\n");
+//  }
   // this should be moved to connection
   con->SetupBuffers();
   uint32_t read = 0;
@@ -71,10 +71,10 @@ int exchange2() {
   printf("\n");
 
   printf("Done rma\n");
-  ret = con->ServerSync();
-  if (ret) {
-    printf("Failed second sync");
-  }
+//  ret = con->ServerSync();
+//  if (ret) {
+//    printf("Failed second sync");
+//  }
   ret = con->Finalize();
   if (ret) {
     printf("Failed Finalize");
