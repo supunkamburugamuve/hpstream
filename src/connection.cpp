@@ -403,6 +403,7 @@ int Connection::SetupBuffers() {
       HPS_ERR("PostRX %d", ret);
       return (int) ret;
     }
+    rBuf->SetHead((uint32_t) i);
   }
   return 0;
 }
