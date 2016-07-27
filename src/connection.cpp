@@ -828,7 +828,7 @@ int Connection::SendCompletions(uint64_t min, uint64_t max) {
 
     while (tx_cq_cntr < max) {
       cq_read = fi_cq_read(txcq, &comp, 1);
-      HPS_INFO("CQ_Read for txcq %ld", cq_read);
+      HPS_INFO("CQ_Read for txcq read=%ld tx_seq=%ld tx_cntr=%ld", cq_read, tx_seq, tx_cq_cntr);
       if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
@@ -880,6 +880,7 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
 
     while (rx_cq_cntr < max	) {
       cq_read = fi_cq_read(rxcq, &comp, 1);
+      HPS_INFO("CQ_Read for txcq read=%ld tx_seq=%ld tx_cntr=%ld", cq_read, rx_seq, rx_cq_cntr);
       if (cq_read > 0) {
         if (timeout >= 0) {
           clock_gettime(CLOCK_MONOTONIC, &a);
