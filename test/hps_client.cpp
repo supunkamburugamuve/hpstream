@@ -59,6 +59,7 @@ int exchange2() {
   }
   con->SetupBuffers();
   con->WriteData((uint8_t *)values, sizeof(values));
+  con->WriteBuffers();
 
   printf("Done rma\n");
   ret = con->ClientSync();

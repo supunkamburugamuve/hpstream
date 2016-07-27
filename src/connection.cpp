@@ -1022,25 +1022,22 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 }
 
 int Connection::WriteBuffers() {
-  ssize_t ret = 0;
-  uint32_t i = 0;
-  uint32_t size = 0;
-
-  Buffer *sbuf = this->send_buf;
-  // now go through the buffers
-  uint32_t head = sbuf->Head();
-  uint32_t data_head = sbuf->DataHead();
-  // send the content in the buffers
-  for (i = head; i < data_head; i++) {
-    void *buf = sbuf->GetBuffer(i);
-    size = sbuf->ContentSize(i);
-    ret = PostRMA(HPS_RMA_WRITE, size, buf);
-    if (ret) {
-      return 1;
-    }
-    // now increment the buffer
-    sbuf->IncrementHead();
+  int ret;
+  Buffer *sbuf = this->recv_buf;
+  uint32_t data_head;
+  uint32_t buffers = sbuf->NoOfBuffers();
+  // now wait until a receive is completed
+  HPS_INFO("Write with %ld %ld", tx_cq_cntr + 1, tx_seq);
+  ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
+  if (ret < 0) {
+    HPS_ERR("Failed to send complete");
+    return 1;
   }
+  // ok a receive is completed
+  // mark the buffers with the data
+  // now update the buffer according to the rx_cq_cntr and rx_cq
+  data_head = (uint32_t) (rx_cq_cntr % buffers);
+  sbuf->SetTail(data_head);
   return 0;
 }
 
