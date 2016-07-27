@@ -622,6 +622,7 @@ ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
     HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
              MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
              fi_mr_desc(mr),	0, ctx);
+    HPS_INFO("Finished posting buffer with size %ld", size);
   }
   return 0;
 }
