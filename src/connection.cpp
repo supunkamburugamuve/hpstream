@@ -947,9 +947,9 @@ int Connection::Receive() {
   // ok a receive is completed
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
-  HPS_INFO("1 Data head, tail and head at %" PRIu32 " %" PRIu32 " %" PRIu32 "", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
   data_head = (uint32_t) (rx_cq_cntr % buffers);
   sbuf->SetDataHead(data_head);
+  HPS_INFO("2 Data head, tail and head at dataHead=%" PRIu32 " tail=%" PRIu32 " head=%" PRIu32 " rx_cq_cntr=%" PRId64, sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
   return 0;
 }
 
