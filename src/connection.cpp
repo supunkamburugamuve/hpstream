@@ -1000,6 +1000,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       if (ret) {
         return (int) ret;
       }
+      rbuf->IncrementHead();
     } else {
       HPS_INFO("Not Moving tail");
       // we cannot copy everything from this buffer
