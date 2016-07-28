@@ -1064,7 +1064,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       //memcpy(current_buf, &current_size, sizeof(uint32_t));
       uint32_t *length = (uint32_t *)current_buf;
       *length = current_size;
-      HPS_INFO("Sending length %" PRIu32, *length);
+      HPS_INFO("Sending length %" PRIu32, *((uint32_t *)current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       // send the current buffer
       if (!PostTX(current_size, current_buf, &this->tx_ctx)) {
