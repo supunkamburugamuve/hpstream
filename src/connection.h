@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <unistd.h>
 #include <stdio.h>
-//#include <stdint-gcc.h>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
@@ -75,7 +74,6 @@ public:
    * Receive content in to the buffer.
    */
   int Receive();
-  int Finalize(void);
 private:
   // options for initialization
   Options *options;

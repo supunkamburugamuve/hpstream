@@ -1062,9 +1062,10 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
       //memcpy(current_buf, &current_size, sizeof(uint32_t));
-      uint32_t *length = (uint32_t *)current_buf;
+      uint32_t *length = (uint32_t *) current_buf;
       *length = current_size;
-      HPS_INFO("Sending length %" PRIu32, *((uint32_t *)current_buf));
+      HPS_INFO("Sending length %"
+                   PRIu32, *((uint32_t *) current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       // send the current buffer
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
@@ -1090,59 +1091,6 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       sbuf->IncrementTail();
     }
   }
-  return 0;
-}
-
-
-int Connection::Finalize(void) {
-  /*struct iovec iov;
-  int ret;
-  struct fi_context ctx;
-  void *desc = fi_mr_desc(mr);
-
-  strcpy(tx_buf + hps_utils_tx_prefix_size(info), "fin");
-  iov.iov_base = tx_buf;
-  iov.iov_len = 4 + hps_utils_tx_prefix_size(info);
-
-  if (info_hints->caps & FI_TAGGED) {
-    struct fi_msg_tagged tmsg;
-
-    memset(&tmsg, 0, sizeof tmsg);
-    tmsg.msg_iov = &iov;
-    tmsg.desc = &desc;
-    tmsg.iov_count = 1;
-    tmsg.addr = remote_fi_addr;
-    tmsg.tag = tx_seq;
-    tmsg.ignore = 0;
-    tmsg.context = &ctx;
-
-    ret = fi_tsendmsg(ep, &tmsg, FI_INJECT | FI_TRANSMIT_COMPLETE);
-  } else {
-    struct fi_msg msg;
-
-    memset(&msg, 0, sizeof msg);
-    msg.msg_iov = &iov;
-    msg.desc = &desc;
-    msg.iov_count = 1;
-    msg.addr = remote_fi_addr;
-    msg.context = &ctx;
-
-    ret = fi_sendmsg(ep, &msg, FI_INJECT | FI_TRANSMIT_COMPLETE);
-  }
-  if (ret) {
-    printf("transmit %d\n", ret);
-    return ret;
-  }
-
-
-  ret = GetTXComp(++tx_seq);
-  if (ret)
-    return ret;
-
-  ret = GetRXComp(rx_seq);
-  if (ret)
-    return ret;
-  */
   return 0;
 }
 

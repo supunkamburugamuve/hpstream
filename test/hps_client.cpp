@@ -37,23 +37,12 @@ int exchange() {
   if (ret) {
     printf("Failed second sync");
   }
-
-  ret = con->Finalize();
-  if (ret) {
-    printf("Failed Finalize");
-  }
   return ret;
 }
 
 int exchange2() {
   int ret;
   int values[10][1000];
-//  ret = con->ClientSync();
-//  if (ret) {
-//    printf("Failed to sync\n");
-//  } else {
-//    printf("synced\n");
-//  }
 
   for (int j = 0; j < 10; j++) {
     for (int i = 0; i < 1000; i++) {
@@ -72,15 +61,6 @@ int exchange2() {
   }
 
   printf("Done rma\n");
-//  ret = con->ClientSync();
-//  if (ret) {
-//    printf("Failed second sync");
-//  }
-
-  ret = con->Finalize();
-  if (ret) {
-    printf("Failed Finalize");
-  }
   return ret;
 }
 

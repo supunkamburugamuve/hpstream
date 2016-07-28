@@ -37,10 +37,6 @@ int exchange() {
   if (ret) {
     printf("Failed second sync");
   }
-  ret = con->Finalize();
-  if (ret) {
-    printf("Failed Finalize");
-  }
   return 0;
 }
 
@@ -80,14 +76,6 @@ int exchange2() {
   }
 
   printf("Done rma\n");
-//  ret = con->ServerSync();
-//  if (ret) {
-//    printf("Failed second sync");
-//  }
-  ret = con->Finalize();
-  if (ret) {
-    printf("Failed Finalize");
-  }
   return 0;
 }
 
