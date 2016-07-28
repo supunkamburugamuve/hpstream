@@ -407,7 +407,7 @@ int Connection::SetupBuffers() {
     }
     rBuf->SetHead(i);
   }
-  HPS_INFO("Head, tail, datahead %ld %ld %ld", rBuf->Head(), rBuf->Tail(), rBuf->DataHead());
+  HPS_INFO("Head, tail, datahead %ld %ld %ld, %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Tail(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
   return 0;
 }
 
