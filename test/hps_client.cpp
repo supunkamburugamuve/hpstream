@@ -47,7 +47,7 @@ int exchange() {
 
 int exchange2() {
   int ret;
-  int values[1000];
+  int values[10][1000];
 //  ret = con->ClientSync();
 //  if (ret) {
 //    printf("Failed to sync\n");
@@ -55,12 +55,19 @@ int exchange2() {
 //    printf("synced\n");
 //  }
 
-  for (int i = 0; i < 1000; i++) {
-    values[i] = 1000 - i;
+  for (int j = 0; j < 10; j++) {
+    for (int i = 0; i < 1000; i++) {
+      if (j % 2 == 0) {
+        values[j][i] = 1000 - i;
+      } else {
+        values[j][i] = i;
+      }
+    }
   }
+
   con->SetupBuffers();
   for (int i = 0; i < 10; i++) {
-    con->WriteData((uint8_t *) values, sizeof(values));
+    con->WriteData((uint8_t *) values[i], sizeof(values));
     con->WriteBuffers();
   }
 
