@@ -64,7 +64,7 @@ int exchange2() {
     }
     read = 0;
     int count = 0;
-    while (read < 1000 && count < 10) {
+    while (read < 1000 && count < 100) {
       if (!con->DataAvailableForRead()) {
         con->Receive();
       }
