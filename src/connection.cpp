@@ -1067,7 +1067,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       HPS_INFO("Sending length %" PRIu32, *((uint32_t *)current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       // send the current buffer
-      if (!PostTX(current_size, current_buf, &this->tx_ctx)) {
+      if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
         // increment the head
         sbuf->IncrementHead();
