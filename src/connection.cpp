@@ -989,7 +989,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     uint32_t tmp_index = current_read_indx;
     HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, r, current_read_indx);
     // we can copy everything from this buffer
-    if (size - read_size > need_copy) {
+    if (size - read_size >= need_copy) {
       HPS_INFO("Moving tail");
       can_copy = need_copy;
       current_read_indx = 0;
