@@ -67,7 +67,7 @@ int exchange2() {
 
   con->SetupBuffers();
   for (int i = 0; i < 10; i++) {
-    con->WriteData((uint8_t *) values[i], sizeof(values));
+    con->WriteData((uint8_t *) values[i], sizeof(values[i]));
     con->WriteBuffers();
   }
 
