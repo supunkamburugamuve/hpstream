@@ -381,10 +381,10 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   }
   if (this->info->rx_attr->op_flags != FI_MULTI_RECV) {
     /* Initial receive will get remote address for unconnected EPs */
-    if (PostRX(MAX(rx_size, HPS_MAX_CTRL_MSG), &rx_ctx)) {
-      HPS_ERR("PostRX %d", ret);
-      return ret;
-    }
+//    if (PostRX(MAX(rx_size, HPS_MAX_CTRL_MSG), &rx_ctx)) {
+//      HPS_ERR("PostRX %d", ret);
+//      return ret;
+//    }
   }
   return 0;
 }
