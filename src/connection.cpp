@@ -877,7 +877,6 @@ int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
   ssize_t cq_read = 0;
   struct fi_cq_err_entry comp;
   struct timespec a, b;
-  uint64_t read;
   // in case we are using completion queue
   if (rxcq) {
     if (timeout >= 0) {
@@ -947,7 +946,7 @@ int Connection::Receive() {
   // ok a receive is completed
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
-  data_head = (uint32_t) (rx_cq_cntr % buffers);
+  data_head = (uint32_t) ((rx_cq_cntr - 1) % buffers);
   sbuf->SetDataHead(data_head);
   HPS_INFO("2 Data head, tail and head at dataHead=%" PRIu32 " tail=%" PRIu32 " head=%" PRIu32 " rx_cq_cntr=%" PRId64, sbuf->DataHead(), sbuf->Tail(), sbuf->Head(), rx_cq_cntr);
   return 0;
