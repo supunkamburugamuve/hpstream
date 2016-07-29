@@ -104,9 +104,9 @@ private:
 
   struct fid_wait *waitset;
 
-  // receive fd and transmit fd
+  // receive cq fd and transmit cq fd
   int rx_fd, tx_fd;
-
+  // send and receive contexts
   struct fi_context tx_ctx, rx_ctx;
 
   // buffer used for communication
