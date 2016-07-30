@@ -4,6 +4,7 @@
 #include "options.h"
 #include "utils.h"
 #include "connection.h"
+#include "event_loop.h"
 
 class Server {
 public:
@@ -35,6 +36,8 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
+
+  EventLoop *eventLoop;
 };
 
 

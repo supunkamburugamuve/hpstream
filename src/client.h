@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "options.h"
 #include "connection.h"
+#include "event_loop.h"
 
 class Client {
 public:
@@ -27,7 +28,7 @@ private:
   // the connection
   Connection *con;
 
-
+  EventLoop *eventLoop;
 };
 
 #endif /* SCLIENT_H_ */

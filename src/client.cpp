@@ -109,6 +109,9 @@ int Client::Connect(void) {
 //		HPS_ERR("Failed to exchange keys with server");
 //		return ret;
 //	}
+	this->eventLoop = new EventLoop(fabric);
+	this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+	this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
 
 	this->con = con;
 	printf("Connection established\n");

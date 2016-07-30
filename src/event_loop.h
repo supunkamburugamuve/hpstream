@@ -10,17 +10,22 @@
 #include <sys/epoll.h>
 #include <unordered_map>
 
+#include <rdma/fabric.h>
+
 #include "event_loop.h"
+#include "connection.h"
 
 class EventLoop {
 public:
-  EventLoop();
-  int RegisterRead(int fid);
-  int RegisterWrite(int fid);
+  EventLoop(struct fid_fabric *fabric);
+  int RegisterRead(int fid, struct fid *desc, Connection *connection);
   void loop();
 private:
+  bool run;
+  struct fid_fabric *fabric;
   int epfd;
-  std::unordered_map<int,std::string> fds;
+  std::unordered_map<int, Callback *> callbacks;
+  std::unordered_map<int, struct fid *> fids;
 };
 
 #endif

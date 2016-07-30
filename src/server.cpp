@@ -75,13 +75,14 @@ int Server::Start(void) {
     return ret;
   }
 
+  this->eventLoop = new EventLoop(fabric);
+
   // start listen for incoming connections
   ret = fi_listen(this->pep);
   if (ret) {
     HPS_ERR("fi_listen %d", ret);
     return ret;
   }
-
   return 0;
 }
 
@@ -161,11 +162,17 @@ int Server::Connect(void) {
 //    HPS_ERR("Failed to exchange keys with client");
 //    goto err;
 //  }
+  // registe with the loop
+  this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+  this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
 
   printf("Connection established\n");
   this->con = con;
-  return 0;
 
+  // start the loop here for now
+  eventLoop->loop();
+
+  return 0;
   err:
     fi_reject(pep, entry.info->handle, NULL, 0);
     return ret;

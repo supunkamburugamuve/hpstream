@@ -1094,6 +1094,17 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   return 0;
 }
 
+int Connection::Ready(int fd) {
+  if (fd == tx_fd) {
+    WriteBuffers();
+  }
+
+  if (fd == rx_fd) {
+    Receive();
+  }
+  return 0;
+}
+
 
 Connection::~Connection() {
 

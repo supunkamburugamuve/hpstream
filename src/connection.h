@@ -74,6 +74,24 @@ public:
    * Receive content in to the buffer.
    */
   int Receive();
+
+  int Ready(int fd);
+
+  struct fid_cq * GetTxCQ() {
+    return txcq;
+  }
+
+  struct fid_cq * GetRxCQ() {
+    return rxcq;
+  }
+
+  int GetTxFd() {
+    return tx_fd;
+  }
+
+  int GetRxFd() {
+    return rx_fd;
+  }
 private:
   // options for initialization
   Options *options;
@@ -158,7 +176,6 @@ private:
   int SendCompletions(uint64_t min, uint64_t max);
   int AllocMsgs(void);
   int AllocateBuffers(void);
-
 
 };
 
