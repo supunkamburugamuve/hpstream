@@ -723,27 +723,24 @@ int Connection::ExchangeServerKeys() {
   struct fi_rma_iov *peer_iov = &this->remote;
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
-  printf("Exchange key\n");
-  if (this->info == NULL) {
-    printf("NULLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
-  }
+  HPS_INFO("Exchange key");
   print_short_info(this->info);
-  HPS_ERR("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
+  HPS_INFO("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
   ret = GetRXComp(rx_seq);
   if (ret) {
     HPS_ERR("Failed to RX Completion");
     return (int) ret;
   }
-  HPS_ERR("Exchange key 3 \n");
+  HPS_INFO("Exchange key 3 \n");
   rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
-  HPS_ERR("Exchange key 4 \n");
+  HPS_INFO("Exchange key 4 \n");
   ret = PostRX(rx_size, &rx_ctx);
   if (ret) {
     HPS_ERR("Failed to post RX");
     return (int) ret;
   }
-  HPS_ERR("Received keys");
+  HPS_INFO("Received keys");
   rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
@@ -753,7 +750,7 @@ int Connection::ExchangeServerKeys() {
     HPS_ERR("Failed to TX");
     return (int) ret;
   }
-  HPS_ERR("Sent keys");
+  HPS_INFO("Sent keys");
   return (int) ret;
 }
 
@@ -761,18 +758,15 @@ int Connection::ExchangeClientKeys() {
   struct fi_rma_iov *peer_iov = &this->remote;
   struct fi_rma_iov *rma_iov;
   ssize_t ret;
-  printf("Exchange key\n");
-  if (this->info == NULL) {
-    printf("NULLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
-  }
+  HPS_INFO("Exchange key");
   print_short_info(this->info);
-  HPS_ERR("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
+  HPS_INFO("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
   rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
   rma_iov->key = fi_mr_key(mr);
   ret = TX(sizeof *rma_iov);
-  HPS_ERR("Sent keys");
+  HPS_INFO("Sent keys");
   if (ret) {
     HPS_ERR("Failed to TX");
     return (int) ret;
@@ -791,7 +785,7 @@ int Connection::ExchangeClientKeys() {
     HPS_ERR("Failed to post RX");
     return (int) ret;
   }
-  HPS_ERR("Received keys");
+  HPS_INFO("Received keys");
   return (int) ret;
 }
 
