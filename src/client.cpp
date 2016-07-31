@@ -130,17 +130,17 @@ int Client::Connect(void) {
 //  }
 
   this->eventLoop = new EventLoop(fabric);
-	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
-  if (ret) {
-    HPS_ERR("Failed to register receive cq to event loop %d", ret);
-    return ret;
-  }
-
-	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
-  if (ret) {
-    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
-    return ret;
-  }
+//	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+//  if (ret) {
+//    HPS_ERR("Failed to register receive cq to event loop %d", ret);
+//    return ret;
+//  }
+//
+//	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
+//  if (ret) {
+//    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
+//    return ret;
+//  }
 
 	this->con = con;
 	printf("Connection established\n");
