@@ -21,6 +21,7 @@ int connect() {
 int connect3() {
   int ret;
   Client client(&options, hints);
+  client.Start();
   client.Connect();
   con = client.GetConnection();
   ret = con->ExchangeClientKeys();
