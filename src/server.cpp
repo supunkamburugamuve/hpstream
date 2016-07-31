@@ -206,11 +206,11 @@ int Server::Connect(void) {
   HPS_INFO("Connection established");
   this->con = con;
 
-  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
-  if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
-    return ret;
-  }
+//  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+//  if (ret) {
+//    HPS_ERR("Failed to create thread %d", ret);
+//    return ret;
+//  }
 
   return 0;
   err:
