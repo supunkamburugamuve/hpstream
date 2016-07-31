@@ -37,7 +37,6 @@ Connection* Client::GetConnection() {
 }
 
 int Client::Start() {
-  this->eventLoop = new EventLoop(fabric);
   // now start accept thread
   int ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
   if (ret) {
@@ -124,7 +123,7 @@ int Client::Connect(void) {
 
   // set up the buffers
   con->SetupBuffers();
-
+  this->eventLoop = new EventLoop(fabric);
 	this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
 	this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
 
