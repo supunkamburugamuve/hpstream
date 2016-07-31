@@ -39,6 +39,8 @@ void EventLoop::loop() {
       con->Ready(event.data.fd);
     }
   }
+
+  delete fid_list;
 }
 
 int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
