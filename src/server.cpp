@@ -184,6 +184,7 @@ int Server::Connect(void) {
     goto err;
   }
 
+  con->SetupBuffers();
   ret = con->ExchangeServerKeys();
   if (ret) {
     HPS_ERR("Failed to exchange keys", ret);

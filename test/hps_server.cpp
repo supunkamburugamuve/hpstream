@@ -86,8 +86,6 @@ int exchange2() {
 int exchange3() {
   int ret;
   int values[1000];
-
-  con->SetupBuffers();
   uint32_t read = 0;
   uint32_t current_read = 0;
   for (int i = 0; i < 10; i++) {
