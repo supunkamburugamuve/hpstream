@@ -38,7 +38,12 @@ Connection* Client::GetConnection() {
 
 int Client::Start() {
   this->eventLoop = new EventLoop(fabric);
-  this->eventLoop->loop();
+  // now start accept thread
+  int ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
   return 0;
 }
 

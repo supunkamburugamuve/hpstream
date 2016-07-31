@@ -24,7 +24,6 @@ private:
   bool run;
   struct fid_fabric *fabric;
   int epfd;
-  std::unordered_map<int, Callback *> callbacks;
   std::unordered_map<int, struct fid *> fids;
 };
 
