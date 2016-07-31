@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
   hints->ep_attr->type = FI_EP_MSG;
   hints->caps = FI_MSG | FI_RMA;
   hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
-  connect();
+  connect3();
   exchange3();
   return 0;
 }
