@@ -1,4 +1,21 @@
+#include <pthread.h>
 #include "server.h"
+
+static void* acceptConnectionsThread(void *param) {
+  Server* server = static_cast<Server *>(param);
+  while (server->IsAcceptConnection()) {
+    if (server->Connect()) {
+      HPS_ERR("Failed to accept connection");
+    }
+  }
+  return NULL;
+}
+
+static void* loopEventsThread(void *param) {
+  Server* server = static_cast<Server *>(param);
+  server->loop();
+  return NULL;
+}
 
 Server::Server(Options *opts, fi_info *hints) {
   this->options = opts;
@@ -83,6 +100,19 @@ int Server::Start(void) {
     HPS_ERR("fi_listen %d", ret);
     return ret;
   }
+
+  // now start accept thread
+  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
+
+  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
   return 0;
 }
 
@@ -158,22 +188,24 @@ int Server::Connect(void) {
     goto err;
   }
 
-//  if ((ret = this->con->ExchangeServerKeys())) {
-//    HPS_ERR("Failed to exchange keys with client");
-//    goto err;
-//  }
   // registe with the loop
   this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
   this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
 
-  printf("Connection established\n");
+  HPS_INFO("Connection established");
   this->con = con;
-
-  // start the loop here for now
-  eventLoop->loop();
 
   return 0;
   err:
     fi_reject(pep, entry.info->handle, NULL, 0);
     return ret;
+}
+
+int Server::loop() {
+  if (eventLoop == NULL) {
+    HPS_ERR("Event loop not created");
+    return 1;
+  }
+  eventLoop->loop();
+  return 0;
 }

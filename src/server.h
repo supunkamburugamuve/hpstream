@@ -19,9 +19,20 @@ public:
    */
   int Connect(void);
 
+  bool IsAcceptConnection() {
+    return acceptConnections;
+  }
+
+  /**
+   * Start and run the event loop
+   */
+  int loop();
+
   Connection * GetConnection();
   // connections
   Connection *con;
+
+
 private:
   Options *options;
   // hints to be used to obtain fabric information
@@ -36,8 +47,13 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
-
+  // event loop associated with this server
   EventLoop *eventLoop;
+  // indicates weather we run the accept connection thread
+  bool acceptConnections;
+
+  pthread_t acceptThreadId;
+  pthread_t loopThreadId;
 };
 
 

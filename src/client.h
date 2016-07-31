@@ -12,6 +12,12 @@ public:
   int Connect(void);
   Connection *GetConnection();
   void Free();
+  int Start();
+
+  /**
+   * Start Loop through the events
+   */
+  int loop();
 private:
   // options for initialization
   Options *options;
@@ -29,6 +35,10 @@ private:
   Connection *con;
 
   EventLoop *eventLoop;
+  // looping thread id
+  pthread_t loopThreadId;
+
+
 };
 
 #endif /* SCLIENT_H_ */

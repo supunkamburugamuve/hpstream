@@ -18,6 +18,20 @@ int connect() {
   return ret;
 }
 
+int connect3() {
+  int ret;
+  Client client(&options, hints);
+  client.Connect();
+  con = client.GetConnection();
+  ret = con->ExchangeClientKeys();
+  if (ret) {
+    printf("Failed to exchange %d\n", ret);
+  } else {
+    printf("Exchanged keys\n");
+  }
+  return ret;
+}
+
 int exchange() {
   int ret;
   ret = con->ClientSync();
@@ -41,7 +55,7 @@ int exchange() {
 }
 
 int exchange2() {
-  int ret;
+  int ret = 0;
   int values[10][1000];
 
   for (int j = 0; j < 10; j++) {
@@ -58,6 +72,29 @@ int exchange2() {
   for (int i = 0; i < 10; i++) {
     con->WriteData((uint8_t *) values[i], sizeof(values[i]));
     con->WriteBuffers();
+  }
+
+  printf("Done rma\n");
+  return ret;
+}
+
+int exchange3() {
+  int ret = 0;
+  int values[10][1000];
+
+  for (int j = 0; j < 10; j++) {
+    for (int i = 0; i < 1000; i++) {
+      if (j % 2 == 0) {
+        values[j][i] = 1000 - i;
+      } else {
+        values[j][i] = i;
+      }
+    }
+  }
+
+  con->SetupBuffers();
+  for (int i = 0; i < 10; i++) {
+    con->WriteData((uint8_t *) values[i], sizeof(values[i]));
   }
 
   printf("Done rma\n");

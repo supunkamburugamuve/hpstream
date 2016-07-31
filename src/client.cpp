@@ -10,6 +10,12 @@
 
 #include "client.h"
 
+static void* loopEventsThread(void *param) {
+	Client* client = static_cast<Client *>(param);
+	client->loop();
+	return NULL;
+}
+
 Client::Client(Options *opts, fi_info *hints) {
 	this->info_hints = hints;
 	this->options = opts;
@@ -18,6 +24,7 @@ Client::Client(Options *opts, fi_info *hints) {
 	this->eq_attr = {};
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;
+  this->eventLoop = NULL;
 }
 
 void Client::Free() {
@@ -27,6 +34,12 @@ void Client::Free() {
 
 Connection* Client::GetConnection() {
 	return this->con;
+}
+
+int Client::Start() {
+  this->eventLoop = new EventLoop(fabric);
+  this->eventLoop->loop();
+  return 0;
 }
 
 int Client::Connect(void) {
@@ -104,12 +117,6 @@ int Client::Connect(void) {
 		return ret;
 	}
 
-	// noe exchange keys
-//	if ((ret = this->con->ExchangeClientKeys())) {
-//		HPS_ERR("Failed to exchange keys with server");
-//		return ret;
-//	}
-	this->eventLoop = new EventLoop(fabric);
 	this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
 	this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
 
@@ -117,4 +124,15 @@ int Client::Connect(void) {
 	printf("Connection established\n");
 	return 0;
 }
+
+int Client::loop() {
+  if (eventLoop == NULL) {
+    HPS_ERR("Event loop not created");
+    return 1;
+  }
+  eventLoop->loop();
+  return 0;
+}
+
+
 
