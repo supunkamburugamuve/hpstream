@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
   hints->caps = FI_MSG | FI_RMA;
   hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
 
-  connect3();
-  exchange3();
+  connect();
+  exchange2();
   return 0;
 }

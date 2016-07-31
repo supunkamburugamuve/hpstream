@@ -103,7 +103,7 @@ int Server::Start(void) {
   }
 
   // now start accept thread
-  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
+  //ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
   if (ret) {
     HPS_ERR("Failed to create thread %d", ret);
     return ret;
@@ -184,12 +184,12 @@ int Server::Connect(void) {
     goto err;
   }
 
-  con->SetupBuffers();
-  ret = con->ExchangeServerKeys();
-  if (ret) {
-    HPS_ERR("Failed to exchange keys", ret);
-    return ret;
-  }
+//  con->SetupBuffers();
+//  ret = con->ExchangeServerKeys();
+//  if (ret) {
+//    HPS_ERR("Failed to exchange keys", ret);
+//    return ret;
+//  }
 
   // registe with the loop
   this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
