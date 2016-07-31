@@ -22,11 +22,11 @@ int connect() {
 int connect3() {
   Client client(&options, hints);
   client.Connect();
-  client.Start();
   while (con == NULL) {
     sleep(1);
     con = client.GetConnection();
   }
+  client.Start();
   return 1;
 }
 
