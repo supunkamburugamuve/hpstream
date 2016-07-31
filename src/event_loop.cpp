@@ -54,7 +54,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
     ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
     if (ret) {
       ret = -errno;
-      HPS_ERR("epoll_ctl", ret);
+      HPS_ERR("epoll_ctl %d", ret);
       return ret;
     }
   } else {
