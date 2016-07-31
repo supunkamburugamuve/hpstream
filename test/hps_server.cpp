@@ -20,15 +20,12 @@ int connect() {
 }
 
 int connect3() {
-  int ret;
+  int ret = 0;
   Server server(&options, hints);
   server.Start();
-  con = server.con;
-  ret = con->ExchangeServerKeys();
-  if (ret) {
-    printf("Failed to exchange %d\n", ret);
-  } else {
-    printf("Exchanged keys\n");
+  while (con == NULL) {
+    sleep(1);
+    con = server.GetConnection();
   }
   return ret;
 }

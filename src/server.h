@@ -29,10 +29,6 @@ public:
   int loop();
 
   Connection * GetConnection();
-  // connections
-  Connection *con;
-
-
 private:
   Options *options;
   // hints to be used to obtain fabric information
@@ -54,6 +50,8 @@ private:
 
   pthread_t acceptThreadId;
   pthread_t loopThreadId;
+  // connections
+  Connection *con;
 };
 
 

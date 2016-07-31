@@ -122,10 +122,20 @@ int Client::Connect(void) {
 		return ret;
 	}
 
+  // set up the buffers
+  con->SetupBuffers();
+
 	this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
 	this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
 
 	this->con = con;
+
+  ret = con->ExchangeClientKeys();
+  if (ret) {
+    HPS_ERR("Failed to exchange keys", ret);
+    return ret;
+  }
+
 	printf("Connection established\n");
 	return 0;
 }

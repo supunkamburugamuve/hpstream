@@ -184,6 +184,12 @@ int Server::Connect(void) {
     goto err;
   }
 
+  ret = con->ExchangeServerKeys();
+  if (ret) {
+    HPS_ERR("Failed to exchange keys", ret);
+    return ret;
+  }
+
   // registe with the loop
   this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
   this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);

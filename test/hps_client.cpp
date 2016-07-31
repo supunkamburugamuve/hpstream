@@ -1,4 +1,5 @@
 #include "hps_utils.h"
+#include <unistd.h>
 
 Connection *con;
 Options options;
@@ -19,18 +20,13 @@ int connect() {
 }
 
 int connect3() {
-  int ret;
   Client client(&options, hints);
-  client.Connect();
   client.Start();
-  con = client.GetConnection();
-  ret = con->ExchangeClientKeys();
-  if (ret) {
-    printf("Failed to exchange %d\n", ret);
-  } else {
-    printf("Exchanged keys\n");
+  while (con == NULL) {
+    sleep(1);
+    con = client.GetConnection();
   }
-  return ret;
+  return 1;
 }
 
 int exchange() {
@@ -93,7 +89,6 @@ int exchange3() {
     }
   }
 
-  con->SetupBuffers();
   for (int i = 0; i < 10; i++) {
     con->WriteData((uint8_t *) values[i], sizeof(values[i]));
   }
@@ -132,7 +127,7 @@ int main(int argc, char **argv) {
   hints->caps = FI_MSG | FI_RMA;
   hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
 
-  connect();
-  exchange2();
+  connect3();
+  exchange3();
   return 0;
 }
