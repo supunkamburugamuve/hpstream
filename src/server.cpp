@@ -28,6 +28,7 @@ Server::Server(Options *opts, fi_info *hints) {
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
   this->con = NULL;
+  this->acceptConnections = true;
 }
 
 void Server::Free() {
