@@ -192,17 +192,17 @@ int Server::Connect(void) {
 //  }
 
   // registe with the loop
-//	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
-//  if (ret) {
-//    HPS_ERR("Failed to register receive cq to event loop %d", ret);
-//    return ret;
-//  }
-//
-//	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
-//  if (ret) {
-//    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
-//    return ret;
-//  }
+	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+  if (ret) {
+    HPS_ERR("Failed to register receive cq to event loop %d", ret);
+    return ret;
+  }
+
+	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
+  if (ret) {
+    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
+    return ret;
+  }
   HPS_INFO("Connection established");
   this->con = con;
 
