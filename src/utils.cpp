@@ -30,14 +30,12 @@ int hps_utils_set_rma_caps(struct fi_info *fi) {
 
 int hps_utils_get_cq_fd(Options *opts, struct fid_cq *cq, int *fd) {
   int ret = FI_SUCCESS;
-
-  if (cq && opts->comp_method == HPS_COMP_WAIT_FD) {
+  if (cq) {
     ret = fi_control(&cq->fid, FI_GETWAIT, fd);
     if (ret) {
       HPS_ERR("fi_control(FI_GETWAIT) %d", ret);
     }
   }
-
   return ret;
 }
 
