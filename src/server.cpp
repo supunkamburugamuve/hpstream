@@ -192,6 +192,8 @@ int Server::Connect(void) {
 //  }
 
   // registe with the loop
+  HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
+
 	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
