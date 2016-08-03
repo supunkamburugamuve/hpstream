@@ -868,61 +868,24 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   // go through the buffers
   Buffer *rbuf = this->recv_buf;
-
-  // nothing to read
-  if (rbuf->Tail() == rbuf->DataHead()) {
-    *read = 0;
-    return 0;
-  }
-
+  ret = rbuf->ReadData(buf, size, read);
+  // now lock the buffer
+  rbuf->acquireLock();
   uint32_t tail = rbuf->Tail();
-  uint32_t head = rbuf->DataHead();
-  uint32_t current_read_indx = rbuf->CurrentReadIndex();
-  // need to copy
-  uint32_t need_copy = 0;
-  // number of bytes copied
-  uint32_t read_size = 0;
-  HPS_INFO("Reading, tail= %d, head= %d", tail, head);
-  while (read_size < size &&  tail != head) {
-    uint8_t *b = rbuf->GetBuffer(tail);
-    uint32_t *r;
-    // first read the amount of data in the buffer
-    r = (uint32_t *) b;
-    // now lets see how much data we need to copy from this buffer
-    need_copy = (*r) - current_read_indx;
-    // now lets see how much we can copy
-    uint32_t can_copy = 0;
-    uint32_t tmp_index = current_read_indx;
-    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, r, current_read_indx);
-    // we can copy everything from this buffer
-    if (size - read_size >= need_copy) {
-      HPS_INFO("Moving tail");
-      can_copy = need_copy;
-      current_read_indx = 0;
-      // advance the tail pointer
-      rbuf->IncrementTail(1);
-      tail = rbuf->Tail();
-      // now post the freed buffer
-      ret = PostRX(rbuf->BufferSize(), b, &this->rx_ctx);
-      if (ret) {
-        return (int) ret;
-      }
-      rbuf->IncrementHead(1);
-    } else {
-      HPS_INFO("Not Moving tail");
-      // we cannot copy everything from this buffer
-      can_copy = size - read_size;
-      current_read_indx += can_copy;
+  uint32_t head = rbuf->Head();
+  uint32_t next_head = (head + 1) % rbuf->NoOfBuffers();
+  while (tail != next_head) {
+    uint8_t *send_buf = rbuf->GetBuffer(head);
+    ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
+    if (ret) {
+      HPS_ERR("Failed to post the receive buffer");
+      return (int) ret;
     }
-    // next copy the buffer
-    HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
-    memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
-    // now update
-    HPS_INFO("Reading, tail= %d, head= %d", tail, head);
-    read_size += can_copy;
+    rbuf->IncrementHead(1);
+    head = rbuf->Head();
+    next_head = (head + 1) % rbuf->NoOfBuffers();
   }
-
-  *read = read_size;
+  rbuf->releaseLock();
   return 0;
 }
 

@@ -40,6 +40,10 @@ public:
   uint32_t CurrentReadIndex();
   void SetCurrentReadIndex(uint32_t indx);
 
+  int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
+
+  int acquireLock();
+  int releaseLock();
   /** Free the buffer */
   void Free();
 
@@ -79,6 +83,7 @@ private:
 
   // private methods
   int Init();
+
 };
 
 #endif /* BUFFER_H_ */

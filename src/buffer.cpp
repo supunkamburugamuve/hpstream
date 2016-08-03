@@ -1,7 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <cinttypes>
+#include <cstring>
 
+#include "hps.h"
 #include "buffer.h"
 
 Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
@@ -19,6 +22,14 @@ Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   pthread_cond_init(&cond_empty, NULL);
   pthread_cond_init(&cond_full, NULL);
   Init();
+}
+
+int Buffer::acquireLock() {
+  return pthread_mutex_lock(&lock);
+}
+
+int Buffer::releaseLock() {
+  return pthread_mutex_unlock(&lock);
 }
 
 uint8_t * Buffer::GetBuffer(int i) {
@@ -131,6 +142,62 @@ uint64_t Buffer::GetReceiveReadySpace() {
 uint64_t Buffer::GetSendReadySpace() {
   int ready_slots = this->no_bufs - abs(this->data_head - this->head);
   return ready_slots * this->buf_size;
+}
+
+int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
+  ssize_t ret = 0;
+
+  pthread_mutex_lock(&lock);
+  // nothing to read
+  if (tail == data_head) {
+    *read = 0;
+    return 0;
+  }
+
+  uint32_t tail = this->tail;
+  uint32_t head = this->head;
+  uint32_t current_read_indx = this->current_read_index;
+  // need to copy
+  uint32_t need_copy = 0;
+  // number of bytes copied
+  uint32_t read_size = 0;
+  HPS_INFO("Reading, tail= %d, head= %d", tail, head);
+  while (read_size < size &&  tail != head) {
+    uint8_t *b = buffers[tail];
+    uint32_t *r;
+    // first read the amount of data in the buffer
+    r = (uint32_t *) b;
+    // now lets see how much data we need to copy from this buffer
+    need_copy = (*r) - current_read_indx;
+    // now lets see how much we can copy
+    uint32_t can_copy = 0;
+    uint32_t tmp_index = current_read_indx;
+    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, r, current_read_indx);
+    // we can copy everything from this buffer
+    if (size - read_size >= need_copy) {
+      HPS_INFO("Moving tail");
+      can_copy = need_copy;
+      current_read_indx = 0;
+      // advance the tail pointer
+      IncrementTail(1);
+      tail = this->tail;
+    } else {
+      HPS_INFO("Not Moving tail");
+      // we cannot copy everything from this buffer
+      can_copy = size - read_size;
+      current_read_indx += can_copy;
+    }
+    // next copy the buffer
+    HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
+    memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
+    // now update
+    HPS_INFO("Reading, tail= %d, head= %d", tail, head);
+    read_size += can_copy;
+  }
+
+  *read = read_size;
+  pthread_mutex_unlock(&lock);
+  return 0;
 }
 
 
