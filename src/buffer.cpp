@@ -106,6 +106,8 @@ int Buffer::IncrementHead(uint32_t count) {
 int Buffer::IncrementTail(uint32_t count) {
   pthread_mutex_lock(&this->lock);
   this->tail = (this->tail + count) % this->no_bufs;
+  // signal that we have an empty buffer
+  pthread_cond_signal(&cond_empty);
   pthread_mutex_unlock(&this->lock);
   return 0;
 }
@@ -144,16 +146,17 @@ uint64_t Buffer::GetSendReadySpace() {
   return ready_slots * this->buf_size;
 }
 
+int Buffer::waitFree() {
+  return pthread_cond_wait(&cond_empty, &lock);
+}
+
 int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
-
-  pthread_mutex_lock(&lock);
   // nothing to read
   if (tail == data_head) {
     *read = 0;
     return 0;
   }
-
   uint32_t tail = this->tail;
   uint32_t head = this->head;
   uint32_t current_read_indx = this->current_read_index;
@@ -196,7 +199,6 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   }
 
   *read = read_size;
-  pthread_mutex_unlock(&lock);
   return 0;
 }
 

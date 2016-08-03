@@ -866,11 +866,12 @@ bool Connection::DataAvailableForRead() {
 
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
+
   // go through the buffers
   Buffer *rbuf = this->recv_buf;
+  rbuf->acquireLock();
   ret = rbuf->ReadData(buf, size, read);
   // now lock the buffer
-  rbuf->acquireLock();
   uint32_t tail = rbuf->Tail();
   uint32_t head = rbuf->Head();
   uint32_t next_head = (head + 1) % rbuf->NoOfBuffers();
@@ -914,6 +915,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   HPS_INFO("Init writing");
   // first lets get the available buffer
   Buffer *sbuf = this->send_buf;
+  sbuf->acquireLock();
   // now determine the buffer no to use
   uint32_t sent_size = 0;
   uint32_t current_size = 0;
@@ -946,22 +948,19 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         error_count++;
         if (error_count > MAX_ERRORS) {
           HPS_ERR("Failed to send the buffer completely. sent %d", sent_size);
-          return sent_size;
+          goto err;
         }
       }
     } else {
-      HPS_INFO("Wait for free space %d", free_space);
-      // we should wait for at least one completion
-      ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
-      if (ret) {
-        HPS_ERR("Failed to get tx completion %d", ret);
-        return 1;
-      }
-      // now free the buffer
-      sbuf->IncrementTail(1);
+      sbuf->waitFree();
     }
   }
+  sbuf->releaseLock();
   return 0;
+
+  err:
+    sbuf->releaseLock();
+    return 1;
 }
 
 int Connection::TransmitComplete() {

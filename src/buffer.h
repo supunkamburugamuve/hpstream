@@ -42,6 +42,8 @@ public:
 
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 
+  // wait until a buffer becomes available for write
+  int waitFree();
   int acquireLock();
   int releaseLock();
   /** Free the buffer */
