@@ -121,14 +121,6 @@ int Client::Connect(void) {
 		return ret;
 	}
 
-  // set up the buffers
-//  con->SetupBuffers();
-//  ret = con->ExchangeClientKeys();
-//  if (ret) {
-//    HPS_ERR("Failed to exchange keys", ret);
-//    return ret;
-//  }
-
   this->eventLoop = new EventLoop(fabric);
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
 	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);

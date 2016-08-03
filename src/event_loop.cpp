@@ -61,7 +61,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
     return 0;
   }
   // create a list of fids
-  return 1;
+  return 0;
 }
 
 
