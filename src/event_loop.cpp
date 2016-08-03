@@ -18,15 +18,18 @@ EventLoop::EventLoop(struct fid_fabric *fabric) {
 void EventLoop::loop() {
   int ret;
   struct epoll_event event;
-  unsigned long size = fids.size();
-  // get all the elements in fids and create a list
-  struct fid **fid_list = new struct fid*[size];
-  int i = 0;
-  for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
-    fid_list[i++] = it->second;
-  }
-
   while (run) {
+    unsigned long size = fids.size();
+    if (size == 0) {
+      continue;
+    }
+    // get all the elements in fids and create a list
+    struct fid **fid_list = new struct fid*[size];
+    int i = 0;
+    for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
+      fid_list[i++] = it->second;
+    }
+
     memset(&event, 0, sizeof event);
     if (fi_trywait(fabric, fid_list, 1) == FI_SUCCESS) {
       ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, &event, 1, -1));
@@ -38,9 +41,9 @@ void EventLoop::loop() {
       Connection *con = (Connection *) event.data.ptr;
       con->Ready(event.data.fd);
     }
-  }
 
-  delete fid_list;
+    delete fid_list;
+  }
 }
 
 int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {

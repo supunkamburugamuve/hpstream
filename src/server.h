@@ -13,7 +13,7 @@ public:
   /**
    * Start the server
    */
-  int Start(void);
+  int Init(void);
   /**
    * Accept new connections
    */
@@ -29,6 +29,9 @@ public:
   int loop();
 
   Connection * GetConnection();
+
+  int Start();
+
 private:
   Options *options;
   // hints to be used to obtain fabric information
@@ -52,6 +55,7 @@ private:
   pthread_t loopThreadId;
   // connections
   Connection *con;
+
 };
 
 

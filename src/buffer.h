@@ -9,13 +9,13 @@ public:
   Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs);
 
   // increment the head
-  bool IncrementHead();
+  int IncrementHead(uint32_t count);
 
   // increment the tail
-  bool IncrementTail();
+  int IncrementTail(uint32_t count);
 
   // increment the data head
-  bool IncrementDataHead();
+  int IncrementDataHead(uint32_t count);
 
   // get the free space available in the buffers
   uint64_t GetFreeSpace();

@@ -85,28 +85,25 @@ int increment(int size, int current) {
   return size - 1 == current ? 0 : current + 1;
 }
 
-bool Buffer::IncrementHead() {
-  uint32_t tail_previous = this->tail == 0 ? this->no_bufs - 1 : this->tail - 1;
-  if (this->head != tail_previous) {
-    this->head = this->head != this->no_bufs - 1 ? this->head + 1 : 0;
-    return true;
-  } else {
-    return false;
-  }
+int Buffer::IncrementHead(uint32_t count) {
+  pthread_mutex_lock(&this->lock);
+  this->head = (this->head + count) % this->no_bufs;
+  pthread_mutex_unlock(&this->lock);
+  return 0;
 }
 
-bool Buffer::IncrementTail() {
-  if (this->head != this->tail) {
-    this->tail = this->tail != this->no_bufs - 1 ? this->tail + 1 : 0;
-    return true;
-  } else {
-    return false;
-  }
+int Buffer::IncrementTail(uint32_t count) {
+  pthread_mutex_lock(&this->lock);
+  this->tail = (this->tail + count) % this->no_bufs;
+  pthread_mutex_unlock(&this->lock);
+  return 0;
 }
 
-bool Buffer::IncrementDataHead() {
-
-  return true;
+int Buffer::IncrementDataHead(uint32_t count) {
+  pthread_mutex_lock(&this->lock);
+  this->data_head = (this->data_head + count) % this->no_bufs;
+  pthread_mutex_unlock(&this->lock);
+  return 0;
 }
 
 void Buffer::Free() {

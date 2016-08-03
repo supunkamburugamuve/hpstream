@@ -141,8 +141,7 @@ private:
   struct fid_mr *mr;
   struct fid_mr no_mr;
 
-  // sequence numbers for messages posted and received
-  // transfer sequence number
+  // sequence numbers for messages posted
   uint64_t tx_seq;
   // completed transfer requests
   uint64_t tx_cq_cntr;
@@ -177,7 +176,8 @@ private:
   int SendCompletions(uint64_t min, uint64_t max);
   int AllocMsgs(void);
   int AllocateBuffers(void);
-
+  int TransmitComplete();
+  int ReceiveComplete();
 };
 
 #endif /* HPS_CONNECTION_H_ */

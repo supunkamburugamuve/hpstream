@@ -900,14 +900,14 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       can_copy = need_copy;
       current_read_indx = 0;
       // advance the tail pointer
-      rbuf->IncrementTail();
+      rbuf->IncrementTail(1);
       tail = rbuf->Tail();
       // now post the freed buffer
       ret = PostRX(rbuf->BufferSize(), b, &this->rx_ctx);
       if (ret) {
         return (int) ret;
       }
-      rbuf->IncrementHead();
+      rbuf->IncrementHead(1);
     } else {
       HPS_INFO("Not Moving tail");
       // we cannot copy everything from this buffer
@@ -948,7 +948,7 @@ int Connection::WriteBuffers() {
 
 int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
-  HPS_INFO("Start writing");
+  HPS_INFO("Init writing");
   // first lets get the available buffer
   Buffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -958,7 +958,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   uint32_t error_count = 0;
 
   uint32_t buf_size = sbuf->BufferSize() - 4;
-  // we need to send everything buy using the buffers available
+  // we need to send everything by using the buffers available
   while (sent_size < size) {
     uint64_t free_space = sbuf->GetFreeSpace();
     // we have space in the buffers
@@ -978,7 +978,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
         // increment the head
-        sbuf->IncrementHead();
+        sbuf->IncrementHead(1);
       } else {
         error_count++;
         if (error_count > MAX_ERRORS) {
@@ -995,23 +995,77 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         return 1;
       }
       // now free the buffer
-      sbuf->IncrementTail();
+      sbuf->IncrementTail(1);
     }
   }
   return 0;
 }
 
-int Connection::Ready(int fd) {
-  if (fd == tx_fd) {
-    WriteBuffers();
+int Connection::TransmitComplete() {
+  struct fi_cq_err_entry comp;
+  int ret;
+  // lets get the number of completions
+  size_t max_completions = tx_seq - tx_cq_cntr;
+  // we can expect up to this
+  ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
+  if (cq_ret > 0) {
+    this->tx_cq_cntr += cq_ret;
+  } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
+    // okay we have an error
+    if (cq_ret == -FI_EAVAIL) {
+      cq_ret = hps_utils_cq_readerr(txcq);
+      this->tx_cq_cntr++;
+    } else {
+      HPS_ERR("ft_get_cq_comp %d", cq_ret);
+      return (int) cq_ret;
+    }
   }
-
-  if (fd == rx_fd) {
-    Receive();
+  // increment the buffer
+  if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
+    HPS_ERR("Failed to increment buffer data pointer");
+    return 1;
   }
   return 0;
 }
 
+int Connection::ReceiveComplete() {
+  struct fi_cq_err_entry comp;
+  int ret;
+  // lets get the number of completions
+  size_t max_completions = rx_seq - rx_cq_cntr;
+  // we can expect up to this
+  ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
+  if (cq_ret > 0) {
+    this->rx_cq_cntr += cq_ret;
+  } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
+    // okay we have an error
+    if (cq_ret == -FI_EAVAIL) {
+      cq_ret = hps_utils_cq_readerr(rxcq);
+      this->rx_cq_cntr++;
+    } else {
+      HPS_ERR("ft_get_cq_comp %d", cq_ret);
+      return (int) cq_ret;
+    }
+  }
+
+  if (this->recv_buf->IncrementDataHead((uint32_t) cq_ret)) {
+    HPS_ERR("Failed to increment buffer data pointer");
+    return 1;
+  }
+
+  return 0;
+}
+
+int Connection::Ready(int fd) {
+  if (fd == tx_fd) {
+    TransmitComplete();
+  }
+
+  if (fd == rx_fd) {
+    ReceiveComplete();
+  }
+  return 0;
+}
 
 Connection::~Connection() {
 

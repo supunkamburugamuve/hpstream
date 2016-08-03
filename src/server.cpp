@@ -53,10 +53,29 @@ Connection* Server::GetConnection() {
   return this->con;
 }
 
+int Server::Start() {
+  int ret;
+  // now start accept thread
+//  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
+//  if (ret) {
+//    HPS_ERR("Failed to create thread %d", ret);
+//    return ret;
+//  }
+
+  // start the loop thread
+  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
+
+  return 0;
+}
+
 /**
  * Initialize the server
  */
-int Server::Start(void) {
+int Server::Init(void) {
   int ret;
   printf("Start server\n");
   // info for passive end-point
@@ -102,12 +121,7 @@ int Server::Start(void) {
     return ret;
   }
 
-  // now start accept thread
-  //ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
-  if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
-    return ret;
-  }
+
 
   return 0;
 }
@@ -206,12 +220,6 @@ int Server::Connect(void) {
   }
   HPS_INFO("Connection established");
   this->con = con;
-
-//  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
-//  if (ret) {
-//    HPS_ERR("Failed to create thread %d", ret);
-//    return ret;
-//  }
 
   return 0;
   err:
