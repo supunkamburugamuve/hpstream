@@ -964,6 +964,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
 }
 
 int Connection::TransmitComplete() {
+  HPS_INFO("Transmit complete");
   struct fi_cq_err_entry comp;
   int ret;
   // lets get the number of completions
@@ -991,6 +992,7 @@ int Connection::TransmitComplete() {
 }
 
 int Connection::ReceiveComplete() {
+  HPS_INFO("Receive complete");
   struct fi_cq_err_entry comp;
   int ret;
   // lets get the number of completions
