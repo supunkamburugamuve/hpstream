@@ -20,9 +20,11 @@ void EventLoop::loop() {
   struct epoll_event event;
   while (run) {
     unsigned long size = fids.size();
+    HPS_INFO("Looping 1");
     if (size == 0) {
       continue;
     }
+    HPS_INFO("Looping 2");
     // get all the elements in fids and create a list
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
