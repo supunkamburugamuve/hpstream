@@ -19,6 +19,7 @@ int exchange3() {
   int values[1000];
   uint32_t read = 0;
   uint32_t current_read = 0;
+  con->SetupBuffers();
   for (int i = 0; i < 10; i++) {
     for (int j = 0; j < 1000; j++) {
       values[j] = 0;
