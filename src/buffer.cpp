@@ -1,10 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
-#include <unistd.h>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
-#include <stdint.h>
 
 #include "buffer.h"
 
@@ -18,6 +14,10 @@ Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->content_sizes = NULL;
   this->current_read_index = 0;
   this->buffers = NULL; // do error handling
+
+  pthread_mutex_init(&lock, NULL);
+  pthread_cond_init(&cond_empty, NULL);
+  pthread_cond_init(&cond_full, NULL);
   Init();
 }
 

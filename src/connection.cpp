@@ -144,7 +144,7 @@ Buffer * Connection::SendBuffer() {
 
 int Connection::AllocateActiveResources() {
   int ret;
-  printf("Allocate recv\n");
+  HPS_INFO("Allocating resources for the connection");
   if (info_hints->caps & FI_RMA) {
     ret = hps_utils_set_rma_caps(info);
     if (ret)
@@ -156,51 +156,29 @@ int Connection::AllocateActiveResources() {
     return ret;
   }
 
-  if (cq_attr.format == FI_CQ_FORMAT_UNSPEC) {
-    if (info->caps & FI_TAGGED) {
-      cq_attr.format = FI_CQ_FORMAT_TAGGED;
-    } else {
-      cq_attr.format = FI_CQ_FORMAT_CONTEXT;
-    }
+  // we use the context, not the counter
+  cq_attr.format = FI_CQ_FORMAT_CONTEXT;
+
+  // create a file descriptor wait cq set
+  cq_attr.wait_obj = FI_WAIT_FD;
+  cq_attr.wait_cond = FI_CQ_COND_NONE;
+  cq_attr.size = info->tx_attr->size;
+  ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
+  if (ret) {
+    HPS_ERR("fi_cq_open for send %d", ret);
+    return ret;
   }
 
-  if (this->options->options & HPS_OPT_TX_CQ) {
-    hps_utils_cq_set_wait_attr(this->options, this->waitset, &this->cq_attr);
-    cq_attr.size = info->tx_attr->size;
-    ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
-    if (ret) {
-      HPS_ERR("fi_cq_open %d", ret);
-      return ret;
-    }
+  // create a file descriptor wait cq set
+  cq_attr.wait_obj = FI_WAIT_FD;
+  cq_attr.wait_cond = FI_CQ_COND_NONE;
+  cq_attr.size = info->rx_attr->size;
+  ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);
+  if (ret) {
+    HPS_ERR("fi_cq_open for receive %d", ret);
+    return ret;
   }
 
-  if (this->options->options & HPS_OPT_TX_CNTR) {
-    hps_utils_cntr_set_wait_attr(this->options, this->waitset, &this->cntr_attr);
-    ret = fi_cntr_open(domain, &cntr_attr, &txcntr, &txcntr);
-    if (ret) {
-      HPS_ERR("fi_cntr_open %d", ret);
-      return ret;
-    }
-  }
-
-  if (this->options->options & HPS_OPT_RX_CQ) {
-    hps_utils_cq_set_wait_attr(this->options, this->waitset, &this->cq_attr);
-    cq_attr.size = info->rx_attr->size;
-    ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);
-    if (ret) {
-      HPS_ERR("fi_cq_open %d", ret);
-      return ret;
-    }
-  }
-
-  if (this->options->options & HPS_OPT_RX_CNTR) {
-    hps_utils_cntr_set_wait_attr(this->options, this->waitset, &this->cntr_attr);
-    ret = fi_cntr_open(domain, &cntr_attr, &rxcntr, &rxcntr);
-    if (ret) {
-      HPS_ERR("fi_cntr_open %d", ret);
-      return ret;
-    }
-  }
 
   if (this->info->ep_attr->type == FI_EP_RDM || this->info->ep_attr->type == FI_EP_DGRAM) {
     if (this->info->domain_attr->av_type != FI_AV_UNSPEC) {
@@ -254,7 +232,7 @@ int Connection::AllocateBuffers(void) {
   }
   memset(buf, 0, buf_size);
   rx_buf = buf;
-  tx_buf = (uint8_t *) buf + MAX(rx_size, HPS_MAX_CTRL_MSG);
+  tx_buf = buf + MAX(rx_size, HPS_MAX_CTRL_MSG);
   tx_buf = (uint8_t *) (((uintptr_t) tx_buf + alignment - 1) & ~(alignment - 1));
 
   remote_cq_data = hps_utils_init_cq_data(info);
@@ -273,64 +251,6 @@ int Connection::AllocateBuffers(void) {
 
   this->send_buf = new Buffer(tx_buf, tx_size, opts->no_buffers);
   this->recv_buf = new Buffer(rx_buf, rx_size, opts->no_buffers);
-  return 0;
-}
-
-/*
- * Include FI_MSG_PREFIX space in the allocated buffer, and ensure that the
- * buffer is large enough for a control message used to exchange addressing
- * data.
- */
-int Connection::AllocMsgs(void) {
-  int ret;
-  long alignment = 1;
-  Options *opts = this->options;
-
-  tx_size = 10000;
-  if (tx_size > info->ep_attr->max_msg_size) {
-    tx_size = info->ep_attr->max_msg_size;
-  }
-  rx_size = tx_size + hps_utils_rx_prefix_size(this->info);
-  tx_size += hps_utils_tx_prefix_size(this->info);
-  buf_size = MAX(tx_size, HPS_MAX_CTRL_MSG) + MAX(rx_size, HPS_MAX_CTRL_MSG);
-
-  if (opts->options & HPS_OPT_ALIGN) {
-    alignment = sysconf(_SC_PAGESIZE);
-    if (alignment < 0) {
-      return -errno;
-    }
-    buf_size += alignment;
-
-    ret = posix_memalign((void **)&buf, (size_t) alignment, buf_size);
-    if (ret) {
-      HPS_ERR("posix_memalign %d", ret);
-      return ret;
-    }
-  } else {
-    buf = (uint8_t *)malloc(sizeof(uint8_t) * buf_size);
-    if (!buf) {
-      perror("malloc");
-      return -FI_ENOMEM;
-    }
-  }
-  memset(buf, 0, buf_size);
-  rx_buf = buf;
-  tx_buf = (uint8_t *) buf + MAX(rx_size, HPS_MAX_CTRL_MSG);
-  tx_buf = (uint8_t*) (((uintptr_t) tx_buf + alignment - 1) & ~(alignment - 1));
-  remote_cq_data = hps_utils_init_cq_data(info);
-
-  if (!ft_skip_mr && ((info->mode & FI_LOCAL_MR) ||
-                      (info->caps & (FI_RMA | FI_ATOMIC)))) {
-    ret = fi_mr_reg(domain, buf, buf_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY, 0, &mr, NULL);
-    if (ret) {
-      HPS_ERR("fi_mr_reg %d", ret);
-      return ret;
-    }
-  } else {
-    mr = &no_mr;
-  }
-
   return 0;
 }
 
@@ -378,13 +298,6 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   if (ret) {
     HPS_ERR("fi_enable %d", ret);
     return ret;
-  }
-  if (this->info->rx_attr->op_flags != FI_MULTI_RECV) {
-    /* Initial receive will get remote address for unconnected EPs */
-//    if (PostRX(MAX(rx_size, HPS_MAX_CTRL_MSG), &rx_ctx)) {
-//      HPS_ERR("PostRX %d", ret);
-//      return ret;
-//    }
   }
   return 0;
 }

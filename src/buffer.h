@@ -2,6 +2,7 @@
 #define BUFFER_H_
 
 #include <cstdint>
+#include <pthread.h>
 
 class Buffer {
 public:
@@ -68,6 +69,14 @@ private:
   uint32_t data_head;
   // no of buffers
   uint32_t no_bufs;
+
+  // the thread lock
+  pthread_mutex_t lock;
+  // condition full
+  pthread_cond_t cond_full;
+  // condition empty
+  pthread_cond_t cond_empty;
+
   // private methods
   int Init();
 };
