@@ -8,6 +8,7 @@ struct fi_info *hints;
 int connect3() {
   Client client(&options, hints);
   client.Connect();
+  con = client.GetConnection();
   client.Start();
   return 1;
 }
