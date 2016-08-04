@@ -14,8 +14,15 @@ public:
   // increment the base
   int IncrementTail(uint32_t count);
 
-  // increment the data head
-  int IncrementDataHead(uint32_t count);
+  int IncrementFilled(uint32_t count);
+
+  uint32_t GetFilledBuffers() {
+    return filled_buffs;
+  }
+
+  uint32_t GetSubmittedBuffers() {
+    return submitted_buffs;
+  }
 
   // get the free space available in the buffers
   uint64_t GetAvailableWriteSpace();
@@ -72,7 +79,6 @@ private:
   uint32_t filled_buffs;
   // private methods
   int Init();
-
 };
 
 #endif /* BUFFER_H_ */

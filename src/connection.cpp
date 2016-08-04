@@ -318,7 +318,7 @@ int Connection::SetupBuffers() {
       HPS_ERR("PostRX %d", ret);
       return (int) ret;
     }
-    rBuf->SetHead(i);
+    rBuf->IncrementSubmitted(i);
   }
   HPS_INFO("Head, base, datahead %" PRId32 "%" PRId32 "%" PRId32 ", %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Base(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
   return 0;
@@ -749,7 +749,7 @@ int Connection::Receive() {
 
 bool Connection::DataAvailableForRead() {
   Buffer *sbuf = this->recv_buf;
-  return sbuf->DataHead() != sbuf->Base();
+  return sbuf->;
 }
 
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
@@ -827,6 +827,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       HPS_INFO("Sending length %"
                    PRIu32, *((uint32_t *) current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
+      sbuf->IncrementFilled(1);
       // send the current buffer
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
@@ -900,7 +901,7 @@ int Connection::ReceiveComplete() {
     }
   }
 
-  if (this->recv_buf->IncrementDataHead((uint32_t) cq_ret)) {
+  if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
     HPS_ERR("Failed to increment buffer data pointer");
     return 1;
   }

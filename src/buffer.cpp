@@ -75,6 +75,16 @@ int increment(int size, int current) {
   return size - 1 == current ? 0 : current + 1;
 }
 
+int Buffer::IncrementFilled(uint32_t count) {
+  uint32_t temp = this->filled_buffs + count;
+  if (temp > this->submitted_buffs || temp > this->no_bufs) {
+    HPS_ERR("Failed to increment the submitted, inconsistant state");
+    return 1;
+  }
+  this->filled_buffs = temp;
+  return 0;
+}
+
 int Buffer::IncrementSubmitted(uint32_t count) {
   uint32_t temp = this->submitted_buffs + count;
   if (temp > this->filled_buffs || temp > this->no_bufs) {
@@ -96,12 +106,6 @@ int Buffer::IncrementTail(uint32_t count) {
   this->filled_buffs -= count;
   // signal that we have an empty buffer
   pthread_cond_signal(&cond_empty);
-  return 0;
-}
-
-int Buffer::IncrementDataHead(uint32_t count) {
-  this->data_head = (this->data_head + count) % this->no_bufs;
-
   return 0;
 }
 
@@ -131,7 +135,7 @@ int Buffer::waitFree() {
 int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   // nothing to read
-  if (base == data_head) {
+  if (filled_buffs == 0) {
     *read = 0;
     return 0;
   }
