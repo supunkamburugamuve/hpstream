@@ -37,6 +37,7 @@ void EventLoop::loop() {
 
     memset(&event, 0, sizeof event);
     if (fi_trywait(fabric, fid_list, 1) == FI_SUCCESS) {
+      HPS_INFO("Wait success");
       ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, &event, 1, -1));
       if (ret < 0) {
         ret = -errno;
