@@ -97,25 +97,19 @@ int increment(int size, int current) {
 }
 
 int Buffer::IncrementHead(uint32_t count) {
-  pthread_mutex_lock(&this->lock);
   this->head = (this->head + count) % this->no_bufs;
-  pthread_mutex_unlock(&this->lock);
   return 0;
 }
 
 int Buffer::IncrementTail(uint32_t count) {
-  pthread_mutex_lock(&this->lock);
   this->tail = (this->tail + count) % this->no_bufs;
   // signal that we have an empty buffer
   pthread_cond_signal(&cond_empty);
-  pthread_mutex_unlock(&this->lock);
   return 0;
 }
 
 int Buffer::IncrementDataHead(uint32_t count) {
-  pthread_mutex_lock(&this->lock);
   this->data_head = (this->data_head + count) % this->no_bufs;
-  pthread_mutex_unlock(&this->lock);
   return 0;
 }
 
