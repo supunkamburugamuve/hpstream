@@ -1038,6 +1038,11 @@ int Connection::Ready(int fd) {
   return 0;
 }
 
+int Connection::Print() {
+  HPS_INFO("Printing %d %d", tx_fd, rx_fd);
+  return 1;
+}
+
 Connection::~Connection() {
 
 }

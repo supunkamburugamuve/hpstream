@@ -60,6 +60,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
   if (fids.find(fid) == fids.end()) {
     this->fids[fid] = desc;
     event.data.ptr = (void *)connection;
+    connection->Print();
     event.data.fd = fid;
     event.events = EPOLLIN;
     ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
@@ -69,7 +70,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
       return ret;
     }
   } else {
-    return 0;
+    return 1;
   }
   // create a list of fids
   return 0;

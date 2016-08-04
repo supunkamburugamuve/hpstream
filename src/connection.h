@@ -93,6 +93,9 @@ public:
   int GetRxFd() {
     return rx_fd;
   }
+
+  int Print();
+
 private:
   // options for initialization
   Options *options;
@@ -178,6 +181,7 @@ private:
   int AllocateBuffers(void);
   int TransmitComplete();
   int ReceiveComplete();
+
 };
 
 #endif /* HPS_CONNECTION_H_ */
