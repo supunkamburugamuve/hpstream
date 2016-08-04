@@ -1021,7 +1021,7 @@ int Connection::ReceiveComplete() {
 }
 
 int Connection::Ready(int fd) {
-  HPS_INFO("Connection ready %d tx_fd=%" PRId64 "rx_fd=%" PRId64, fd, tx_fd, rx_fd);
+  HPS_INFO("Connection ready %d tx_fd=%d rx_fd=%d", fd, tx_fd, rx_fd);
   if (fd == tx_fd) {
     TransmitComplete();
   }
