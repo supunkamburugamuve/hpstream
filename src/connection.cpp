@@ -320,7 +320,7 @@ int Connection::SetupBuffers() {
     }
     rBuf->SetHead(i);
   }
-  HPS_INFO("Head, tail, datahead %" PRId32 " %" PRId32 " %" PRId32 " %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Tail(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
+  HPS_INFO("Head, tail, datahead %" PRId32 "%" PRId32 "%" PRId32 ", %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Tail(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
   return 0;
 }
 
@@ -964,6 +964,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
 }
 
 int Connection::TransmitComplete() {
+  HPS_INFO("Transmit complete");
   struct fi_cq_err_entry comp;
   int ret;
   // lets get the number of completions
@@ -991,6 +992,7 @@ int Connection::TransmitComplete() {
 }
 
 int Connection::ReceiveComplete() {
+  HPS_INFO("Receive complete");
   struct fi_cq_err_entry comp;
   int ret;
   // lets get the number of completions
@@ -1019,6 +1021,7 @@ int Connection::ReceiveComplete() {
 }
 
 int Connection::Ready(int fd) {
+  HPS_INFO("Connection ready %d", fd);
   if (fd == tx_fd) {
     TransmitComplete();
   }
@@ -1027,6 +1030,11 @@ int Connection::Ready(int fd) {
     ReceiveComplete();
   }
   return 0;
+}
+
+int Connection::Print() {
+  HPS_INFO("Printing %d %d", tx_fd, rx_fd);
+  return 1;
 }
 
 Connection::~Connection() {

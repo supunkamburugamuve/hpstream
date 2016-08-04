@@ -8,6 +8,7 @@ struct fi_info *hints;
 int connect3() {
   Client client(&options, hints);
   client.Connect();
+  con = client.GetConnection();
   client.Start();
   return 1;
 }
@@ -16,6 +17,7 @@ int exchange3() {
   int ret = 0;
   int values[10][1000];
 
+  con->SetupBuffers();
   for (int j = 0; j < 10; j++) {
     for (int i = 0; i < 1000; i++) {
       if (j % 2 == 0) {

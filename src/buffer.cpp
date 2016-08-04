@@ -97,25 +97,19 @@ int increment(int size, int current) {
 }
 
 int Buffer::IncrementHead(uint32_t count) {
-  pthread_mutex_lock(&this->lock);
   this->head = (this->head + count) % this->no_bufs;
-  pthread_mutex_unlock(&this->lock);
   return 0;
 }
 
 int Buffer::IncrementTail(uint32_t count) {
-  pthread_mutex_lock(&this->lock);
   this->tail = (this->tail + count) % this->no_bufs;
   // signal that we have an empty buffer
   pthread_cond_signal(&cond_empty);
-  pthread_mutex_unlock(&this->lock);
   return 0;
 }
 
 int Buffer::IncrementDataHead(uint32_t count) {
-  pthread_mutex_lock(&this->lock);
   this->data_head = (this->data_head + count) % this->no_bufs;
-  pthread_mutex_unlock(&this->lock);
   return 0;
 }
 
@@ -158,14 +152,14 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     return 0;
   }
   uint32_t tail = this->tail;
-  uint32_t head = this->head;
+  uint32_t dataHead = this->data_head;
   uint32_t current_read_indx = this->current_read_index;
   // need to copy
   uint32_t need_copy = 0;
   // number of bytes copied
   uint32_t read_size = 0;
-  HPS_INFO("Reading, tail= %d, head= %d", tail, head);
-  while (read_size < size &&  tail != head) {
+  HPS_INFO("Reading, tail= %d, dataHead= %d", tail, dataHead);
+  while (read_size < size &&  tail != dataHead) {
     uint8_t *b = buffers[tail];
     uint32_t *r;
     // first read the amount of data in the buffer
@@ -194,7 +188,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
     memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
-    HPS_INFO("Reading, tail= %d, head= %d", tail, head);
+    HPS_INFO("Reading, tail= %d, dataHead= %d", tail, dataHead);
     read_size += can_copy;
   }
 
