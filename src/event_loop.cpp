@@ -42,6 +42,7 @@ void EventLoop::loop() {
 
       Connection *con = (Connection *) event.data.ptr;
       if (con != NULL) {
+        HPS_ERR("Connection fd %d", event.data.fd);
         con->Ready(event.data.fd);
       } else {
         HPS_ERR("Connection NULL");
