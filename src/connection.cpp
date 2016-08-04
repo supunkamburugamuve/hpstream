@@ -702,50 +702,6 @@ int Connection::ExchangeClientKeys() {
   return (int) ret;
 }
 
-int Connection::ClientSync() {
-  ssize_t ret;
-  ret = TX(1);
-  if (ret) {
-    return (int) ret;
-  }
-
-  ret = RX(1);
-  return (int) ret;
-}
-
-int Connection::ServerSync() {
-  ssize_t ret;
-  ret = RX(1);
-  if (ret) {
-    return (int) ret;
-  }
-
-  ret = TX(1);
-  return (int) ret;
-}
-
-int Connection::Receive() {
-  int ret;
-  Buffer *sbuf = this->recv_buf;
-  uint32_t data_head;
-  uint32_t buffers = sbuf->NoOfBuffers();
-  HPS_INFO("1 Data head, base and head at %" PRIu32 " %" PRIu32 " %" PRIu32 "", sbuf->DataHead(), sbuf->Base(), sbuf->Head());
-  // now wait until a receive is completed
-  HPS_INFO("Receive with %ld %ld", rx_cq_cntr + 1, rx_seq);
-  ret = ReceiveCompletions(rx_cq_cntr + 1, rx_seq);
-  if (ret < 0) {
-    HPS_ERR("Failed to retrieve");
-    return 1;
-  }
-  // ok a receive is completed
-  // mark the buffers with the data
-  // now update the buffer according to the rx_cq_cntr and rx_cq
-  data_head = (uint32_t) ((rx_cq_cntr - 1) % buffers);
-  sbuf->SetDataHead(data_head);
-  HPS_INFO("2 Data head, base and head at dataHead=%" PRIu32 " base=%" PRIu32 " head=%" PRIu32 " rx_cq_cntr=%" PRId64, sbuf->DataHead(),
-           sbuf->Base(), sbuf->Head(), rx_cq_cntr);
-  return 0;
-}
 
 bool Connection::DataAvailableForRead() {
   Buffer *sbuf = this->recv_buf;
@@ -757,22 +713,24 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
   // go through the buffers
   Buffer *rbuf = this->recv_buf;
+  // now lock the buffer
   rbuf->acquireLock();
   ret = rbuf->ReadData(buf, size, read);
-  // now lock the buffer
-  uint32_t tail = rbuf->Base();
-  uint32_t head = rbuf->Head();
-  uint32_t next_head = (head + 1) % rbuf->NoOfBuffers();
-  while (tail != next_head) {
-    uint8_t *send_buf = rbuf->GetBuffer(head);
+  uint32_t base = rbuf->Base();
+  uint32_t submittedBuffers = rbuf->GetSubmittedBuffers();
+  uint32_t noOfBuffers = rbuf->NoOfBuffers();
+  uint32_t unSubmittedBuffers = noOfBuffers - submittedBuffers;
+  uint32_t index = 0;
+  while (unSubmittedBuffers > 0) {
+    index = (base + submittedBuffers + 1) % noOfBuffers;
+    uint8_t *send_buf = rbuf->GetBuffer(index);
     ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
       return (int) ret;
     }
     rbuf->IncrementSubmitted(1);
-    head = rbuf->Head();
-    next_head = (head + 1) % rbuf->NoOfBuffers();
+    unSubmittedBuffers--;
   }
   rbuf->releaseLock();
   return 0;

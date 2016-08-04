@@ -133,21 +133,20 @@ int Buffer::waitFree() {
 }
 
 int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
-  ssize_t ret = 0;
   // nothing to read
   if (filled_buffs == 0) {
     *read = 0;
     return 0;
   }
   uint32_t tail = this->base;
-  uint32_t dataHead = this->data_head;
+  uint32_t buffers_filled = this->filled_buffs;
   uint32_t current_read_indx = this->current_read_index;
   // need to copy
   uint32_t need_copy = 0;
   // number of bytes copied
   uint32_t read_size = 0;
-  HPS_INFO("Reading, base= %d, dataHead= %d", tail, dataHead);
-  while (read_size < size &&  tail != dataHead) {
+  HPS_INFO("Reading, base= %d, dataHead= %d", tail, buffers_filled);
+  while (read_size < size &&  buffers_filled > 0) {
     uint8_t *b = buffers[tail];
     uint32_t *r;
     // first read the amount of data in the buffer
@@ -165,6 +164,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       current_read_indx = 0;
       // advance the base pointer
       IncrementTail(1);
+      buffers_filled--;
       tail = this->base;
     } else {
       HPS_INFO("Not Moving base");
@@ -176,7 +176,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
     memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
-    HPS_INFO("Reading, base= %d, dataHead= %d", tail, dataHead);
+    HPS_INFO("Reading, base= %d, dataHead= %d", tail, buffers_filled);
     read_size += can_copy;
   }
 
