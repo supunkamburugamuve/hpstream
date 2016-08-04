@@ -310,7 +310,7 @@ int Connection::SetupBuffers() {
   ssize_t ret = 0;
   Buffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->NoOfBuffers();
-  HPS_INFO("Head, tail, datahead %ld %ld %ld", rBuf->Head(), rBuf->Tail(), rBuf->DataHead());
+  HPS_INFO("Head, base, datahead %ld %ld %ld", rBuf->Head(), rBuf->Base(), rBuf->DataHead());
   for (uint32_t i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
@@ -320,7 +320,7 @@ int Connection::SetupBuffers() {
     }
     rBuf->SetHead(i);
   }
-  HPS_INFO("Head, tail, datahead %" PRId32 "%" PRId32 "%" PRId32 ", %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Tail(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
+  HPS_INFO("Head, base, datahead %" PRId32 "%" PRId32 "%" PRId32 ", %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Base(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
   return 0;
 }
 
@@ -724,125 +724,12 @@ int Connection::ServerSync() {
   return (int) ret;
 }
 
-int Connection::SendCompletions(uint64_t min, uint64_t max) {
-  ssize_t ret = 0;
-  ssize_t cq_read = 0;
-  struct fi_cq_err_entry comp;
-  struct timespec a, b;
-
-  if (txcq) {
-    if (timeout >= 0) {
-      clock_gettime(CLOCK_MONOTONIC, &a);
-    }
-
-    HPS_INFO("CQ_Read for txcq tx_seq=%ld tx_cntr=%ld", tx_seq, tx_cq_cntr);
-    while (tx_cq_cntr < max) {
-      cq_read = fi_cq_read(txcq, &comp, 1);
-
-      if (cq_read > 0) {
-        if (timeout >= 0) {
-          clock_gettime(CLOCK_MONOTONIC, &a);
-        }
-        tx_cq_cntr += cq_read;
-        if (tx_cq_cntr >= max) {
-          HPS_INFO("Done completion %ld", rx_cq_cntr);
-          break;
-        }
-      } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
-        HPS_INFO("Failed %ld %ld", rx_cq_cntr, cq_read);
-        return (int) cq_read;
-      } else if (min <= tx_cq_cntr && cq_read == -FI_EAGAIN) {
-        // we have read enough to return
-        HPS_INFO("Done completion %ld", rx_cq_cntr);
-        break;
-      } else if (timeout >= 0) {
-        clock_gettime(CLOCK_MONOTONIC, &b);
-        if ((b.tv_sec - a.tv_sec) > timeout) {
-          HPS_ERR("%ds timeout expired", timeout);
-          return -FI_ENODATA;
-        }
-      }
-    }
-  } else if (txcntr) {
-    ret = fi_cntr_wait(txcntr, min, -1);
-    if (ret) {
-      HPS_ERR("fi_cntr_wait %ld", ret);
-    }
-  } else {
-    HPS_ERR("Trying to get a TX completion when no TX CQ or counter were opened");
-    ret = -FI_EOTHER;
-  }
-  return (int) ret;
-}
-
-/**
- * Receive completions at least 'total' completions and until rx_seq
- * completions
- */
-int Connection::ReceiveCompletions(uint64_t min, uint64_t max) {
-  ssize_t ret = FI_SUCCESS;
-  ssize_t cq_read = 0;
-  struct fi_cq_err_entry comp;
-  struct timespec a, b;
-  // in case we are using completion queue
-  if (rxcq) {
-    if (timeout >= 0) {
-      clock_gettime(CLOCK_MONOTONIC, &a);
-    }
-
-    HPS_INFO("CQ_Read for rxcq rx_seq=%ld rx_cntr=%ld", rx_seq, rx_cq_cntr);
-    while (rx_cq_cntr < max	) {
-      cq_read = fi_cq_read(rxcq, &comp, 1);
-      if (cq_read > 0) {
-        if (timeout >= 0) {
-          clock_gettime(CLOCK_MONOTONIC, &a);
-        }
-        rx_cq_cntr += cq_read;
-        // we've reached max
-        if (rx_cq_cntr >= max) {
-          HPS_INFO("Done completion %ld", rx_cq_cntr);
-          break;
-        }
-      } else if (cq_read < 0 && cq_read != -FI_EAGAIN) {
-        ret = cq_read;
-        HPS_INFO("Failed %ld %ld", rx_cq_cntr, cq_read);
-        break;
-      } else if (min <= rx_cq_cntr && cq_read == -FI_EAGAIN) {
-        // we have read enough to return
-        HPS_INFO("Done looping %ld %ld", rx_cq_cntr, cq_read);
-        break;
-      } else if (timeout >= 0) {
-        clock_gettime(CLOCK_MONOTONIC, &b);
-        if ((b.tv_sec - a.tv_sec) > timeout) {
-          HPS_ERR("%ds timeout expired", timeout);
-          ret = -FI_ENODATA;
-          break;
-        }
-      }
-    }
-
-    if (ret) {
-      if (ret == -FI_EAVAIL) {
-        ret = hps_utils_cq_readerr(rxcq);
-        rx_cq_cntr++;
-      } else {
-        HPS_ERR("ft_get_cq_comp %ld", ret);
-      }
-    }
-    return 0;
-  } else {
-    HPS_ERR("Trying to get a RX completion when no RX CQ or counter were opened");
-    ret = -FI_EOTHER;
-  }
-  return (int) ret;
-}
-
 int Connection::Receive() {
   int ret;
   Buffer *sbuf = this->recv_buf;
   uint32_t data_head;
   uint32_t buffers = sbuf->NoOfBuffers();
-  HPS_INFO("1 Data head, tail and head at %" PRIu32 " %" PRIu32 " %" PRIu32 "", sbuf->DataHead(), sbuf->Tail(), sbuf->Head());
+  HPS_INFO("1 Data head, base and head at %" PRIu32 " %" PRIu32 " %" PRIu32 "", sbuf->DataHead(), sbuf->Base(), sbuf->Head());
   // now wait until a receive is completed
   HPS_INFO("Receive with %ld %ld", rx_cq_cntr + 1, rx_seq);
   ret = ReceiveCompletions(rx_cq_cntr + 1, rx_seq);
@@ -855,13 +742,14 @@ int Connection::Receive() {
   // now update the buffer according to the rx_cq_cntr and rx_cq
   data_head = (uint32_t) ((rx_cq_cntr - 1) % buffers);
   sbuf->SetDataHead(data_head);
-  HPS_INFO("2 Data head, tail and head at dataHead=%" PRIu32 " tail=%" PRIu32 " head=%" PRIu32 " rx_cq_cntr=%" PRId64, sbuf->DataHead(), sbuf->Tail(), sbuf->Head(), rx_cq_cntr);
+  HPS_INFO("2 Data head, base and head at dataHead=%" PRIu32 " base=%" PRIu32 " head=%" PRIu32 " rx_cq_cntr=%" PRId64, sbuf->DataHead(),
+           sbuf->Base(), sbuf->Head(), rx_cq_cntr);
   return 0;
 }
 
 bool Connection::DataAvailableForRead() {
   Buffer *sbuf = this->recv_buf;
-  return sbuf->DataHead() != sbuf->Tail();
+  return sbuf->DataHead() != sbuf->Base();
 }
 
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
@@ -872,7 +760,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   rbuf->acquireLock();
   ret = rbuf->ReadData(buf, size, read);
   // now lock the buffer
-  uint32_t tail = rbuf->Tail();
+  uint32_t tail = rbuf->Base();
   uint32_t head = rbuf->Head();
   uint32_t next_head = (head + 1) % rbuf->NoOfBuffers();
   while (tail != next_head) {
@@ -882,7 +770,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       HPS_ERR("Failed to post the receive buffer");
       return (int) ret;
     }
-    rbuf->IncrementHead(1);
+    rbuf->IncrementSubmitted(1);
     head = rbuf->Head();
     next_head = (head + 1) % rbuf->NoOfBuffers();
   }
@@ -906,7 +794,7 @@ int Connection::WriteBuffers() {
   // mark the buffers with the data
   // now update the buffer according to the rx_cq_cntr and rx_cq
   data_head = (uint32_t) (tx_cq_cntr % buffers);
-  sbuf->SetTail(data_head);
+  sbuf->SetBase(data_head);
   return 0;
 }
 
@@ -925,11 +813,11 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   uint32_t buf_size = sbuf->BufferSize() - 4;
   // we need to send everything by using the buffers available
   while (sent_size < size) {
-    uint64_t free_space = sbuf->GetFreeSpace();
+    uint64_t free_space = sbuf->GetAvailableWriteSpace();
     // we have space in the buffers
     if (free_space > 0) {
       HPS_INFO("Free space %d", free_space);
-      head = sbuf->Head();
+      head = sbuf->NextWriteIndex();
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
@@ -943,7 +831,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
         // increment the head
-        sbuf->IncrementHead(1);
+        sbuf->IncrementSubmitted(1);
       } else {
         error_count++;
         if (error_count > MAX_ERRORS) {

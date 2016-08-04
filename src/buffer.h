@@ -9,34 +9,23 @@ public:
   Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs);
 
   // increment the head
-  int IncrementHead(uint32_t count);
+  int IncrementSubmitted(uint32_t count);
 
-  // increment the tail
+  // increment the base
   int IncrementTail(uint32_t count);
 
   // increment the data head
   int IncrementDataHead(uint32_t count);
 
   // get the free space available in the buffers
-  uint64_t GetFreeSpace();
-
-  // get the space ready to be received by user
-  uint64_t GetReceiveReadySpace();
-
-  // get space ready to be posted to Hardware
-  uint64_t GetSendReadySpace();
+  uint64_t GetAvailableWriteSpace();
 
   /** Getters and setters */
   uint8_t *GetBuffer(int i);
   uint32_t BufferSize();
   uint32_t NoOfBuffers();
-  uint32_t Head();
-  uint32_t Tail();
-  uint32_t DataHead();
-  uint32_t ContentSize(int i);
-  void SetDataHead(uint32_t head);
-  void SetHead(uint32_t head);
-  void SetTail(uint32_t tail);
+  uint32_t Base();
+  void SetBase(uint32_t tail);
   uint32_t CurrentReadIndex();
   void SetCurrentReadIndex(uint32_t indx);
 
@@ -48,6 +37,8 @@ public:
   int releaseLock();
   /** Free the buffer */
   void Free();
+
+  uint32_t NextWriteIndex();
 
 private:
   // place in the current buffer we read up to, this is needed to get the data out
@@ -62,17 +53,10 @@ private:
   uint32_t buf_size;
   // array of actual data sizes
   uint32_t *content_sizes;
-  // buffers between tail and head are posted to RDMA operations
-  // tail of the buffers that are being used
+  // buffers between base and head are posted to RDMA operations
+  // base of the buffers that are being used
   // the buffers can be in a posted state, or received messages
-  uint32_t tail;
-  // head of the buffer
-  uint32_t head;
-  // buffers between head and data_head are with data from users
-  // and these are ready to be posted
-  // in case of receive, the data between tail and data_head are
-  // received data, that needs to be consumed by the user
-  uint32_t data_head;
+  uint32_t base;
   // no of buffers
   uint32_t no_bufs;
 
@@ -82,7 +66,10 @@ private:
   pthread_cond_t cond_full;
   // condition empty
   pthread_cond_t cond_empty;
-
+  // number of buffers submitted to RDMA
+  uint32_t submitted_buffs;
+  // number of buffers filled by RDMA
+  uint32_t filled_buffs;
   // private methods
   int Init();
 

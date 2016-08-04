@@ -11,12 +11,12 @@ Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->buf = buf;
   this->buf_size = buf_size / no_bufs;
   this->no_bufs = no_bufs;
-  this->head = 0;
-  this->tail = 0;
-  this->data_head = 0;
+  this->base = 0;
   this->content_sizes = NULL;
   this->current_read_index = 0;
   this->buffers = NULL; // do error handling
+  this->submitted_buffs = 0;
+  this->filled_buffs = 0;
 
   pthread_mutex_init(&lock, NULL);
   pthread_cond_init(&cond_empty, NULL);
@@ -44,32 +44,12 @@ uint32_t Buffer::NoOfBuffers() {
   return no_bufs;
 }
 
-uint32_t Buffer::Head() {
-  return head;
+uint32_t Buffer::Base() {
+  return base;
 }
 
-uint32_t Buffer::Tail() {
-  return tail;
-}
-
-uint32_t Buffer::DataHead() {
-  return data_head;
-}
-
-uint32_t Buffer::ContentSize(int i) {
-  return content_sizes[i];
-}
-
-void Buffer::SetDataHead(uint32_t head) {
-  this->data_head = head;
-}
-
-void Buffer::SetHead(uint32_t head) {
-  this->head = head;
-}
-
-void Buffer::SetTail(uint32_t tail) {
-  this->tail = tail;
+void Buffer::SetBase(uint32_t tail) {
+  this->base = tail;
 }
 
 uint32_t Buffer::CurrentReadIndex() {
@@ -87,8 +67,7 @@ int Buffer::Init() {
   for (i = 0; i < no_bufs; i++) {
     this->buffers[i] = this->buf + buf_size * i;
   }
-  this->head = 0;
-  this->tail = 0;
+  this->base = 0;
   return 0;
 }
 
@@ -96,13 +75,25 @@ int increment(int size, int current) {
   return size - 1 == current ? 0 : current + 1;
 }
 
-int Buffer::IncrementHead(uint32_t count) {
-  this->head = (this->head + count) % this->no_bufs;
+int Buffer::IncrementSubmitted(uint32_t count) {
+  uint32_t temp = this->submitted_buffs + count;
+  if (temp > this->filled_buffs || temp > this->no_bufs) {
+    HPS_ERR("Failed to increment the submitted, inconsistant state");
+    return 1;
+  }
+  this->submitted_buffs = temp;
   return 0;
 }
 
 int Buffer::IncrementTail(uint32_t count) {
-  this->tail = (this->tail + count) % this->no_bufs;
+  if (this->filled_buffs - count < 0 || this->submitted_buffs - count < 0) {
+    HPS_ERR("Failed to decrement the buffer, inconsistant state");
+    return 1;
+  }
+  this->base = (this->base + count) % this->no_bufs;
+  // dec submitted and filled
+  this->submitted_buffs -= count;
+  this->filled_buffs -= count;
   // signal that we have an empty buffer
   pthread_cond_signal(&cond_empty);
   return 0;
@@ -123,22 +114,14 @@ void Buffer::Free() {
   }
 }
 
-uint64_t Buffer::GetFreeSpace() {
+uint64_t Buffer::GetAvailableWriteSpace() {
   // get the total free space available
-  int free_slots = this->no_bufs - abs(this->head - this->tail);
+  int free_slots = this->no_bufs - this->filled_buffs;
   return free_slots * this->buf_size;
 }
 
-// get the space ready to be received by user
-uint64_t Buffer::GetReceiveReadySpace() {
-  int ready_slots = this->no_bufs - abs(this->data_head - this->tail);
-  return ready_slots * this->buf_size;
-}
-
-// get space ready to be posted to Hardware
-uint64_t Buffer::GetSendReadySpace() {
-  int ready_slots = this->no_bufs - abs(this->data_head - this->head);
-  return ready_slots * this->buf_size;
+uint32_t Buffer::NextWriteIndex() {
+  return (base + this->filled_buffs) % this->no_bufs;
 }
 
 int Buffer::waitFree() {
@@ -148,18 +131,18 @@ int Buffer::waitFree() {
 int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   // nothing to read
-  if (tail == data_head) {
+  if (base == data_head) {
     *read = 0;
     return 0;
   }
-  uint32_t tail = this->tail;
+  uint32_t tail = this->base;
   uint32_t dataHead = this->data_head;
   uint32_t current_read_indx = this->current_read_index;
   // need to copy
   uint32_t need_copy = 0;
   // number of bytes copied
   uint32_t read_size = 0;
-  HPS_INFO("Reading, tail= %d, dataHead= %d", tail, dataHead);
+  HPS_INFO("Reading, base= %d, dataHead= %d", tail, dataHead);
   while (read_size < size &&  tail != dataHead) {
     uint8_t *b = buffers[tail];
     uint32_t *r;
@@ -173,14 +156,14 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, r, current_read_indx);
     // we can copy everything from this buffer
     if (size - read_size >= need_copy) {
-      HPS_INFO("Moving tail");
+      HPS_INFO("Moving base");
       can_copy = need_copy;
       current_read_indx = 0;
-      // advance the tail pointer
+      // advance the base pointer
       IncrementTail(1);
-      tail = this->tail;
+      tail = this->base;
     } else {
-      HPS_INFO("Not Moving tail");
+      HPS_INFO("Not Moving base");
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
       current_read_indx += can_copy;
@@ -189,7 +172,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
     memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
-    HPS_INFO("Reading, tail= %d, dataHead= %d", tail, dataHead);
+    HPS_INFO("Reading, base= %d, dataHead= %d", tail, dataHead);
     read_size += can_copy;
   }
 
