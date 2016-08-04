@@ -41,7 +41,11 @@ void EventLoop::loop() {
       }
 
       Connection *con = (Connection *) event.data.ptr;
-      con->Ready(event.data.fd);
+      if (con != NULL) {
+        con->Ready(event.data.fd);
+      } else {
+        HPS_ERR("Connection NULL");
+      }
     }
 
     delete fid_list;
