@@ -1022,12 +1022,6 @@ int Connection::ReceiveComplete() {
 
 int Connection::Ready(int fd) {
   HPS_INFO("Connection ready %d", fd);
-  if (this == NULL) {
-    HPS_ERR("This NULL");
-  }
-  HPS_INFO("Connection ready %d rx_fd=%d", fd, rx_fd);
-  HPS_INFO("Connection ready %d tx_fd=%d", fd, tx_fd);
-  HPS_INFO("Connection ready %d tx_fd=%d rx_fd=%d", fd, tx_fd, rx_fd);
   if (fd == tx_fd) {
     TransmitComplete();
   }

@@ -48,7 +48,7 @@ void EventLoop::loop() {
         Connection *c = con->con;
         int f = con->fid;
         HPS_ERR("Connection fd %d", f);
-        c->Ready(event.data.fd);
+        c->Ready(f);
       } else {
         HPS_ERR("Connection NULL");
       }
