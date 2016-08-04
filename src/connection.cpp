@@ -320,7 +320,7 @@ int Connection::SetupBuffers() {
     }
     rBuf->SetHead(i);
   }
-  HPS_INFO("Head, tail, datahead %ld %ld %ld, %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Tail(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
+  HPS_INFO("Head, tail, datahead %" PRId32 "%" PRId32 "%" PRId32 ", %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Tail(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
   return 0;
 }
 
@@ -1021,7 +1021,7 @@ int Connection::ReceiveComplete() {
 }
 
 int Connection::Ready(int fd) {
-  HPS_INFO("Connection ready %d tx_fd=%d rx_fd=%d", fd, tx_fd, rx_fd);
+  HPS_INFO("Connection ready %d tx_fd=%" PRId64 "rx_fd=%" PRId64, fd, tx_fd, rx_fd);
   if (fd == tx_fd) {
     TransmitComplete();
   }
