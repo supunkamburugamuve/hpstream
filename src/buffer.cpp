@@ -110,6 +110,7 @@ int Buffer::IncrementTail(uint32_t count) {
 
 int Buffer::IncrementDataHead(uint32_t count) {
   this->data_head = (this->data_head + count) % this->no_bufs;
+
   return 0;
 }
 
