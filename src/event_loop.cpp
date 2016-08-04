@@ -3,6 +3,11 @@
 
 #include "event_loop.h"
 
+struct connect_info {
+  Connection *con;
+  int fid;
+};
+
 EventLoop::EventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
@@ -40,10 +45,12 @@ void EventLoop::loop() {
         HPS_ERR("epoll_wait %d", ret);
       }
 
-      Connection *con = (Connection *) event.data.ptr;
+      struct connect_info *con = (struct connect_info *) event.data.ptr;
       if (con != NULL) {
-        HPS_ERR("Connection fd %d", event.data.fd);
-        con->Ready(event.data.fd);
+        Connection *c = con->con;
+        int f = con->fid;
+        HPS_ERR("Connection fd %d", f);
+        c->Ready(event.data.fd);
       } else {
         HPS_ERR("Connection NULL");
       }
@@ -56,12 +63,12 @@ void EventLoop::loop() {
 int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
   struct epoll_event event;
   int ret;
-
   if (fids.find(fid) == fids.end()) {
     this->fids[fid] = desc;
-    event.data.ptr = (void *)connection;
-    connection->Print();
-    event.data.fd = fid;
+    struct connect_info *info = new connect_info();
+    info->con = connection;
+    info->fid = fid;
+    event.data.ptr = (void *)info;
     event.events = EPOLLIN;
     ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
     if (ret) {
