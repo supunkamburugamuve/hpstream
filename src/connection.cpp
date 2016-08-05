@@ -504,7 +504,7 @@ int Connection::ExchangeServerKeys() {
   rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
   HPS_INFO("Exchange key 4 \n");
-  ret = PostRX(rx_size, &rx_ctx);
+  ret = PostRX(rx_size, rx_buf, &rx_ctx);
   if (ret) {
     HPS_ERR("Failed to post RX");
     return (int) ret;
@@ -549,7 +549,7 @@ int Connection::ExchangeClientKeys() {
 
   rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
   *peer_iov = *rma_iov;
-  ret = PostRX(rx_size, &rx_ctx);
+  ret = PostRX(rx_size, rx_buf, &rx_ctx);
   if (ret) {
     HPS_ERR("Failed to post RX");
     return (int) ret;
