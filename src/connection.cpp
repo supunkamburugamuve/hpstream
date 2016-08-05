@@ -705,7 +705,7 @@ int Connection::ExchangeClientKeys() {
 
 bool Connection::DataAvailableForRead() {
   Buffer *sbuf = this->recv_buf;
-  return sbuf->;
+  return sbuf->GetFilledBuffers() > 0;
 }
 
 int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
