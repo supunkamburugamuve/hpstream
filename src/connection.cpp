@@ -471,13 +471,6 @@ int Connection::GetTXComp(uint64_t total) {
   return ret;
 }
 
-ssize_t Connection::PostTX(size_t size, struct fi_context* ctx) {
-  HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
-          tx_buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-          this->remote_fi_addr, ctx);
-  return 0;
-}
-
 ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
            buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
@@ -485,12 +478,6 @@ ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   return 0;
 }
 
-ssize_t Connection::PostRX(size_t size, struct fi_context* ctx) {
-  HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, rx_buf,
-          MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-          fi_mr_desc(mr),	0, ctx);
-  return 0;
-}
 
 ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
