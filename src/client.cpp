@@ -1,6 +1,4 @@
 #include <iostream>
-#include <cstdio>
-#include <cstdlib>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>

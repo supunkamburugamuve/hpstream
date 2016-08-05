@@ -202,11 +202,11 @@ int Server::Connect(void) {
     return ret;
   }
 
-  ret = con->ExchangeServerKeys();
-  if (ret) {
-    HPS_ERR("Failed to exchange keys", ret);
-    return ret;
-  }
+//  ret = con->ExchangeServerKeys();
+//  if (ret) {
+//    HPS_ERR("Failed to exchange keys", ret);
+//    return ret;
+//  }
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
