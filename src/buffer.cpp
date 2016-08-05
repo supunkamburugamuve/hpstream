@@ -78,7 +78,7 @@ int increment(int size, int current) {
 int Buffer::IncrementFilled(uint32_t count) {
   uint32_t temp = this->filled_buffs + count;
   if (temp > this->submitted_buffs || temp > this->no_bufs) {
-    HPS_ERR("Failed to increment the submitted, inconsistant state");
+    HPS_ERR("Failed to increment the submitted, inconsistant state temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
     return 1;
   }
   this->filled_buffs = temp;

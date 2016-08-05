@@ -821,7 +821,6 @@ int Connection::TransmitComplete() {
 int Connection::ReceiveComplete() {
   HPS_INFO("Receive complete");
   struct fi_cq_err_entry comp;
-  int ret;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
