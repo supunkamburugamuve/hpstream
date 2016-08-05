@@ -9,7 +9,7 @@ int connect3() {
   int ret = 0;
   server = new Server(&options, hints);
   server->Init();
-  server->Connect();
+  //server->Connect();
 //  con = server.GetConnection();
   server->Start();
   return ret;
