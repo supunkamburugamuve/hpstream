@@ -138,9 +138,7 @@ private:
 
   int timeout;
 
-  ssize_t PostTX(size_t size, struct fi_context* ctx);
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
-  ssize_t PostRX(size_t size, struct fi_context* ctx);
   ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
 
   int GetTXComp(uint64_t total);
