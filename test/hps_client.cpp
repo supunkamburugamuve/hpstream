@@ -1,5 +1,4 @@
 #include "hps_utils.h"
-#include <unistd.h>
 
 Connection *con;
 Options options;
@@ -38,7 +37,6 @@ int exchange3() {
 
 int main(int argc, char **argv) {
   int op;
-  int ret = 0;
   options.rma_op = HPS_RMA_WRITE;
   options.buf_size = 1024 * 1024 * 40;
   options.no_buffers = 4;

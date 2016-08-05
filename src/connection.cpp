@@ -736,26 +736,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   return 0;
 }
 
-int Connection::WriteBuffers() {
-  int ret;
-  Buffer *sbuf = this->send_buf;
-  uint32_t data_head;
-  uint32_t buffers = sbuf->NoOfBuffers();
-  // now wait until a receive is completed
-  HPS_INFO("Write with %ld %ld", tx_cq_cntr + 1, tx_seq);
-  ret = SendCompletions(tx_cq_cntr + 1, tx_seq);
-  if (ret < 0) {
-    HPS_ERR("Failed to send complete");
-    return 1;
-  }
-  // ok a receive is completed
-  // mark the buffers with the data
-  // now update the buffer according to the rx_cq_cntr and rx_cq
-  data_head = (uint32_t) (tx_cq_cntr % buffers);
-  sbuf->SetBase(data_head);
-  return 0;
-}
-
 int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
   HPS_INFO("Init writing");

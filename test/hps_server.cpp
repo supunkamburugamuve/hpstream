@@ -15,7 +15,6 @@ int connect3() {
 }
 
 int exchange3() {
-  int ret;
   int values[1000];
   uint32_t read = 0;
   uint32_t current_read = 0;
@@ -46,7 +45,6 @@ int exchange3() {
 
 int main(int argc, char **argv) {
   int op;
-  int ret = 0;
   options.rma_op = HPS_RMA_WRITE;
   options.buf_size = 1024 * 1024 * 40;
   options.no_buffers = 4;

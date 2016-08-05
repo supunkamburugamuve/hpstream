@@ -40,8 +40,6 @@ public:
    */
   int ExchangeServerKeys();
   int ExchangeClientKeys();
-  int ServerSync();
-  int ClientSync();
   /**
    * Post a message
    */
@@ -58,11 +56,6 @@ public:
    */
   int WriteData(uint8_t *buf, uint32_t size);
 
-  /**
-   * Write the current buffers
-   */
-  int WriteBuffers();
-
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 
   bool DataAvailableForRead();
@@ -71,10 +64,6 @@ public:
   Buffer *ReceiveBuffer();
   /** GEt the send buffer */
   Buffer *SendBuffer();
-  /**
-   * Receive content in to the buffer.
-   */
-  int Receive();
 
   int Ready(int fd);
 
@@ -175,9 +164,6 @@ private:
                         uint64_t total, int timeout);
   int SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
                         uint64_t total, int timeout);
-  int ReceiveCompletions(uint64_t min, uint64_t max);
-  int SendCompletions(uint64_t min, uint64_t max);
-  int AllocMsgs(void);
   int AllocateBuffers(void);
   int TransmitComplete();
   int ReceiveComplete();
