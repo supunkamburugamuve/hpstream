@@ -527,7 +527,7 @@ int Connection::ExchangeServerKeys() {
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
   rma_iov->key = fi_mr_key(mr);
-  ret = TX(sizeof *rma_iov);
+  ret = PostTX(sizeof *rma_iov, tx_buf, &tx_ctx);
   if (ret) {
     HPS_ERR("Failed to TX");
     return (int) ret;
@@ -547,7 +547,7 @@ int Connection::ExchangeClientKeys() {
   rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
                   0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
   rma_iov->key = fi_mr_key(mr);
-  ret = TX(sizeof *rma_iov);
+  ret = PostTX(sizeof *rma_iov, tx_buf, &tx_ctx);
   HPS_INFO("Sent keys");
   if (ret) {
     HPS_ERR("Failed to TX");
