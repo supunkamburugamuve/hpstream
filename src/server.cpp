@@ -56,11 +56,11 @@ Connection* Server::GetConnection() {
 int Server::Start() {
   int ret;
   // now start accept thread
-  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
-  if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
-    return ret;
-  }
+//  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
+//  if (ret) {
+//    HPS_ERR("Failed to create thread %d", ret);
+//    return ret;
+//  }
 
   // start the loop thread
   ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
