@@ -310,7 +310,7 @@ int Connection::SetupBuffers() {
   ssize_t ret = 0;
   Buffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->NoOfBuffers();
-  HPS_INFO("Head, base, datahead %ld %ld %ld", rBuf->Head(), rBuf->Base(), rBuf->DataHead());
+  HPS_INFO("base, filled submitted %ld %ld %ld", rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   for (uint32_t i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
@@ -320,7 +320,7 @@ int Connection::SetupBuffers() {
     }
     rBuf->IncrementSubmitted(i);
   }
-  HPS_INFO("Head, base, datahead %" PRId32 "%" PRId32 "%" PRId32 ", %" PRIu64 " %" PRIu64, rBuf->Head(), rBuf->Base(), rBuf->DataHead(), rx_seq, rx_cq_cntr);
+  HPS_INFO("base, filled submitted %" PRId32 "%" PRId32 "%" PRId32, rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   return 0;
 }
 
