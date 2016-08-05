@@ -1,16 +1,17 @@
 #include "hps_utils.h"
 
-Connection *con;
+//Connection *con;
 Options options;
 struct fi_info *hints;
+Server *server;
 
 int connect3() {
   int ret = 0;
-  Server server(&options, hints);
-  server.Init();
-  server.Connect();
-  con = server.GetConnection();
-  server.Start();
+  server = new Server(&options, hints);
+  server->Init();
+  server->Connect();
+//  con = server.GetConnection();
+  server->Start();
   return ret;
 }
 
@@ -18,25 +19,35 @@ int exchange3() {
   int values[1000];
   uint32_t read = 0;
   uint32_t current_read = 0;
-  for (int i = 0; i < 10; i++) {
-    for (int j = 0; j < 1000; j++) {
-      values[j] = 0;
-    }
-    read = 0;
-    int count = 0;
-    while (read < 1000 && count < 100) {
-      if (con->DataAvailableForRead()) {
-        con->ReadData((uint8_t *) values + read, sizeof(values) - read, &current_read);
-        HPS_INFO("read amount %d", current_read);
-        read += current_read;
-        count++;
+  std::list<Connection *>::const_iterator iterator;
+
+  std::list<Connection *> *pList = server->GetConnections();
+  while (pList->size() == 2);
+
+  for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
+    Connection *con = *iterator;
+
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 1000; j++) {
+        values[j] = 0;
       }
+      read = 0;
+      int count = 0;
+      while (read < 1000 && count < 100) {
+        if (con->DataAvailableForRead()) {
+          con->ReadData((uint8_t *) values + read, sizeof(values) - read, &current_read);
+          HPS_INFO("read amount %d", current_read);
+          read += current_read;
+          count++;
+        }
+      }
+      for (int j = 0; j < 1000; j++) {
+        printf("%d ", values[j]);
+      }
+      printf("\n");
     }
-    for (int j = 0; j < 1000; j++) {
-      printf("%d ", values[j]);
-    }
-    printf("\n");
   }
+
 
   printf("Done rma\n");
   return 0;

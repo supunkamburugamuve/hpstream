@@ -1,6 +1,8 @@
 #ifndef SERVER_H_
 #define SERVER_H_
 
+#include <list>
+
 #include "options.h"
 #include "utils.h"
 #include "connection.h"
@@ -29,7 +31,9 @@ public:
   int loop();
 
   Connection * GetConnection();
-
+  std::list<Connection *> * GetConnections() {
+    return &connections;
+  }
   int Start();
 
 private:
@@ -55,7 +59,8 @@ private:
   pthread_t loopThreadId;
   // connections
   Connection *con;
-
+  // list of connections
+  std::list<Connection *> connections;
 };
 
 

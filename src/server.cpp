@@ -202,12 +202,6 @@ int Server::Connect(void) {
     return ret;
   }
 
-//  ret = con->ExchangeServerKeys();
-//  if (ret) {
-//    HPS_ERR("Failed to exchange keys", ret);
-//    return ret;
-//  }
-
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
 	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
@@ -223,6 +217,9 @@ int Server::Connect(void) {
   }
   HPS_INFO("Connection established");
   this->con = con;
+
+  // add the connection to list
+  this->connections.push_back(con);
 
   return 0;
   err:
