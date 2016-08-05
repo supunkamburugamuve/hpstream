@@ -301,7 +301,7 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   return 0;
 }
 
-int Connection::SetupBuffers() {
+int Connection::  SetupBuffers() {
   this->rx_seq = 0;
   this->rx_cq_cntr = 0;
   this->tx_cq_cntr = 0;
@@ -317,7 +317,7 @@ int Connection::SetupBuffers() {
       HPS_ERR("PostRX %d", ret);
       return (int) ret;
     }
-    rBuf->IncrementSubmitted(i);
+    rBuf->IncrementSubmitted(1);
   }
   HPS_INFO("base, filled submitted %" PRId32 "%" PRId32 "%" PRId32, rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   return 0;
