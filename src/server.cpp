@@ -56,11 +56,11 @@ Connection* Server::GetConnection() {
 int Server::Start() {
   int ret;
   // now start accept thread
-//  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
-//  if (ret) {
-//    HPS_ERR("Failed to create thread %d", ret);
-//    return ret;
-//  }
+  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
 
   // start the loop thread
   ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
@@ -120,8 +120,6 @@ int Server::Init(void) {
     HPS_ERR("fi_listen %d", ret);
     return ret;
   }
-
-
 
   return 0;
 }
@@ -198,12 +196,17 @@ int Server::Connect(void) {
     goto err;
   }
 
-//  con->SetupBuffers();
-//  ret = con->ExchangeServerKeys();
-//  if (ret) {
-//    HPS_ERR("Failed to exchange keys", ret);
-//    return ret;
-//  }
+  ret = con->SetupBuffers();
+  if (ret) {
+    HPS_ERR("Failed to set up the buffers %d", ret);
+    return ret;
+  }
+
+  ret = con->ExchangeServerKeys();
+  if (ret) {
+    HPS_ERR("Failed to exchange keys", ret);
+    return ret;
+  }
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());

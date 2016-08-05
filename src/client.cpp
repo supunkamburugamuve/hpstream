@@ -135,6 +135,12 @@ int Client::Connect(void) {
     return ret;
   }
 
+	ret = con->SetupBuffers();
+	if (ret) {
+		HPS_ERR("Failed to set up the buffers %d", ret);
+		return ret;
+	}
+
 	this->con = con;
 	printf("Connection established\n");
 	return 0;
