@@ -7,7 +7,6 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
-#include <rdma/fi_tagged.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
 
@@ -473,164 +472,34 @@ int Connection::GetTXComp(uint64_t total) {
 }
 
 ssize_t Connection::PostTX(size_t size, struct fi_context* ctx) {
-  if (info_hints->caps & FI_TAGGED) {
-    HPS_POST(fi_tsend, GetTXComp, tx_seq, "transmit", ep,
-            tx_buf, size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-            this->remote_fi_addr, tx_seq, ctx);
-  } else {
-    HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
-            tx_buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-            this->remote_fi_addr, ctx);
-  }
+  HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
+          tx_buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
+          this->remote_fi_addr, ctx);
   return 0;
 }
 
 ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  if (info_hints->caps & FI_TAGGED) {
-    HPS_POST(fi_tsend, GetTXComp, tx_seq, "transmit", ep,
-             buf, size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-             this->remote_fi_addr, tx_seq, ctx);
-  } else {
-    HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
-             buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-             this->remote_fi_addr, ctx);
-  }
+  HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
+           buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
+           this->remote_fi_addr, ctx);
   return 0;
 }
 
-ssize_t Connection::TX(size_t size) {
-  ssize_t ret;
-
-  if (hps_utils_check_opts(options, HPS_OPT_VERIFY_DATA | HPS_OPT_ACTIVE)) {
-    hps_utils_fill_buf((char *) tx_buf + hps_utils_tx_prefix_size(info), size);
-  }
-
-  ret = PostTX(size, &this->tx_ctx);
-  if (ret) {
-    return ret;
-  }
-
-  ret = GetTXComp(tx_seq);
-  printf("Waiting tx %ld with size %ld\n", tx_seq, size);
-  return ret;
-}
-
 ssize_t Connection::PostRX(size_t size, struct fi_context* ctx) {
-  if (info_hints->caps & FI_TAGGED) {
-    HPS_POST(fi_trecv, GetRXComp, rx_seq, "receive", this->ep, rx_buf,
-            MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-            fi_mr_desc(mr), 0, rx_seq, 0, ctx);
-  } else {
-    HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, rx_buf,
-            MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-            fi_mr_desc(mr),	0, ctx);
-  }
+  HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, rx_buf,
+          MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
+          fi_mr_desc(mr),	0, ctx);
   return 0;
 }
 
 ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  if (info_hints->caps & FI_TAGGED) {
-    HPS_POST(fi_trecv, GetRXComp, rx_seq, "receive", this->ep, buf,
-             MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-             fi_mr_desc(mr), 0, rx_seq, 0, ctx);
-  } else {
-    HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
-             MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-             fi_mr_desc(mr),	0, ctx);
-    HPS_INFO("Finished posting buffer with size %ld", size);
-  }
+  HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
+           MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
+           fi_mr_desc(mr),	0, ctx);
+  HPS_INFO("Finished posting buffer with size %ld", size);
   return 0;
 }
 
-ssize_t Connection::RX(size_t size) {
-  ssize_t ret;
-  printf("Waiting rx %ld with size %ld\n", rx_cq_cntr, size);
-  ret = GetRXComp(rx_cq_cntr + 1);
-  if (ret)
-    return ret;
-
-  if (hps_utils_check_opts(options, HPS_OPT_VERIFY_DATA | HPS_OPT_ACTIVE)) {
-    ret = hps_utils_check_buf((char *) rx_buf + hps_utils_rx_prefix_size(info), (int) size);
-    if (ret)
-      return ret;
-  }
-
-  ret = PostRX(this->rx_size, &this->rx_ctx);
-  return ret;
-}
-
-ssize_t Connection::PostRMA(enum hps_rma_opcodes op, size_t size) {
-  struct fi_rma_iov *remote = &this->remote;
-  switch (op) {
-    case HPS_RMA_WRITE:
-      HPS_POST(fi_write, GetTXComp, tx_seq, "fi_write", ep, tx_buf,
-              size, fi_mr_desc(mr), remote_fi_addr,
-              remote->addr, remote->key, ep);
-      break;
-    case HPS_RMA_WRITEDATA:
-      HPS_POST(fi_writedata, GetTXComp, tx_seq, "fi_writedata", ep,
-              tx_buf, size, fi_mr_desc(mr),
-              remote_cq_data,	remote_fi_addr,	remote->addr,
-              remote->key, ep);
-      break;
-    case HPS_RMA_READ:
-      HPS_POST(fi_read, GetTXComp, tx_seq, "fi_read", ep, rx_buf,
-              size, fi_mr_desc(mr), remote_fi_addr,
-              remote->addr, remote->key, ep);
-      break;
-    default:
-      HPS_ERR("Unknown RMA op type");
-      return EXIT_FAILURE;
-  }
-
-  return 0;
-}
-
-ssize_t Connection::PostRMA(enum hps_rma_opcodes op, size_t size, void *buf) {
-  switch (op) {
-    case HPS_RMA_WRITE:
-      HPS_POST(fi_write, GetTXComp, tx_seq, "fi_write", ep, buf,
-              size, fi_mr_desc(mr), remote_fi_addr,
-              remote.addr, remote.key, ep);
-      break;
-    case HPS_RMA_WRITEDATA:
-      HPS_POST(fi_writedata, GetTXComp, tx_seq, "fi_writedata", ep,
-              buf, size, fi_mr_desc(mr),
-              remote_cq_data,	remote_fi_addr,	remote.addr,
-              remote.key, ep);
-      break;
-    case HPS_RMA_READ:
-      HPS_POST(fi_read, GetTXComp, tx_seq, "fi_read", ep, buf,
-              size, fi_mr_desc(mr), remote_fi_addr,
-              remote.addr, remote.key, ep);
-      break;
-    default:
-      HPS_ERR("Unknown RMA op type");
-      return EXIT_FAILURE;
-  }
-
-  return 0;
-}
-
-ssize_t Connection::RMA(enum hps_rma_opcodes op, size_t size) {
-  ssize_t ret;
-
-  ret = PostRMA(op, size);
-  if (ret)
-    return ret;
-
-  if (op == HPS_RMA_WRITEDATA) {
-    ret = RX(0);
-    if (ret)
-      return ret;
-  }
-
-  ret = GetTXComp(tx_seq);
-  if (ret)
-    return ret;
-
-  return 0;
-}
 
 int Connection::ExchangeServerKeys() {
   struct fi_rma_iov *peer_iov = &this->remote;
@@ -856,11 +725,6 @@ int Connection::Ready(int fd) {
     ReceiveComplete();
   }
   return 0;
-}
-
-int Connection::Print() {
-  HPS_INFO("Printing %d %d", tx_fd, rx_fd);
-  return 1;
 }
 
 Connection::~Connection() {
