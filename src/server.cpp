@@ -132,7 +132,7 @@ int Server::Connect(void) {
   struct fid_ep *ep;
   struct fid_domain *domain;
   Connection *con;
-
+  HPS_INFO("Waiting for connection");
   // read the events for incoming messages
   rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
   if (rd != sizeof entry) {
