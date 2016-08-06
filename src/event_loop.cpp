@@ -50,7 +50,7 @@ void EventLoop::loop() {
       if (con != NULL) {
         Connection *c = con->con;
         int f = con->fid;
-        // HPS_ERR("Connection fd %d", f);
+        HPS_ERR("Connection fd %d", f);
         c->Ready(f);
       } else {
         HPS_ERR("Connection NULL");
