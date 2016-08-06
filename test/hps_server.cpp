@@ -22,7 +22,12 @@ int exchange3() {
   std::list<Connection *>::const_iterator iterator;
 
   std::list<Connection *> *pList = server->GetConnections();
-  while (pList->size() != 2);
+  int count = 0;
+  while (pList->size() != 2) {
+    if (count++ == 10000) {
+      HPS_INFO("Size %d", pList->size());
+    }
+  }
 
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
     Connection *con = *iterator;
