@@ -638,6 +638,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       sbuf->waitFree();
     }
   }
+  HPS_INFO("base, filled submitted %ld %ld %ld", sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
   sbuf->releaseLock();
   return 0;
 
