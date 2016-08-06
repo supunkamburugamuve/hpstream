@@ -666,6 +666,7 @@ int Connection::TransmitComplete() {
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
+      HPS_INFO("Error receive %ld", cq_ret);
       cq_ret = hps_utils_cq_readerr(txcq);
       this->tx_cq_cntr++;
     } else {
@@ -693,6 +694,7 @@ int Connection::ReceiveComplete() {
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
+      HPS_INFO("Error receive %ld", cq_ret);
       cq_ret = hps_utils_cq_readerr(rxcq);
       this->rx_cq_cntr++;
     } else {

@@ -37,7 +37,7 @@ int exchange3() {
         values[j] = 0;
       }
       read = 0;
-      int count = 0;
+      count = 0;
       while (read < 1000 && count < 10) {
         if (con->DataAvailableForRead()) {
           con->ReadData((uint8_t *) values + read, sizeof(values) - read, &current_read);
