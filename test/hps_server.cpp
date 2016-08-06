@@ -54,6 +54,7 @@ int exchange3() {
       printf("\n");
     }
 
+    HPS_INFO("Done receiving.. switching to sending");
     con->WriteData((uint8_t *)values, sizeof(values));
   }
 
