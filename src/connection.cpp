@@ -649,7 +649,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
 }
 
 int Connection::TransmitComplete() {
-  HPS_INFO("Transmit complete");
+  // HPS_INFO("Transmit complete");
   struct fi_cq_err_entry comp;
   int ret;
   // lets get the number of completions
@@ -658,7 +658,7 @@ int Connection::TransmitComplete() {
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
-    HPS_INFO("Increment tail %ld", cq_ret);
+    HPS_INFO("Increment transmit tail %ld", cq_ret);
     if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
       return 1;
@@ -677,7 +677,7 @@ int Connection::TransmitComplete() {
 }
 
 int Connection::ReceiveComplete() {
-  HPS_INFO("Receive complete");
+  // HPS_INFO("Receive complete");
   struct fi_cq_err_entry comp;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
@@ -685,6 +685,7 @@ int Connection::ReceiveComplete() {
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
+    HPS_INFO("Increment read tail %ld", cq_ret);
     if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
       return 1;
