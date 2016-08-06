@@ -26,7 +26,7 @@ void EventLoop::loop() {
   while (run) {
     unsigned long size = fids.size();
     if (size == 0) {
-       HPS_INFO("Loop starting....");
+//       HPS_INFO("Loop starting....");
       continue;
     }
     // get all the elements in fids and create a list
