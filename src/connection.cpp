@@ -610,7 +610,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
     uint64_t free_space = sbuf->GetAvailableWriteSpace();
     // we have space in the buffers
     if (free_space > 0) {
-      HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
+      // HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
       HPS_INFO("Free space %d", free_space);
       head = sbuf->NextWriteIndex();
       uint8_t *current_buf = sbuf->GetBuffer(head);

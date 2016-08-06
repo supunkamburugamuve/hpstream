@@ -40,6 +40,8 @@ int exchange3() {
       read += current_read;
       HPS_INFO("read amount %d", current_read);
       count++;
+    } else {
+      pthread_yield();
     }
   }
   printf("Done rma\n");
