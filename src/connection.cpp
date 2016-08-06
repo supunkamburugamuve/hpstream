@@ -649,12 +649,12 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
 }
 
 int Connection::TransmitComplete() {
-  HPS_INFO("Transmit complete");
   struct fi_cq_err_entry comp;
   int ret;
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
+  HPS_INFO("Transmit complete max_completions=%ld", max_completions);
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
@@ -678,11 +678,11 @@ int Connection::TransmitComplete() {
 }
 
 int Connection::ReceiveComplete() {
-  HPS_INFO("Receive complete");
   struct fi_cq_err_entry comp;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
+  HPS_INFO("Receive complete max_completions=%ld", max_completions);
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
