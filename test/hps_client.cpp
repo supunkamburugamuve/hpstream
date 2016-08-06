@@ -38,6 +38,7 @@ int exchange3() {
     if (con->DataAvailableForRead()) {
       con->ReadData((uint8_t *) values[0], sizeof(values[0]), &read);
       read += current_read;
+      HPS_INFO("read amount %d", current_read);
     }
   }
   printf("Done rma\n");

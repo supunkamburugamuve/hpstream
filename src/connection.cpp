@@ -704,7 +704,7 @@ int Connection::ReceiveComplete() {
 }
 
 int Connection::Ready(int fd) {
-  HPS_INFO("Connection ready %d", fd);
+  // HPS_INFO("Connection ready %d", fd);
   if (fd == tx_fd) {
     TransmitComplete();
   }
