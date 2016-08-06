@@ -658,6 +658,11 @@ int Connection::TransmitComplete() {
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
+    HPS_INFO("Increment tail %ld", cq_ret);
+    if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
+      HPS_ERR("Failed to increment buffer data pointer");
+      return 1;
+    }
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
@@ -666,14 +671,6 @@ int Connection::TransmitComplete() {
     } else {
       HPS_ERR("ft_get_cq_comp %d", cq_ret);
       return (int) cq_ret;
-    }
-  }
-  // increment the buffer
-  if (cq_ret != FI_EAGAIN) {
-    HPS_INFO("Increment tail %ld", cq_ret);
-    if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
-      HPS_ERR("Failed to increment buffer data pointer");
-      return 1;
     }
   }
   return 0;
@@ -688,6 +685,10 @@ int Connection::ReceiveComplete() {
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
+    if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
+      HPS_ERR("Failed to increment buffer data pointer");
+      return 1;
+    }
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
@@ -697,11 +698,6 @@ int Connection::ReceiveComplete() {
       HPS_ERR("ft_get_cq_comp %d", cq_ret);
       return (int) cq_ret;
     }
-  }
-
-  if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
-    HPS_ERR("Failed to increment buffer data pointer");
-    return 1;
   }
 
   return 0;
