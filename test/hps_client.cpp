@@ -31,8 +31,15 @@ int exchange3() {
   }
 
   uint32_t read = 0;
-  con->ReadData((uint8_t *)values[0], sizeof(values[0]), &read);
-
+  read = 0;
+  int count = 0;
+  uint32_t current_read = 0;
+  while (read < 1000) {
+    if (con->DataAvailableForRead()) {
+      con->ReadData((uint8_t *) values[0], sizeof(values[0]), &read);
+      read += current_read;
+    }
+  }
   printf("Done rma\n");
   return ret;
 }
