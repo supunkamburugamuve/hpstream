@@ -140,6 +140,10 @@ int Server::Connect(void) {
     return (int) rd;
   }
 
+  if (event == FI_SHUTDOWN) {
+    HPS_ERR("Recv shut down");
+  }
+
   // this is the correct fi_info associated with active end-point
   if (event != FI_CONNREQ) {
     HPS_ERR("Unexpected CM event %d", event);
