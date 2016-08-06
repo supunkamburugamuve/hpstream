@@ -187,7 +187,7 @@ int print_short_info(struct fi_info *info) {
 
 
 int hps_utils_get_info(Options *options, struct fi_info *hints, struct fi_info **info) {
-  char *fi_str;
+  // char *fi_str;
   char *node, *service;
   uint64_t flags = 0;
 
@@ -199,34 +199,34 @@ int hps_utils_get_info(Options *options, struct fi_info *hints, struct fi_info *
     hints->ep_attr->type = FI_EP_RDM;
   }
 
-  std::cout << "First ******************" << std::endl;
-  fi_str = fi_tostr(hints, FI_TYPE_INFO);
-  std::cout << "FI" << fi_str << std::endl;
-  print_short_info(hints);
+  //std::cout << "First ******************" << std::endl;
+  // fi_str = fi_tostr(hints, FI_TYPE_INFO);
+  // std::cout << "FI" << fi_str << std::endl;
+  //print_short_info(hints);
 
   // now lets retrieve the available network services
   // according to hints
-  printf("node=%s service=%s flags=%d\n", node, service, (int)flags);
+  HPS_INFO("node=%s service=%s flags=%d\n", node, service, (int)flags);
   int ret = fi_getinfo(HPS_FIVERSION, node, service, flags, hints, info);
   if (ret) {
     HPS_ERR("Fi_info failed %d", ret);
     return 1;
   }
 
-  if (*info) {
-    fi_info *next = *info;
-    while (next) {
-      fi_fabric_attr *attr = next->fabric_attr;
-      printf("fabric attr name=%s prov_name=%s\n", attr->name, attr->prov_name);
-      fi_str = fi_tostr(next, FI_TYPE_INFO);
-      std::cout << "FI" << fi_str << std::endl;
-      print_short_info(next);
-      next = next->next;
-    }
-  } else {
-    HPS_ERR("No information returned");
-    return 1;
-  }
+//  if (*info) {
+//    fi_info *next = *info;
+//    while (next) {
+//      fi_fabric_attr *attr = next->fabric_attr;
+//      printf("fabric attr name=%s prov_name=%s\n", attr->name, attr->prov_name);
+//      fi_str = fi_tostr(next, FI_TYPE_INFO);
+//      std::cout << "FI" << fi_str << std::endl;
+//      print_short_info(next);
+//      next = next->next;
+//    }
+//  } else {
+//    HPS_ERR("No information returned");
+//    return 1;
+//  }
 
   return 0;
 }
