@@ -30,6 +30,9 @@ int exchange3() {
     con->WriteData((uint8_t *) values[i], sizeof(values[i]));
   }
 
+  uint32_t read = 0;
+  con->ReadData((uint8_t *)values[0], sizeof(values[0]), &read);
+
   printf("Done rma\n");
   return ret;
 }

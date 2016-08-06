@@ -51,6 +51,8 @@ int exchange3() {
       }
       printf("\n");
     }
+
+    con->WriteData((uint8_t *)values[0], sizeof(values[0]));
   }
 
 
