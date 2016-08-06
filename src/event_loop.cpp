@@ -24,7 +24,7 @@ void EventLoop::loop() {
   int ret;
   struct epoll_event event;
   while (run) {
-    HPS_INFO("Loop starting....");
+    // HPS_INFO("Loop starting....");
     unsigned long size = fids.size();
     if (size == 0) {
       continue;
