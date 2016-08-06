@@ -141,7 +141,8 @@ int Server::Connect(void) {
   }
 
   if (event == FI_SHUTDOWN) {
-    HPS_ERR("Recv shut down");
+    HPS_ERR("Recv shut down, Ignoring");
+    return 0;
   }
 
   // this is the correct fi_info associated with active end-point
