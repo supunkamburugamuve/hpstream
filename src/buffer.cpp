@@ -97,7 +97,7 @@ int Buffer::IncrementSubmitted(uint32_t count) {
 
 int Buffer::IncrementTail(uint32_t count) {
   if (this->filled_buffs - count < 0 || this->submitted_buffs - count < 0) {
-    HPS_ERR("Failed to decrement the buffer, inconsistant state");
+    HPS_ERR("Failed to decrement the buffer, inconsistent state");
     return 1;
   }
   this->base = (this->base + count) % this->no_bufs;
