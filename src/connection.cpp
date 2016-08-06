@@ -669,6 +669,7 @@ int Connection::TransmitComplete() {
     }
   }
   // increment the buffer
+  HPS_INFO("Increment tail %ld", cq_ret);
   if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
     HPS_ERR("Failed to increment buffer data pointer");
     return 1;
