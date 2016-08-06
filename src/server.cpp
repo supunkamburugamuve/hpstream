@@ -72,6 +72,12 @@ int Server::Start() {
   return 0;
 }
 
+int Server::Wait() {
+  pthread_join(loopThreadId, NULL);
+  pthread_join(loopThreadId, NULL);
+  return 0;
+}
+
 /**
  * Initialize the server
  */

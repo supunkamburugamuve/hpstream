@@ -55,8 +55,9 @@ int exchange3() {
     con->WriteData((uint8_t *)values, sizeof(values));
   }
 
-
   printf("Done rma\n");
+
+  server->Wait();
   return 0;
 }
 

@@ -36,6 +36,8 @@ public:
   }
   int Start();
 
+  int Wait();
+
 private:
   Options *options;
   // hints to be used to obtain fabric information
@@ -61,6 +63,7 @@ private:
   Connection *con;
   // list of connections
   std::list<Connection *> connections;
+
 };
 
 
