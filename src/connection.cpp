@@ -319,7 +319,7 @@ int Connection::  SetupBuffers() {
     }
     rBuf->IncrementSubmitted(1);
   }
-  HPS_INFO("base, filled submitted %" PRId32 "%" PRId32 "%" PRId32, rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
+  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   return 0;
 }
 
@@ -638,7 +638,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       sbuf->waitFree();
     }
   }
-  HPS_INFO("base, filled submitted %ld %ld %ld", sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
+  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
   sbuf->releaseLock();
   return 0;
 
