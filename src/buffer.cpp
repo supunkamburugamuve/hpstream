@@ -125,7 +125,7 @@ uint64_t Buffer::GetAvailableWriteSpace() {
 }
 
 uint32_t Buffer::NextWriteIndex() {
-  return (base + this->filled_buffs) % this->no_bufs;
+  return (base + this->filled_buffs - 1) % this->no_bufs;
 }
 
 int Buffer::waitFree() {
