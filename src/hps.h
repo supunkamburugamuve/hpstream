@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #define HPS_LOG(level, fmt, ...) \
-	do { fprintf(stderr, "[%s] hps:%s:%d: " fmt "\n", level, __FILE__, \
+	do { fprintf(stdout, "[%s] hps:%s:%d: " fmt "\n", level, __FILE__, \
 			__LINE__, ##__VA_ARGS__); } while (0)
 
 #define HPS_LOG_INFO(level, fmt, ...) \
