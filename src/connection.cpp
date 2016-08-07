@@ -651,6 +651,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
 int Connection::TransmitComplete() {
   struct fi_cq_err_entry comp;
   int ret;
+  this->send_buf->acquireLock();
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
@@ -662,6 +663,7 @@ int Connection::TransmitComplete() {
     HPS_INFO("Increment transmit tail %ld", cq_ret);
     if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
+      this->send_buf->releaseLock();
       return 1;
     }
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
@@ -672,11 +674,13 @@ int Connection::TransmitComplete() {
       this->tx_cq_cntr++;
     } else {
       HPS_ERR("ft_get_cq_comp %d", cq_ret);
+      this->send_buf->releaseLock();
       return (int) cq_ret;
     }
   } /*else if (cq_ret == -FI_EAGAIN) {
     pthread_yield();
   }*/
+  this->send_buf->releaseLock();
   return 0;
 }
 
