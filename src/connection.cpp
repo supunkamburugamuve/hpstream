@@ -674,9 +674,9 @@ int Connection::TransmitComplete() {
       HPS_ERR("ft_get_cq_comp %d", cq_ret);
       return (int) cq_ret;
     }
-  } else if (cq_ret == -FI_EAGAIN) {
+  } /*else if (cq_ret == -FI_EAGAIN) {
     pthread_yield();
-  }
+  }*/
   return 0;
 }
 
@@ -705,9 +705,9 @@ int Connection::ReceiveComplete() {
       HPS_ERR("ft_get_cq_comp %d", cq_ret);
       return (int) cq_ret;
     }
-  } else if (cq_ret == -FI_EAGAIN) {
+  } /*else if (cq_ret == -FI_EAGAIN) {
     pthread_yield();
-  }
+  }*/
 
   return 0;
 }
