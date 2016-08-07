@@ -654,7 +654,7 @@ int Connection::TransmitComplete() {
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
-  // HPS_INFO("Transmit complete max_completions=%ld", max_completions);
+  HPS_INFO("Transmit complete max_completions=%ld", max_completions);
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
