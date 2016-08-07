@@ -8,9 +8,13 @@
 	do { fprintf(stderr, "[%s] hps:%s:%d: " fmt "\n", level, __FILE__, \
 			__LINE__, ##__VA_ARGS__); } while (0)
 
+#define HPS_LOG_INFO(level, fmt, ...) \
+	do { fprintf(stdout, "[%s] hps:%s:%d: " fmt "\n", level, __FILE__, \
+			__LINE__, ##__VA_ARGS__); } while (0)
+
 #define HPS_ERR(fmt, ...) HPS_LOG("error", fmt, ##__VA_ARGS__)
 #define HPS_WARN(fmt, ...) HPS_LOG("warn", fmt, ##__VA_ARGS__)
-#define HPS_INFO(fmt, ...) HPS_LOG("info", fmt, ##__VA_ARGS__)
+#define HPS_INFO(fmt, ...) HPS_LOG_INFO("info", fmt, ##__VA_ARGS__)
 
 #define MAX_ERRORS 10
 
