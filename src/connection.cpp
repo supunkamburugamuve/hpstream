@@ -683,6 +683,7 @@ int Connection::TransmitComplete() {
 int Connection::ReceiveComplete() {
   struct fi_cq_err_entry comp;
   // lets get the number of completions
+  this->recv_buf->acquireLock();
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
   HPS_INFO("Receive complete max_completions=%ld", max_completions);
@@ -693,6 +694,7 @@ int Connection::ReceiveComplete() {
     HPS_INFO("Increment read tail %ld", cq_ret);
     if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
+      this->recv_buf->releaseLock();
       return 1;
     }
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
@@ -703,12 +705,13 @@ int Connection::ReceiveComplete() {
       this->rx_cq_cntr++;
     } else {
       HPS_ERR("ft_get_cq_comp %d", cq_ret);
+      this->recv_buf->releaseLock();
       return (int) cq_ret;
     }
   } /*else if (cq_ret == -FI_EAGAIN) {
     pthread_yield();
   }*/
-
+  this->recv_buf->releaseLock();
   return 0;
 }
 
