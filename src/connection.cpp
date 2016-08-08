@@ -693,7 +693,7 @@ int Connection::ReceiveComplete() {
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
   max_completions = max_completions == 0 ? 1 : max_completions;
-  HPS_INFO("Transmit complete max_completions=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, rx_seq, rx_cq_cntr);
+  HPS_INFO("Receive complete max_completions=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
