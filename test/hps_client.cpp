@@ -48,7 +48,7 @@ int exchange3() {
   }
 
   for (int i = 0; i < 1000; i++) {
-    printf("%d", values[0][i]);
+    printf("%d ", values[0][i]);
   }
 
   printf("\nDone rma\n");
