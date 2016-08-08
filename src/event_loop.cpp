@@ -32,7 +32,7 @@ void EventLoop::loop() {
     }
     // get all the elements in fids and create a list
     // HPS_INFO("Size of the fids %d", size);
-    struct fid **fid_list = new struct fid*[size];
+    struct fid **fid_list = (struct fid**) malloc(sizeof(struct fid *) * size);
     int i = 0;
 //    for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
 //
@@ -48,7 +48,7 @@ void EventLoop::loop() {
       i++;
     }
 
-    struct epoll_event* events = new struct epoll_event[size];
+    struct epoll_event* events = (epoll_event *) malloc(sizeof(struct epoll_event) * size);
 
     memset(events, 0, sizeof events);
     // HPS_INFO("Wait..........");
@@ -73,9 +73,10 @@ void EventLoop::loop() {
         }
       }
     }
-
-    delete events;
-    delete fid_list;
+    free(fid_list);
+    free(events);
+//    delete events;
+//    delete fid_list;
   }
 }
 
