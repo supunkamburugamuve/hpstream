@@ -46,7 +46,12 @@ int exchange3() {
       pthread_yield();
     }
   }
-  printf("Done rma\n");
+
+  for (int i = 0; i < 1000; i++) {
+    printf("%d", values[0][i]);
+  }
+
+  printf("\nDone rma\n");
   return ret;
 }
 
