@@ -30,7 +30,7 @@ void EventLoop::loop() {
       continue;
     }
     // get all the elements in fids and create a list
-    HPS_INFO("Size of the fids %d", size);
+    // HPS_INFO("Size of the fids %d", size);
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
     for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
