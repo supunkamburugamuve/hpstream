@@ -40,6 +40,10 @@ void EventLoop::loop() {
 
     for (std::unordered_map<int,struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
       fid_list[i] = it->second;
+      if (fid_list[i] == NULL) {
+        HPS_INFO("NULL for %d", i);
+        continue;
+      }
       HPS_INFO("%ld", fid_list[i]->fclass);
       i++;
     }
