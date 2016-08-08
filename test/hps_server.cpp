@@ -44,8 +44,6 @@ int exchange3() {
           HPS_INFO("read amount %d", current_read);
           read += current_read;
           count++;
-        } else {
-//          pthread_yield();
         }
       }
       for (int j = 0; j < 1000; j++) {

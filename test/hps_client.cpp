@@ -19,9 +19,9 @@ int exchange3() {
   for (int j = 0; j < 10; j++) {
     for (int i = 0; i < 1000; i++) {
       if (j % 2 == 0) {
-        values[j][i] = 1000 - i;
+        values[j][i] = j;
       } else {
-        values[j][i] = i;
+        values[j][i] = j;
       }
     }
   }
@@ -41,8 +41,6 @@ int exchange3() {
       HPS_INFO("read amount %d", current_read);
       read += current_read;
       count++;
-    } else {
-//      pthread_yield();
     }
   }
 
