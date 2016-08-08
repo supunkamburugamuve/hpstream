@@ -25,6 +25,7 @@ private:
   struct fid_fabric *fabric;
   int epfd;
   std::unordered_map<int, struct fid *> fids;
+  std::unordered_map<int, Connection *> connections;
 };
 
 #endif

@@ -63,8 +63,13 @@ void EventLoop::loop() {
           HPS_ERR("Connection NULL");
         }
       }
-    } else {
-      HPS_INFO("trywait %d", trywait);
+    } else if (trywait == -FI_EAGAIN){
+      for (std::unordered_map<int, Connection *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+        Connection *c = it->second;
+        // HPS_ERR("Connection fd %d", f);
+        c->Ready(it->first);
+      }
+
     }
     delete fid_list;
     delete events;
@@ -77,6 +82,8 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
   if (fids.find(fid) == fids.end()) {
     HPS_INFO("Register FID %d", fid);
     this->fids[fid] = desc;
+    this->connections[fid] = connection;
+
     struct connect_info *info = new connect_info();
     info->con = connection;
     info->fid = fid;
