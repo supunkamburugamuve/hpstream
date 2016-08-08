@@ -580,6 +580,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   while (unSubmittedBuffers > 0) {
     index = (base + submittedBuffers + 1) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
+    HPS_INFO("Posting buffer with index %" PRId32, index);
     ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
