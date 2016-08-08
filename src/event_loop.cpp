@@ -49,7 +49,11 @@ void EventLoop::loop() {
     }
 
     struct epoll_event* events = (epoll_event *) malloc(sizeof(struct epoll_event) * size);
-
+    for (int k = 0; k < 2; k++) {
+      if (fid_list[k] == NULL) {
+        HPS_INFO("NULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
+      }
+    }
     memset(events, 0, sizeof events);
     // HPS_INFO("Wait..........");
     if (fi_trywait(fabric, fid_list, 2) == FI_SUCCESS) {
