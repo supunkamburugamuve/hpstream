@@ -26,9 +26,9 @@ int exchange3() {
     }
   }
 
-  for (int i = 0; i < 10; i++) {
-    con->WriteData((uint8_t *) values[i], sizeof(values[i]));
-  }
+//  for (int i = 0; i < 10; i++) {
+//    con->WriteData((uint8_t *) values[i], sizeof(values[i]));
+//  }
 
   uint32_t read = 0;
   read = 0;
