@@ -626,9 +626,11 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       sbuf->IncrementFilled(1);
       uint32_t *buffer = (uint32_t *) (current_buf + sizeof(uint32_t));
-      for (int i = 0; i < ((buf_size - 4) / sizeof(int)); i++) {
-        printf("%d", buffer[i]);
+      int i = 0;
+      for (i = 0; i < ((buf_size - 4) / sizeof(int)); i++) {
+        printf("%d ", buffer[i]);
       }
+      printf("\nwritten=%d \n", i);
       // send the current buffer
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
