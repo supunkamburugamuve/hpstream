@@ -44,7 +44,7 @@ void EventLoop::loop() {
         HPS_INFO("NULL for %d", i);
         continue;
       }
-      HPS_INFO("%ld", fid_list[i]->fclass);
+      // HPS_INFO("FID_LIST %ld", fid_list[i]->fclass);
       i++;
     }
 
