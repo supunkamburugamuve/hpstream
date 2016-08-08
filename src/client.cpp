@@ -119,6 +119,12 @@ int Client::Connect(void) {
 		return ret;
 	}
 
+  ret = con->SetupBuffers();
+  if (ret) {
+    HPS_ERR("Failed to set up the buffers %d", ret);
+    return ret;
+  }
+
   this->eventLoop = new EventLoop(fabric);
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
 	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
@@ -132,12 +138,6 @@ int Client::Connect(void) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;
   }
-
-	ret = con->SetupBuffers();
-	if (ret) {
-		HPS_ERR("Failed to set up the buffers %d", ret);
-		return ret;
-	}
 
 	this->con = con;
 	printf("Connection established\n");
