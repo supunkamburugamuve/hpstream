@@ -24,7 +24,7 @@ void EventLoop::loop() {
   int ret;
 
   while (run) {
-    unsigned long size = fids.size();
+    int size = (int) fids.size();
     if (size == 0) {
       pthread_yield();
       continue;
@@ -42,7 +42,7 @@ void EventLoop::loop() {
     // HPS_INFO("Wait..........");
     if (fi_trywait(fabric, fid_list, 1) == FI_SUCCESS) {
       // HPS_INFO("Wait success");
-      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, , -1));
+      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, size, -1));
       if (ret < 0) {
         ret = -errno;
         HPS_ERR("epoll_wait %d", ret);
