@@ -714,9 +714,11 @@ int Connection::ReceiveComplete() {
       this->recv_buf->releaseLock();
       return (int) cq_ret;
     }
-  } /*else if (cq_ret == -FI_EAGAIN) {
-    pthread_yield();
-  }*/
+  } else if (cq_ret == -FI_EAGAIN) {
+    HPS_INFO("FI_EAGAIN");
+  } else if (cq_ret == 0) {
+    HPS_INFO("cq_ret %d", cq_ret);
+  }
   this->recv_buf->releaseLock();
   return 0;
 }
