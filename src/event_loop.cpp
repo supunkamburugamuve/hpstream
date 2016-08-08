@@ -47,7 +47,7 @@ void EventLoop::loop() {
         ret = -errno;
         HPS_ERR("epoll_wait %d", ret);
       }
-
+      HPS_INFO("Epoll wait returned %d", ret);
       for (int j = 0; j < ret; j++) {
         struct epoll_event *event = events + j;
         struct connect_info *con = (struct connect_info *) event->data.ptr;
