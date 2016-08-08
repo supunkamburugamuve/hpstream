@@ -34,7 +34,8 @@ void EventLoop::loop() {
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
     for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
-      fid_list[i++] = it->second;
+      fid_list[i] = it->second;
+      i++;
     }
 
     struct epoll_event* events = new struct epoll_event[size];
