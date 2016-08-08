@@ -55,7 +55,7 @@ int exchange3() {
 int main(int argc, char **argv) {
   int op;
   options.rma_op = HPS_RMA_WRITE;
-  options.buf_size = 1024 * 1024 * 40;
+  options.buf_size = 1024 * 6;
   options.no_buffers = 6;
   hints = fi_allocinfo();
   // parse the options
