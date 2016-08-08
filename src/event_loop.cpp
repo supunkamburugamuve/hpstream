@@ -1,5 +1,6 @@
 #include <rdma/fi_eq.h>
 #include <rdma/fi_errno.h>
+#include <map>
 
 #include "event_loop.h"
 
@@ -33,7 +34,11 @@ void EventLoop::loop() {
     // HPS_INFO("Size of the fids %d", size);
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
-    for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
+//    for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
+//
+//    }
+
+    for (std::unordered_map<int,struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
       fid_list[i] = it->second;
       i++;
     }
