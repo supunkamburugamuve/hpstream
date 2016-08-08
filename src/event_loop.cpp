@@ -42,7 +42,8 @@ void EventLoop::loop() {
     struct epoll_event* events = new struct epoll_event [size];
     memset(events, 0, sizeof events);
     // HPS_INFO("Wait..........");
-    if (fi_trywait(fabric, fid_list, 2) == FI_SUCCESS) {
+    int trywait = fi_trywait(fabric, fid_list, 2);
+    if (trywait == FI_SUCCESS) {
       // HPS_INFO("Wait success");
       ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, 2, -1));
       if (ret < 0) {
@@ -62,6 +63,8 @@ void EventLoop::loop() {
           HPS_ERR("Connection NULL");
         }
       }
+    } else {
+      HPS_INFO("trywait %d", trywait);
     }
     delete fid_list;
     delete events;

@@ -583,6 +583,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
+      rbuf->releaseLock();
       return (int) ret;
     }
     rbuf->IncrementSubmitted(1);
