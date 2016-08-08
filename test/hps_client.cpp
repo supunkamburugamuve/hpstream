@@ -42,8 +42,7 @@ int exchange3() {
       read += current_read;
       count++;
     } else {
-      HPS_INFO("No data available for read");
-      pthread_yield();
+//      pthread_yield();
     }
   }
 

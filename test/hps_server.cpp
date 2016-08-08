@@ -45,7 +45,7 @@ int exchange3() {
           read += current_read;
           count++;
         } else {
-          pthread_yield();
+//          pthread_yield();
         }
       }
       for (int j = 0; j < 1000; j++) {
