@@ -26,7 +26,7 @@ void EventLoop::loop() {
 
   while (run) {
     int size = (int) fids.size();
-    if (size == 0) {
+    if (size < 2) {
       pthread_yield();
       continue;
     }
