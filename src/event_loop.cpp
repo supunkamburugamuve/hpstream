@@ -30,6 +30,7 @@ void EventLoop::loop() {
       continue;
     }
     // get all the elements in fids and create a list
+    HPS_INFO("Size of the fids %d", size);
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
     for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
@@ -71,6 +72,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
   struct epoll_event event;
   int ret;
   if (fids.find(fid) == fids.end()) {
+    HPS_INFO("Register FID %d", fid);
     this->fids[fid] = desc;
     struct connect_info *info = new connect_info();
     info->con = connection;
