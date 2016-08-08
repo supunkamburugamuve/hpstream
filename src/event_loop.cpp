@@ -22,7 +22,7 @@ EventLoop::EventLoop(struct fid_fabric *fabric) {
 
 void EventLoop::loop() {
   int ret;
-  struct epoll_event event;
+
   while (run) {
     unsigned long size = fids.size();
     if (size == 0) {
@@ -36,27 +36,33 @@ void EventLoop::loop() {
       fid_list[i++] = it->second;
     }
 
-    memset(&event, 0, sizeof event);
+    struct epoll_event* events = new struct epoll_event[size];
+
+    memset(events, 0, sizeof events);
     // HPS_INFO("Wait..........");
     if (fi_trywait(fabric, fid_list, 1) == FI_SUCCESS) {
       // HPS_INFO("Wait success");
-      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, &event, 1, -1));
+      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, , -1));
       if (ret < 0) {
         ret = -errno;
         HPS_ERR("epoll_wait %d", ret);
       }
 
-      struct connect_info *con = (struct connect_info *) event.data.ptr;
-      if (con != NULL) {
-        Connection *c = con->con;
-        int f = con->fid;
-        // HPS_ERR("Connection fd %d", f);
-        c->Ready(f);
-      } else {
-        HPS_ERR("Connection NULL");
+      for (int j = 0; j < ret; j++) {
+        struct epoll_event *event = events + j;
+        struct connect_info *con = (struct connect_info *) event->data.ptr;
+        if (con != NULL) {
+          Connection *c = con->con;
+          int f = con->fid;
+          // HPS_ERR("Connection fd %d", f);
+          c->Ready(f);
+        } else {
+          HPS_ERR("Connection NULL");
+        }
       }
     }
 
+    delete events;
     delete fid_list;
   }
 }
