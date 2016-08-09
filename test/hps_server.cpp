@@ -44,8 +44,6 @@ int exchange3() {
           HPS_INFO("read amount %d", current_read);
           read += current_read;
           count++;
-        } else {
-          pthread_yield();
         }
       }
       for (int j = 0; j < 1000; j++) {
@@ -67,7 +65,7 @@ int exchange3() {
 int main(int argc, char **argv) {
   int op;
   options.rma_op = HPS_RMA_WRITE;
-  options.buf_size = 1024 * 1024 * 40;
+  options.buf_size = 1024 * 6;
   options.no_buffers = 6;
   hints = fi_allocinfo();
   // parse the options

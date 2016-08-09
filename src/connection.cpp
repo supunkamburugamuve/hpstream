@@ -578,11 +578,13 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t unSubmittedBuffers = noOfBuffers - submittedBuffers;
   uint32_t index = 0;
   while (unSubmittedBuffers > 0) {
-    index = (base + submittedBuffers + 1) % noOfBuffers;
+    index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
+    HPS_INFO("Posting buffer with index %" PRId32, index);
     ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
+      rbuf->releaseLock();
       return (int) ret;
     }
     rbuf->IncrementSubmitted(1);
@@ -623,6 +625,12 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
                    PRIu32, *((uint32_t *) current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       sbuf->IncrementFilled(1);
+      uint32_t *buffer = (uint32_t *) (current_buf + sizeof(uint32_t));
+      int i = 0;
+      for (i = 0; i < ((buf_size - 4) / sizeof(int)); i++) {
+        printf("%d ", buffer[i]);
+      }
+      printf("\nwritten=%d \n", i);
       // send the current buffer
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
@@ -655,8 +663,8 @@ int Connection::TransmitComplete() {
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
-  max_completions = max_completions == 0 ? 1 : max_completions;
-  HPS_INFO("Transmit complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr);
+  max_completions = max_completions == 0 ? 0 : max_completions;
+  HPS_INFO("Transmit complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
@@ -692,8 +700,8 @@ int Connection::ReceiveComplete() {
   this->recv_buf->acquireLock();
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
-  max_completions = max_completions == 0 ? 1 : max_completions;
-  HPS_INFO("Receive complete max_completions=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, rx_seq, rx_cq_cntr);
+  max_completions = max_completions == 0 ? 0 : max_completions;
+  HPS_INFO("Receive complete max_completions=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;

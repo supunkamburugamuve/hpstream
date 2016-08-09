@@ -1,5 +1,6 @@
 #include <rdma/fi_eq.h>
 #include <rdma/fi_errno.h>
+#include <map>
 
 #include "event_loop.h"
 
@@ -25,7 +26,7 @@ void EventLoop::loop() {
 
   while (run) {
     int size = (int) fids.size();
-    if (size == 0) {
+    if (size < 2) {
       pthread_yield();
       continue;
     }
@@ -33,17 +34,18 @@ void EventLoop::loop() {
     // HPS_INFO("Size of the fids %d", size);
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
-    for ( auto it = this->fids.begin(); it != this->fids.end(); ++it ) {
-      fid_list[i++] = it->second;
+    for (std::unordered_map<int,struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
+      fid_list[i] = it->second;
+      i++;
     }
 
-    struct epoll_event* events = new struct epoll_event[size];
-
+    struct epoll_event* events = new struct epoll_event [size];
     memset(events, 0, sizeof events);
     // HPS_INFO("Wait..........");
-    if (fi_trywait(fabric, fid_list, 1) == FI_SUCCESS) {
+    int trywait = fi_trywait(fabric, fid_list, 2);
+    if (trywait == FI_SUCCESS) {
       // HPS_INFO("Wait success");
-      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, size, -1));
+      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, 2, -1));
       if (ret < 0) {
         ret = -errno;
         HPS_ERR("epoll_wait %d", ret);
@@ -61,10 +63,16 @@ void EventLoop::loop() {
           HPS_ERR("Connection NULL");
         }
       }
-    }
+    } else if (trywait == -FI_EAGAIN){
+      for (std::unordered_map<int, Connection *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+        Connection *c = it->second;
+        // HPS_ERR("Connection fd %d", f);
+        c->Ready(it->first);
+      }
 
-    delete events;
+    }
     delete fid_list;
+    delete events;
   }
 }
 
@@ -74,6 +82,8 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
   if (fids.find(fid) == fids.end()) {
     HPS_INFO("Register FID %d", fid);
     this->fids[fid] = desc;
+    this->connections[fid] = connection;
+
     struct connect_info *info = new connect_info();
     info->con = connection;
     info->fid = fid;
