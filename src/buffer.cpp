@@ -183,7 +183,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
     memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
-    HPS_INFO("Reading, base= %d, dataHead= %d " PRId32, tail, buffers_filled, read_size);
+    HPS_INFO("Reading, base= %d, dataHead= %d read_size=%" PRId32, tail, buffers_filled, read_size);
     read_size += can_copy;
   }
 
