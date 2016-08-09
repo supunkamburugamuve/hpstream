@@ -708,7 +708,6 @@ int Connection::ReceiveComplete() {
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
-    HPS_INFO("Increment read tail %ld", cq_ret);
     if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
       this->recv_buf->releaseLock();
