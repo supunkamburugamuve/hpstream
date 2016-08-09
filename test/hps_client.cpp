@@ -19,9 +19,9 @@ int exchange3() {
   for (int j = 0; j < 10; j++) {
     for (int i = 0; i < 1000; i++) {
       if (j % 2 == 0) {
-        values[j][i] = j * 1000 + 1;
+        values[j][i] = j * 1000 + i;
       } else {
-        values[j][i] = j * 1000 + 1;
+        values[j][i] = j * 1000 + i;
       }
     }
   }
