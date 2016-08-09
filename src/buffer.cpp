@@ -156,7 +156,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // now lets see how much we can copy
     uint32_t can_copy = 0;
     uint32_t tmp_index = current_read_indx;
-    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, r, current_read_indx);
+    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, *r, current_read_indx);
     // we can copy everything from this buffer
     if (size - read_size >= need_copy) {
       HPS_INFO("Moving base");
@@ -174,7 +174,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     }
     // next copy the buffer
     HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
-    memcpy(buf, b + sizeof(uint32_t) + tmp_index, can_copy);
+    memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
     HPS_INFO("Reading, base= %d, dataHead= %d", tail, buffers_filled);
     read_size += can_copy;
