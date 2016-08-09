@@ -636,7 +636,9 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         sent_size += current_size;
         // increment the head
         sbuf->IncrementSubmitted(1);
+        HPS_ERR("Posting....");
       } else {
+        HPS_ERR("Failed to post");
         error_count++;
         if (error_count > MAX_ERRORS) {
           HPS_ERR("Failed to send the buffer completely. sent %d", sent_size);
