@@ -35,7 +35,7 @@ int exchange3() {
   int count = 0;
   uint32_t current_read = 0;
   HPS_INFO("Done sending.. switching to receive");
-  while (read < 1000 && count < 10) {
+  while (read < 4000 && count < 10) {
     if (con->DataAvailableForRead()) {
       con->ReadData((uint8_t *) (values[0] + read), sizeof(values[0]) - read, &current_read);
       HPS_INFO("read amount %d", current_read);
