@@ -575,9 +575,8 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t base = rbuf->Base();
   uint32_t submittedBuffers = rbuf->GetSubmittedBuffers();
   uint32_t noOfBuffers = rbuf->NoOfBuffers();
-  uint32_t unSubmittedBuffers = noOfBuffers - submittedBuffers;
   uint32_t index = 0;
-  while (unSubmittedBuffers > 0) {
+  while (submittedBuffers < noOfBuffers) {
     index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
     HPS_INFO("Posting buffer with index %" PRId32, index);
@@ -588,7 +587,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       return (int) ret;
     }
     rbuf->IncrementSubmitted(1);
-    unSubmittedBuffers--;
+    submittedBuffers++;
   }
   rbuf->releaseLock();
   return 0;
