@@ -38,7 +38,7 @@ void EventLoop::loop() {
 
     struct epoll_event* events = new struct epoll_event [size];
     memset(events, 0, sizeof events);
-    HPS_INFO("Wait..........");
+    HPS_INFO("Wait.......... wit size %d", size);
     int trywait = fi_trywait(fabric, fid_list, size);
     if (trywait == FI_SUCCESS) {
       // HPS_INFO("Wait success");
