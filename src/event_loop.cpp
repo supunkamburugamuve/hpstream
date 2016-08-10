@@ -63,7 +63,7 @@ void EventLoop::loop() {
     } else if (trywait == -FI_EAGAIN){
       for (std::unordered_map<int, IEventCallback *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
         IEventCallback *c = it->second;
-        // HPS_ERR("Connection fd %d", f);
+        HPS_ERR("Wait try again Connection fd %d", it->first);
         c->OnEvent(it->first);
       }
 
