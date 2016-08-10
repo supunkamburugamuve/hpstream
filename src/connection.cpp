@@ -749,7 +749,7 @@ Connection::~Connection() {
 
 }
 
-int Connection::OnEvent(int fid) {
+int Connection::OnEvent(int fid, enum loop_status state) {
   return this->Ready(fid);
 }
 

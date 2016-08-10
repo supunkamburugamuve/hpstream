@@ -55,7 +55,7 @@ void EventLoop::loop() {
           IEventCallback *c = callback->callback;
           int f = callback->fid;
           // HPS_ERR("Connection fd %d", f);
-          c->OnEvent(f);
+          c->OnEvent(f, AVIALBLE);
         } else {
           HPS_ERR("Connection NULL");
         }
@@ -64,9 +64,8 @@ void EventLoop::loop() {
       for (std::unordered_map<int, IEventCallback *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
         IEventCallback *c = it->second;
         HPS_ERR("Wait try again Connection fd %d", it->first);
-        c->OnEvent(it->first);
+        c->OnEvent(it->first, TRYAGAIN);
       }
-
     }
     delete fid_list;
     delete events;

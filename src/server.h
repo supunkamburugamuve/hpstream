@@ -33,7 +33,7 @@ public:
   }
   int Start();
 
-  int OnEvent(int fid);
+  int OnEvent(int fid, enum loop_status state);
 
   int Wait();
 private:

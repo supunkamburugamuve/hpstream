@@ -13,7 +13,7 @@ public:
   Connection *GetConnection();
   void Free();
   int Start();
-  int OnEvent(int fid);
+  int OnEvent(int fid, enum loop_status state);
   /**
    * Start Loop through the events
    */

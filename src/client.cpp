@@ -44,11 +44,14 @@ int Client::Start() {
   return 0;
 }
 
-int Client::OnEvent(int fid) {
+int Client::OnEvent(int fid, enum loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
   int ret = 0;
+  if (state == TRYAGAIN) {
+    return 0;
+  }
   HPS_INFO("Waiting for connection");
   // read the events for incoming messages
   rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);

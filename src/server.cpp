@@ -124,12 +124,15 @@ int Server::Init(void) {
   return 0;
 }
 
-int Server::OnEvent(int fid){
+int Server::OnEvent(int fid, enum loop_status state){
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
   int ret = 0;
   HPS_INFO("Waiting for connection");
+  if (state == TRYAGAIN) {
+    return 0;
+  }
   // read the events for incoming messages
   rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
   if (rd != sizeof entry) {

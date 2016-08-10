@@ -79,7 +79,7 @@ public:
     return ep;
   }
 
-  int OnEvent(int fid);
+  int OnEvent(int fid, enum loop_status state);
 
   // disconnect
   int Disconnect();

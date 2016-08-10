@@ -15,9 +15,11 @@
 #include "event_loop.h"
 #include "hps.h"
 
+enum loop_status {AVIALBLE, TRYAGAIN};
+
 class IEventCallback {
 public:
-  virtual int OnEvent(int fid) = 0;
+  virtual int OnEvent(int fid, enum loop_status state) = 0;
 };
 
 class EventLoop {
