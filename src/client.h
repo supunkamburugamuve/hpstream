@@ -6,14 +6,14 @@
 #include "connection.h"
 #include "event_loop.h"
 
-class Client {
+class Client : IEventCallback {
 public:
   Client(Options *opts, fi_info *hints);
   int Connect(void);
   Connection *GetConnection();
   void Free();
   int Start();
-
+  int OnEvent(int fid);
   /**
    * Start Loop through the events
    */
@@ -27,6 +27,7 @@ private:
   struct fi_info *info_hints;
   // the event queue to for  connection handling
   struct fid_eq *eq;
+  int eq_fid;
   // event queue attribute
   struct fi_eq_attr eq_attr;
   // the fabric
@@ -38,7 +39,7 @@ private:
   // looping thread id
   pthread_t loopThreadId;
 
-
+  int Disconnect();
 };
 
 #endif /* SCLIENT_H_ */

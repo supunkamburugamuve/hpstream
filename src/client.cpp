@@ -44,6 +44,35 @@ int Client::Start() {
   return 0;
 }
 
+int Client::OnEvent(int fid) {
+  struct fi_eq_cm_entry entry;
+  uint32_t event;
+  ssize_t rd;
+  int ret = 0;
+  HPS_INFO("Waiting for connection");
+  // read the events for incoming messages
+  rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
+  if (rd != sizeof entry) {
+    HPS_ERR("fi_eq_sread listen");
+    return (int) rd;
+  }
+
+  if (event == FI_SHUTDOWN) {
+    HPS_ERR("Recv shut down, Ignoring");
+    Disconnect();
+    return 0;
+  } {
+    HPS_ERR("Unexpected CM event %d", event);
+    ret = -FI_EOTHER;
+  }
+
+  return ret;
+}
+
+int Client::Disconnect() {
+  return this->con->Disconnect();
+}
+
 int Client::Connect(void) {
 	struct fi_eq_cm_entry entry;
 	uint32_t event;
@@ -69,6 +98,12 @@ int Client::Connect(void) {
 		HPS_ERR("fi_eq_open %d", ret);
 		return ret;
 	}
+
+  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
+  if (ret) {
+    HPS_ERR("Failed to get event queue fid %d", ret);
+    return ret;
+  }
 
 	ret = fi_domain(this->fabric, this->info, &domain, NULL);
 	if (ret) {
@@ -126,6 +161,12 @@ int Client::Connect(void) {
   }
 
   this->eventLoop = new EventLoop(fabric);
+  ret = this->eventLoop->RegisterRead(this->eq_fid, &this->eq->fid, this);
+  if (ret) {
+    HPS_ERR("Failed to register event queue fid %d", ret);
+    return ret;
+  }
+
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
 	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
   if (ret) {

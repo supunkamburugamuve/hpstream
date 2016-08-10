@@ -109,8 +109,11 @@ int Server::Init(void) {
   }
 
   this->eventLoop = new EventLoop(fabric);
-  this->eventLoop->RegisterRead(this->eq_fid, &eq->fid, this);
-
+  ret = this->eventLoop->RegisterRead(this->eq_fid, &eq->fid, this);
+  if (ret) {
+    HPS_ERR("Failed to register event queue fid %d", ret);
+    return ret;
+  }
   // start listen for incoming connections
   ret = fi_listen(this->pep);
   if (ret) {
@@ -126,9 +129,6 @@ int Server::OnEvent(int fid){
   uint32_t event;
   ssize_t rd;
   int ret = 0;
-  struct fid_ep *ep;
-  struct fid_domain *domain;
-  Connection *con;
   HPS_INFO("Waiting for connection");
   // read the events for incoming messages
   rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
@@ -139,7 +139,6 @@ int Server::OnEvent(int fid){
 
   if (event == FI_SHUTDOWN) {
     HPS_ERR("Recv shut down, Ignoring");
-    Disconnect(NULL);
     return 0;
   } else if (event == FI_CONNREQ) {
     // this is the correct fi_info associated with active end-point
