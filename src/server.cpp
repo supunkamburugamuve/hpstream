@@ -163,7 +163,6 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   struct fid_ep *ep;
   struct fid_domain *domain;
   Connection *con;
-  struct fi_eq_cm_entry confirm_entry;
 
   ret = fi_domain(this->fabric, entry->info, &domain, NULL);
   if (ret) {
@@ -201,14 +200,14 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   }
 
   // read the confirmation
-  rd = fi_eq_sread(eq, &event, &confirm_entry, sizeof confirm_entry, -1, 0);
+  rd = fi_eq_sread(eq, &event, entry, sizeof (struct fi_eq_cm_entry), -1, 0);
   if (rd != sizeof entry) {
     HPS_ERR("fi_eq_sread accept %d", (int)rd);
     ret = (int) rd;
     goto err;
   }
 
-  if (event != FI_CONNECTED || confirm_entry.fid != &ep->fid) {
+  if (event != FI_CONNECTED || entry->fid != &ep->fid) {
     HPS_ERR("Unexpected CM event %d fid %p (ep %p)", event, entry->fid, ep);
     ret = -FI_EOTHER;
     goto err;
