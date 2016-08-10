@@ -147,11 +147,7 @@ int Server::OnEvent(int fid){
   } else {
     HPS_ERR("Unexpected CM event %d", event);
     ret = -FI_EOTHER;
-    goto err;
   }
-
-  err:
-    fi_reject(pep, entry.info->handle, NULL, 0);
 
   return ret;
 }
