@@ -27,10 +27,6 @@ void EventLoop::loop() {
 
   while (run) {
     int size = (int) fids.size();
-//    if (size < 2) {
-//      pthread_yield();
-//      continue;
-//    }
     // get all the elements in fids and create a list
     // HPS_INFO("Size of the fids %d", size);
     struct fid **fid_list = new struct fid*[size];
@@ -42,7 +38,7 @@ void EventLoop::loop() {
 
     struct epoll_event* events = new struct epoll_event [size];
     memset(events, 0, sizeof events);
-    // HPS_INFO("Wait..........");
+    HPS_INFO("Wait..........");
     int trywait = fi_trywait(fabric, fid_list, size);
     if (trywait == FI_SUCCESS) {
       // HPS_INFO("Wait success");
