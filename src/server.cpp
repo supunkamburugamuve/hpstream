@@ -201,7 +201,7 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   // read the confirmation
   rd = fi_eq_sread(eq, &event, entry, sizeof (struct fi_eq_cm_entry), -1, 0);
-  if (rd != sizeof entry) {
+  if (rd != sizeof (struct fi_eq_cm_entry)) {
     HPS_ERR("fi_eq_sread accept %d", (int)rd);
     ret = (int) rd;
     goto err;
