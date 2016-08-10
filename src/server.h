@@ -8,7 +8,7 @@
 #include "connection.h"
 #include "event_loop.h"
 
-class Server {
+class Server : public IEventCallback {
 public:
   Server(Options *opts, fi_info *hints);
   void Free();
@@ -16,10 +16,7 @@ public:
    * Start the server
    */
   int Init(void);
-  /**
-   * Accept new connections
-   */
-  int Connect(void);
+
 
   bool IsAcceptConnection() {
     return acceptConnections;
@@ -36,8 +33,9 @@ public:
   }
   int Start();
 
-  int Wait();
+  int OnEvent(int fid);
 
+  int Wait();
 private:
   Options *options;
   // hints to be used to obtain fabric information
@@ -48,6 +46,8 @@ private:
   struct fid_pep *pep;
   // the event queue to listen on for incoming connections
   struct fid_eq *eq;
+  // fid for event queue
+  int eq_fid;
   // event queue attribute
   struct fi_eq_attr eq_attr;
   // the fabric
@@ -64,6 +64,17 @@ private:
   // list of connections
   std::list<Connection *> connections;
 
+  /**
+ * Accept new connections
+ */
+  int Connect(struct fi_eq_cm_entry *entry);
+
+  /**
+   * Disconnect the connection
+   * @param con
+   * @return
+   */
+  int Disconnect(Connection *con);
 };
 
 

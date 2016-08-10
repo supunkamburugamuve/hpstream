@@ -4,8 +4,8 @@
 
 #include "event_loop.h"
 
-struct connect_info {
-  Connection *con;
+struct loop_info {
+  IEventCallback *callback;
   int fid;
 };
 
@@ -53,21 +53,21 @@ void EventLoop::loop() {
       HPS_INFO("Epoll wait returned %d size=%d", ret, size);
       for (int j = 0; j < ret; j++) {
         struct epoll_event *event = events + j;
-        struct connect_info *con = (struct connect_info *) event->data.ptr;
-        if (con != NULL) {
-          Connection *c = con->con;
-          int f = con->fid;
+        struct loop_info *callback = (struct loop_info *) event->data.ptr;
+        if (callback != NULL) {
+          IEventCallback *c = callback->callback;
+          int f = callback->fid;
           // HPS_ERR("Connection fd %d", f);
-          c->Ready(f);
+          c->OnEvent(f);
         } else {
           HPS_ERR("Connection NULL");
         }
       }
     } else if (trywait == -FI_EAGAIN){
-      for (std::unordered_map<int, Connection *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
-        Connection *c = it->second;
+      for (std::unordered_map<int, IEventCallback *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+        IEventCallback *c = it->second;
         // HPS_ERR("Connection fd %d", f);
-        c->Ready(it->first);
+        c->OnEvent(it->first);
       }
 
     }
@@ -76,7 +76,7 @@ void EventLoop::loop() {
   }
 }
 
-int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
+int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connection) {
   struct epoll_event event;
   int ret;
   if (fids.find(fid) == fids.end()) {
@@ -84,8 +84,8 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, Connection *connection) {
     this->fids[fid] = desc;
     this->connections[fid] = connection;
 
-    struct connect_info *info = new connect_info();
-    info->con = connection;
+    struct loop_info *info = new loop_info();
+    info->callback = connection;
     info->fid = fid;
     event.data.ptr = (void *)info;
     event.events = EPOLLIN;

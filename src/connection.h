@@ -16,8 +16,9 @@
 #include "buffer.h"
 #include "utils.h"
 #include "options.h"
+#include "event_loop.h"
 
-class Connection {
+class Connection : public IEventCallback {
 public:
   Connection(Options *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
@@ -74,6 +75,10 @@ public:
     return rx_fd;
   }
 
+  int OnEvent(int fid);
+
+  // disconnect
+  int Disconnect();
 private:
   // options for initialization
   Options *options;

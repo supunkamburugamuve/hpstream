@@ -39,6 +39,17 @@ int hps_utils_get_cq_fd(Options *opts, struct fid_cq *cq, int *fd) {
   return ret;
 }
 
+int hps_utils_get_eq_fd(Options *opts, struct fid_eq *eq, int *fd) {
+  int ret = FI_SUCCESS;
+  if (eq) {
+    ret = fi_control(&eq->fid, FI_GETWAIT, fd);
+    if (ret) {
+      HPS_ERR("fi_control(FI_GETWAIT) %d", ret);
+    }
+  }
+  return ret;
+}
+
 size_t hps_utils_tx_prefix_size(struct fi_info *fi) {
   return (fi->tx_attr->mode & FI_MSG_PREFIX) ?
          fi->ep_attr->msg_prefix_size : 0;

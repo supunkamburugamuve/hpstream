@@ -748,3 +748,20 @@ int Connection::Ready(int fd) {
 Connection::~Connection() {
 
 }
+
+int Connection::OnEvent(int fid) {
+  return this->Ready(fid);
+}
+
+int Connection::Disconnect() {
+  if (ep) {
+    int ret = fi_shutdown(ep, 0);
+    if (ret) {
+      HPS_ERR("Failed to shutdown connection");
+    }
+    return ret;
+  } else {
+    HPS_ERR("Not connected");
+  }
+  return 1;
+}

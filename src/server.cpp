@@ -1,16 +1,6 @@
 #include <pthread.h>
 #include "server.h"
 
-static void* acceptConnectionsThread(void *param) {
-  Server* server = static_cast<Server *>(param);
-  while (server->IsAcceptConnection()) {
-    if (server->Connect()) {
-      HPS_ERR("Failed to accept connection");
-    }
-  }
-  return NULL;
-}
-
 static void* loopEventsThread(void *param) {
   Server* server = static_cast<Server *>(param);
   server->loop();
@@ -55,12 +45,6 @@ Connection* Server::GetConnection() {
 
 int Server::Start() {
   int ret;
-  // now start accept thread
-  ret = pthread_create(&acceptThreadId, NULL, &acceptConnectionsThread, (void *)this);
-  if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
-    return ret;
-  }
 
   // start the loop thread
   ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
@@ -104,6 +88,12 @@ int Server::Init(void) {
     return ret;
   }
 
+  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
+  if (ret) {
+    HPS_ERR("Failed to get event queue fid %d", ret);
+    return ret;
+  }
+
   // allocates a passive end-point
   ret = fi_passive_ep(this->fabric, this->info_pep, &this->pep, NULL);
   if (ret) {
@@ -119,6 +109,7 @@ int Server::Init(void) {
   }
 
   this->eventLoop = new EventLoop(fabric);
+  this->eventLoop->RegisterRead(this->eq_fid, &eq->fid, this);
 
   // start listen for incoming connections
   ret = fi_listen(this->pep);
@@ -130,11 +121,11 @@ int Server::Init(void) {
   return 0;
 }
 
-int Server::Connect(void) {
+int Server::OnEvent(int fid){
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
-  int ret;
+  int ret = 0;
   struct fid_ep *ep;
   struct fid_domain *domain;
   Connection *con;
@@ -148,17 +139,32 @@ int Server::Connect(void) {
 
   if (event == FI_SHUTDOWN) {
     HPS_ERR("Recv shut down, Ignoring");
+    Disconnect(NULL);
     return 0;
-  }
-
-  // this is the correct fi_info associated with active end-point
-  if (event != FI_CONNREQ) {
+  } else if (event == FI_CONNREQ) {
+    // this is the correct fi_info associated with active end-point
+    Connect(&entry);
+  } else {
     HPS_ERR("Unexpected CM event %d", event);
     ret = -FI_EOTHER;
     goto err;
   }
 
-  ret = fi_domain(this->fabric, entry.info, &domain, NULL);
+  err:
+    fi_reject(pep, entry.info->handle, NULL, 0);
+
+  return ret;
+}
+
+int Server::Connect(struct fi_eq_cm_entry *entry) {
+  uint32_t event;
+  ssize_t rd;
+  int ret;
+  struct fid_ep *ep;
+  struct fid_domain *domain;
+  Connection *con;
+
+  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
   if (ret) {
     HPS_ERR("fi_domain %d", ret);
     goto err;
@@ -166,7 +172,7 @@ int Server::Connect(void) {
 
   // create the connection
   con = new Connection(this->options, this->info_hints,
-                       entry.info, this->fabric, domain, this->eq);
+                       entry->info, this->fabric, domain, this->eq);
   // allocate the queues and counters
   ret = con->AllocateActiveResources();
   if (ret) {
@@ -174,7 +180,7 @@ int Server::Connect(void) {
   }
 
   // create the end point for this connection
-  ret = fi_endpoint(domain, entry.info, &ep, NULL);
+  ret = fi_endpoint(domain, entry->info, &ep, NULL);
   if (ret) {
     HPS_ERR("fi_endpoint %d", ret);
     goto err;
@@ -201,8 +207,8 @@ int Server::Connect(void) {
     goto err;
   }
 
-  if (event != FI_CONNECTED || entry.fid != &ep->fid) {
-    HPS_ERR("Unexpected CM event %d fid %p (ep %p)", event, entry.fid, ep);
+  if (event != FI_CONNECTED || entry->fid != &ep->fid) {
+    HPS_ERR("Unexpected CM event %d fid %p (ep %p)", event, entry->fid, ep);
     ret = -FI_EOTHER;
     goto err;
   }
@@ -234,8 +240,12 @@ int Server::Connect(void) {
 
   return 0;
   err:
-    fi_reject(pep, entry.info->handle, NULL, 0);
+    fi_reject(pep, entry->info->handle, NULL, 0);
     return ret;
+}
+
+int Server::Disconnect(Connection *con) {
+  return con->Disconnect();
 }
 
 int Server::loop() {

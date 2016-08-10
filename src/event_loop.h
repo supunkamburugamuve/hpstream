@@ -13,19 +13,24 @@
 #include <rdma/fabric.h>
 
 #include "event_loop.h"
-#include "connection.h"
+#include "hps.h"
+
+class IEventCallback {
+public:
+  virtual int OnEvent(int fid) = 0;
+};
 
 class EventLoop {
 public:
   EventLoop(struct fid_fabric *fabric);
-  int RegisterRead(int fid, struct fid *desc, Connection *connection);
+  int RegisterRead(int fid, struct fid *desc, IEventCallback *callback);
   void loop();
 private:
   bool run;
   struct fid_fabric *fabric;
   int epfd;
   std::unordered_map<int, struct fid *> fids;
-  std::unordered_map<int, Connection *> connections;
+  std::unordered_map<int, IEventCallback *> connections;
 };
 
 #endif
