@@ -75,6 +75,10 @@ public:
     return rx_fd;
   }
 
+  struct fid_ep *GetEp() {
+    return ep;
+  }
+
   int OnEvent(int fid);
 
   // disconnect

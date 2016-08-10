@@ -13,6 +13,7 @@ EventLoop::EventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
   this->run = true;
+
   epfd = epoll_create1(0);
   if (epfd < 0) {
     ret = -errno;
@@ -101,6 +102,20 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connectio
   // create a list of fids
   return 0;
 }
+
+int EventLoop::UnRegister(int fid) {
+  struct epoll_event event;
+  int ret;
+  if (fids.find(fid) != fids.end()) {
+    ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
+    if (ret) {
+      ret = -errno;
+      HPS_ERR("Failed to un-register connection %d", ret);
+      return ret;
+    }
+  }
+  return 0;
+};
 
 
 

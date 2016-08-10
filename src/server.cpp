@@ -139,6 +139,12 @@ int Server::OnEvent(int fid){
 
   if (event == FI_SHUTDOWN) {
     HPS_ERR("Recv shut down, Ignoring");
+    std::list<Connection *>::const_iterator iterator;
+    for (iterator = connections.begin(); iterator != connections.end(); ++iterator) {
+      Connection *con = *iterator;
+      struct fid_ep *ep = con->GetEp();
+
+    }
     return 0;
   } else if (event == FI_CONNREQ) {
     // this is the correct fi_info associated with active end-point

@@ -31,6 +31,8 @@ private:
   int epfd;
   std::unordered_map<int, struct fid *> fids;
   std::unordered_map<int, IEventCallback *> connections;
+
+  int UnRegister(int fid);
 };
 
 #endif
