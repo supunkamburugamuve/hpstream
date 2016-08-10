@@ -237,8 +237,8 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   // add the connection to list
   this->connections.push_back(con);
-
   return 0;
+
   err:
     fi_reject(pep, entry->info->handle, NULL, 0);
     return ret;
