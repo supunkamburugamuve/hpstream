@@ -240,8 +240,9 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   return 0;
 
   err:
-    fi_reject(pep, entry->info->handle, NULL, 0);
-    return ret;
+  HPS_INFO("Error label");
+  fi_reject(pep, entry->info->handle, NULL, 0);
+  return ret;
 }
 
 int Server::Disconnect(Connection *con) {
