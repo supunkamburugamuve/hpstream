@@ -58,7 +58,6 @@ int Server::Start() {
 
 int Server::Wait() {
   pthread_join(loopThreadId, NULL);
-  pthread_join(loopThreadId, NULL);
   return 0;
 }
 

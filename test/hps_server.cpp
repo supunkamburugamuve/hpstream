@@ -32,7 +32,7 @@ int exchange3() {
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
     Connection *con = *iterator;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10000; i++) {
       for (int j = 0; j < 1000; j++) {
         values[j] = 0;
       }
@@ -46,9 +46,9 @@ int exchange3() {
           count++;
         }
       }
-      for (int j = 0; j < 1000; j++) {
-        printf("%d ", values[j]);
-      }
+//      for (int j = 0; j < 1000; j++) {
+//        printf("%d ", values[j]);
+//      }
       printf("\n");
     }
 
