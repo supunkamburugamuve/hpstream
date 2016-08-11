@@ -48,6 +48,7 @@ private:
   struct fid_eq *eq;
   // fid for event queue
   int eq_fid;
+  struct fid_domain *domain;
   // event queue attribute
   struct fi_eq_attr eq_attr;
   // the fabric

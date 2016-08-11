@@ -16,6 +16,7 @@ Server::Server(Options *opts, fi_info *hints) {
   this->eq = NULL;
   this->fabric = NULL;
   this->eq_attr = {};
+  this->domain = NULL;
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
   this->con = NULL;
@@ -80,6 +81,12 @@ int Server::Init(void) {
   ret = fi_fabric(this->info_pep->fabric_attr, &fabric, NULL);
   if (ret) {
     HPS_ERR("fi_fabric %d", ret);
+    return ret;
+  }
+
+  ret = fi_domain(this->fabric, info_hints, &this->domain, NULL);
+  if (ret) {
+    HPS_ERR("fi_domain %d", ret);
     return ret;
   }
 
@@ -167,17 +174,17 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   ssize_t rd;
   int ret;
   struct fid_ep *ep;
-  struct fid_domain *domain;
+  // struct fid_domain *domain;
   Connection *con;
 
   char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
   std::cout << "FI ENTRY" << fi_str << std::endl;
 
-  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
-  if (ret) {
-    HPS_ERR("fi_domain %d", ret);
-    goto err;
-  }
+//  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
+//  if (ret) {
+//    HPS_ERR("fi_domain %d", ret);
+//    goto err;
+//  }
 
   // create the connection
   con = new Connection(this->options, this->info_hints,
