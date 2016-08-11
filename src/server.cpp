@@ -85,7 +85,7 @@ int Server::Init(void) {
   }
 
   HPS_INFO("Domain before");
-  ret = fi_domain(this->fabric, info_hints, &this->domain, NULL);
+  ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
     HPS_ERR("fi_domain %d", ret);
     return ret;
