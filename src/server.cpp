@@ -84,11 +84,13 @@ int Server::Init(void) {
     return ret;
   }
 
+  HPS_INFO("Domain before");
   ret = fi_domain(this->fabric, info_hints, &this->domain, NULL);
   if (ret) {
     HPS_ERR("fi_domain %d", ret);
     return ret;
   }
+  HPS_INFO("Domain after");
 
   // open the event queue for passive end-point
   ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
