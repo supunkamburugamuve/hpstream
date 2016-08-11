@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <iostream>
 #include "server.h"
 
 static void* loopEventsThread(void *param) {
@@ -72,6 +73,8 @@ int Server::Init(void) {
   if (ret) {
     return ret;
   }
+  char *fi_str = fi_tostr(this->info_pep, FI_TYPE_INFO);
+  std::cout << "FI PEP" << fi_str << std::endl;
 
   // create the fabric for passive end-point
   ret = fi_fabric(this->info_pep->fabric_attr, &fabric, NULL);
@@ -166,6 +169,9 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   struct fid_ep *ep;
   struct fid_domain *domain;
   Connection *con;
+
+  char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
+  std::cout << "FI ENTRY" << fi_str << std::endl;
 
   ret = fi_domain(this->fabric, entry->info, &domain, NULL);
   if (ret) {
