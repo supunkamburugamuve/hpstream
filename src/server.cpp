@@ -74,7 +74,7 @@ int Server::Init(void) {
   if (ret) {
     return ret;
   }
-  char *fi_str = fi_tostr(this->info_pep, FI_TYPE_INFO);
+  char *fi_str = fi_tostr(this->info_hints, FI_TYPE_INFO);
   std::cout << "FI PEP" << fi_str << std::endl;
 
   // create the fabric for passive end-point
