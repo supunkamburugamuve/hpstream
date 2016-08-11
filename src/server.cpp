@@ -107,7 +107,7 @@ int Server::Init(void) {
     return ret;
   }
 
-  this->eventLoop = new EventLoop(fabric);
+  this->eventLoop = new EventLoop(fabric  );
   ret = this->eventLoop->RegisterRead(this->eq_fid, &eq->fid, this);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);

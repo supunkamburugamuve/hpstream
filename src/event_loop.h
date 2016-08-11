@@ -24,13 +24,15 @@ public:
 
 class EventLoop {
 public:
-  EventLoop(struct fid_fabric *fabric);
+  EventLoop(struct fid_fabric *fabric, struct fid_domain *domain);
   int RegisterRead(int fid, struct fid *desc, IEventCallback *callback);
   void loop();
 private:
   bool run;
   struct fid_fabric *fabric;
   int epfd;
+  struct fid_poll *poll_fd;
+  fi_poll_attr poll_attr;
   std::unordered_map<int, struct fid *> fids;
   std::unordered_map<int, IEventCallback *> connections;
 

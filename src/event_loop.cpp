@@ -1,6 +1,7 @@
 #include <rdma/fi_eq.h>
 #include <rdma/fi_errno.h>
 #include <map>
+#include <rdma/fi_domain.h>
 
 #include "event_loop.h"
 
@@ -9,14 +10,15 @@ struct loop_info {
   int fid;
 };
 
-EventLoop::EventLoop(struct fid_fabric *fabric) {
+EventLoop::EventLoop(struct fid_fabric *fabric, struct fid_domain *domain) {
   int ret;
   this->fabric = fabric;
   this->run = true;
+  this->poll_attr = {};
+  this->poll_attr.flags = 0;
 
-  epfd = epoll_create1(0);
-  if (epfd < 0) {
-    ret = -errno;
+  ret = fi_poll_open(domain, &poll_attr, &poll_fd);
+  if (ret) {
     HPS_ERR("epoll_create1", ret);
     throw ret;
   }
@@ -36,20 +38,20 @@ void EventLoop::loop() {
       i++;
     }
 
-    struct epoll_event* events = new struct epoll_event [size];
+    struct fi_context **events = new struct fi_context*[size];
     memset(events, 0, sizeof events);
     HPS_INFO("Wait.......... wit size %d", size);
     int trywait = fi_trywait(fabric, fid_list, size);
     if (trywait == FI_SUCCESS) {
       HPS_INFO("Wait success");
-      ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, size, -1));
+      ret = (int) TEMP_FAILURE_RETRY(fi_poll(poll_fd, (void **)events, size));
       if (ret < 0) {
         ret = -errno;
         HPS_ERR("epoll_wait %d", ret);
       }
       HPS_INFO("Epoll wait returned %d size=%d", ret, size);
       for (int j = 0; j < ret; j++) {
-        struct epoll_event *event = events + j;
+        struct fi_context *event = events[j];
         struct loop_info *callback = (struct loop_info *) event->data.ptr;
         if (callback != NULL) {
           IEventCallback *c = callback->callback;
@@ -73,7 +75,6 @@ void EventLoop::loop() {
 }
 
 int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connection) {
-  struct epoll_event event;
   int ret;
   if (fids.find(fid) == fids.end()) {
     HPS_INFO("Register FID %d", fid);
@@ -81,11 +82,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connectio
     this->connections[fid] = connection;
 
     struct loop_info *info = new loop_info();
-    info->callback = connection;
-    info->fid = fid;
-    event.data.ptr = (void *)info;
-    event.events = EPOLLIN;
-    ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
+    ret = fi_poll_add(poll_fd, desc, 0);
     if (ret) {
       ret = -errno;
       HPS_ERR("epoll_ctl %d", ret);
@@ -98,11 +95,11 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connectio
   return 0;
 }
 
-int EventLoop::UnRegister(int fid) {
+int EventLoop::UnRegister(int fid, struct fid *desc) {
   struct epoll_event event;
   int ret;
   if (fids.find(fid) != fids.end()) {
-    ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
+    ret = fi_poll_del(poll_fd, desc, 0);
     if (ret) {
       ret = -errno;
       HPS_ERR("Failed to un-register connection %d", ret);

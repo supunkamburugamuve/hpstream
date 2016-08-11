@@ -27,6 +27,9 @@ private:
   struct fi_info *info_hints;
   // the event queue to for  connection handling
   struct fid_eq *eq;
+  // context associated with eq
+  struct fi_context eq_ctx;
+  // file descriptor associated with eq
   int eq_fid;
   // event queue attribute
   struct fi_eq_attr eq_attr;
