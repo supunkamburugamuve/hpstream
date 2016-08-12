@@ -185,6 +185,11 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   struct fid_ep *ep;
   // struct fid_domain *domain;
   Connection *con;
+  char host[NI_MAXHOST];
+  char serv[NI_MAXSERV];
+  struct sockaddr_storage addr;
+  size_t size;
+  socklen_t client_len
 
   char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
   std::cout << "FI ENTRY" << fi_str << std::endl;
@@ -238,14 +243,10 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-  struct sockaddr_storage addr;
-  size_t size;
-  socklen_t client_len = sizeof(struct sockaddr_storage);
+
+  client_len = sizeof(struct sockaddr_storage);
   ret = fi_getpeer(ep, &addr, &size);
 
-
-  char host[NI_MAXHOST];
-  char serv[NI_MAXSERV];
 
   if (getnameinfo((const struct sockaddr *) &addr, client_len,
                   host, sizeof(host),
