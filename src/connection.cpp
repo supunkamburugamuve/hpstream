@@ -9,6 +9,7 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
+#include <arpa/inet.h>
 
 #include "connection.h"
 
@@ -764,4 +765,43 @@ int Connection::Disconnect() {
     HPS_ERR("Not connected");
   }
   return 1;
+}
+
+char* Connection::getIPAddress() {
+  struct sockaddr_storage addr;
+  size_t size;
+  int ret;
+
+  ret = fi_getpeer(ep, &addr, &size);
+  if (ret) {
+    if (ret == -FI_ETOOSMALL) {
+      HPS_ERR("FI_ETOOSMALL, we shouln't get this");
+    } else {
+      HPS_ERR("Failed to get peer address");
+    }
+  }
+
+  char *addr_str = new char[INET_ADDRSTRLEN];
+  struct sockaddr_in* addr_in = (struct sockaddr_in*)(&addr);
+  inet_ntop(addr_in->sin_family, &(addr_in->sin_addr), addr_str, INET_ADDRSTRLEN);
+  HPS_INFO("Address: %s", addr_str);
+  return addr_str;
+}
+
+uint32_t Connection::getPort() {
+  struct sockaddr_storage addr;
+  size_t size;
+  int ret;
+
+  ret = fi_getpeer(ep, &addr, &size);
+  if (ret) {
+    if (ret == -FI_ETOOSMALL) {
+      HPS_ERR("FI_ETOOSMALL, we shouln't get this");
+    } else {
+      HPS_ERR("Failed to get peer address");
+    }
+  }
+  int port ntohs(((struct sockaddr_in*)(&addr))->sin_port);
+  HPS_INFO("Port: %d", port);
+  return port;
 }

@@ -185,11 +185,6 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   struct fid_ep *ep;
   // struct fid_domain *domain;
   Connection *con;
-  char host[NI_MAXHOST];
-  char serv[NI_MAXSERV];
-  struct sockaddr_storage addr;
-  size_t size;
-  socklen_t client_len;
 
   char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
   std::cout << "FI ENTRY" << fi_str << std::endl;
@@ -243,23 +238,8 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-
-  client_len = sizeof(struct sockaddr_storage);
-  ret = fi_getpeer(ep, &addr, &size);
-  if (ret) {
-    if (ret == -FI_ETOOSMALL) {
-      HPS_ERR("FI_ETOOSMALL");
-    } else {
-      HPS_ERR("Failed to get peer address");
-    }
-  }
-  if (getnameinfo((const struct sockaddr *) &addr, client_len,
-                  host, sizeof(host),
-                  serv, sizeof(serv), 0) == 0) {
-    printf("Host address: %s, host service: %s\n", host, serv);
-  } else {
-    HPS_ERR("Failed to get information");
-  }
+  con->getIPAddress();
+  con->getPort();
 
   ret = con->SetupBuffers();
   if (ret) {
