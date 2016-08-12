@@ -15,7 +15,7 @@ EventLoop::EventLoop(struct fid_fabric *fabric, struct fid_domain *domain) {
   ret = fi_poll_open(domain, &poll_attr, &poll_fd);
   if (ret) {
     HPS_ERR("epoll_create1", ret);
-    throw ret;
+    // throw ret;
   }
 }
 
