@@ -247,8 +247,7 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   if (getnameinfo((const struct sockaddr *) &addr, client_len,
                   host, sizeof(host),
-                  serv, sizeof(serv), 0) == 0)
-  {
+                  serv, sizeof(serv), 0) == 0) {
     printf("Host address: %s, host service: %s\n", host, serv);
   }
 
