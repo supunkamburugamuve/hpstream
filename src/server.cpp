@@ -189,7 +189,7 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   char serv[NI_MAXSERV];
   struct sockaddr_storage addr;
   size_t size;
-  socklen_t client_len
+  socklen_t client_len;
 
   char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
   std::cout << "FI ENTRY" << fi_str << std::endl;
