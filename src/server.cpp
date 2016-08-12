@@ -231,6 +231,13 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
+  char addr[1000];
+  size_t size;
+  ret = fi_getpeer(ep, addr, &size);
+  for (int i = 0; i < 100; i++) {
+    printf("%c", addr[i]);
+  }
+
   ret = con->SetupBuffers();
   if (ret) {
     HPS_ERR("Failed to set up the buffers %d", ret);
