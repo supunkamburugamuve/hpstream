@@ -131,7 +131,7 @@ int Server::Init(void) {
   return 0;
 }
 
-int Server::OnEvent(int fid, enum loop_status state){
+int Server::OnEvent(enum hps_loop_event e, enum loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;

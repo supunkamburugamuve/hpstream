@@ -87,7 +87,7 @@ public:
     return &tx_loop;
   }
 
-  int OnEvent(int fid, enum loop_status state);
+  int OnEvent(enum hps_loop_event event, enum loop_status state);
 
   // disconnect
   int Disconnect();

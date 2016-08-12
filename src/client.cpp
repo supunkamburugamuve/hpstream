@@ -46,7 +46,7 @@ int Client::Start() {
   return 0;
 }
 
-int Client::OnEvent(int fid, enum loop_status state) {
+int Client::OnEvent(enum hps_loop_event e, enum loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;

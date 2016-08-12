@@ -755,8 +755,13 @@ Connection::~Connection() {
 
 }
 
-int Connection::OnEvent(int fid, enum loop_status state) {
-  return this->Ready(fid);
+int Connection::OnEvent(enum hps_loop_event event, enum loop_status state) {
+  if (event == CQ_READ) {
+    ReceiveComplete();
+  } else if (event == CQ_TRANSMIT) {
+    TransmitComplete();
+  }
+  return 0;
 }
 
 int Connection::Disconnect() {
