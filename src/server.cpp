@@ -2,13 +2,6 @@
 #include <iostream>
 #include "server.h"
 
-#ifndef NI_MAXHOST
-# define NI_MAXHOST 1025
-#endif
-#ifndef NI_MAXSERV
-# define NI_MAXSERV 32
-#endif
-
 static void* loopEventsThread(void *param) {
   Server* server = static_cast<Server *>(param);
   server->loop();

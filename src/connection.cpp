@@ -801,7 +801,7 @@ uint32_t Connection::getPort() {
       HPS_ERR("Failed to get peer address");
     }
   }
-  int port ntohs(((struct sockaddr_in*)(&addr))->sin_port);
+  uint32_t port = ntohs(((struct sockaddr_in*)(&addr))->sin_port);
   HPS_INFO("Port: %d", port);
   return port;
 }
