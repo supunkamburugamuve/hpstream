@@ -2,6 +2,13 @@
 #include <iostream>
 #include "server.h"
 
+#ifndef NI_MAXHOST
+# define NI_MAXHOST 1025
+#endif
+#ifndef NI_MAXSERV
+# define NI_MAXSERV 32
+#endif
+
 static void* loopEventsThread(void *param) {
   Server* server = static_cast<Server *>(param);
   server->loop();
@@ -235,12 +242,7 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   size_t size;
   socklen_t client_len = sizeof(struct sockaddr_storage);
   ret = fi_getpeer(ep, &addr, &size);
-#ifndef NI_MAXHOST
-# define NI_MAXHOST 1025
-#endif
-#ifndef NI_MAXSERV
-# define NI_MAXSERV 32
-#endif
+
 
   char host[NI_MAXHOST];
   char serv[NI_MAXSERV];
