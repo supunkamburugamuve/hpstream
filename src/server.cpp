@@ -246,8 +246,13 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   client_len = sizeof(struct sockaddr_storage);
   ret = fi_getpeer(ep, &addr, &size);
-
-
+  if (ret) {
+    if (ret == -FI_ETOOSMALL) {
+      HPS_ERR("FI_ETOOSMALL");
+    } else {
+      HPS_ERR("Failed to get peer address");
+    }
+  }
   if (getnameinfo((const struct sockaddr *) &addr, client_len,
                   host, sizeof(host),
                   serv, sizeof(serv), 0) == 0) {
