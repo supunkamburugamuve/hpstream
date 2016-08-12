@@ -231,11 +231,25 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-  char addr[1000];
+  struct sockaddr_storage addr;
   size_t size;
-  ret = fi_getpeer(ep, addr, &size);
-  for (int i = 0; i < 100; i++) {
-    printf("%c", addr[i]);
+  socklen_t client_len = sizeof(struct sockaddr_storage);
+  ret = fi_getpeer(ep, &addr, &size);
+#ifndef NI_MAXHOST
+# define NI_MAXHOST 1025
+#endif
+#ifndef NI_MAXSERV
+# define NI_MAXSERV 32
+#endif
+
+  char host[NI_MAXHOST];
+  char serv[NI_MAXSERV];
+
+  if (getnameinfo((const struct sockaddr *) &addr, client_len,
+                  host, sizeof(host),
+                  serv, sizeof(serv), 0) == 0)
+  {
+    printf("Host address: %s, host service: %s\n", host, serv);
   }
 
   ret = con->SetupBuffers();
