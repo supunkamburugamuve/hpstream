@@ -252,6 +252,8 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
                   host, sizeof(host),
                   serv, sizeof(serv), 0) == 0) {
     printf("Host address: %s, host service: %s\n", host, serv);
+  } else {
+    HPS_ERR("Failed to get information");
   }
 
   ret = con->SetupBuffers();
