@@ -54,6 +54,8 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
+  // the domain associated with the queues
+  struct fid_domain *domain;
   // event loop associated with this server
   EventLoop *eventLoop;
   // indicates weather we run the accept connection thread

@@ -159,7 +159,7 @@ int Connection::AllocateActiveResources() {
   cq_attr.format = FI_CQ_FORMAT_CONTEXT;
 
   // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_FD;
+  cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   cq_attr.size = info->tx_attr->size;
   ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
@@ -169,7 +169,7 @@ int Connection::AllocateActiveResources() {
   }
 
   // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_FD;
+  cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   cq_attr.size = info->rx_attr->size;
   ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);

@@ -17,9 +17,20 @@
 
 enum loop_status {AVIALBLE, TRYAGAIN};
 
+enum hps_loop_event {
+  CONNECTION,
+  CQ_READ,
+  CQ_TRANSMIT
+};
+
 class IEventCallback {
 public:
-  virtual int OnEvent(int fid, enum loop_status state) = 0;
+  virtual int OnEvent(void *fid, enum loop_status state) = 0;
+};
+
+struct loop_info {
+  IEventCallback *callback;
+  void *data;
 };
 
 class EventLoop {

@@ -82,7 +82,6 @@ int Client::Connect(void) {
 	ssize_t rd;
 	int ret;
 	struct fid_ep *ep = NULL;
-	struct fid_domain *domain = NULL;
 	Connection *con = NULL;
 
 	HPS_ERR("Client connect");
@@ -163,7 +162,7 @@ int Client::Connect(void) {
     return ret;
   }
 
-  this->eventLoop = new EventLoop(fabric);
+  this->eventLoop = new EventLoop(fabric, domain);
   ret = this->eventLoop->RegisterRead(this->eq_fid, &this->eq->fid, this);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);

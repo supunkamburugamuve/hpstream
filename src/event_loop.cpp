@@ -5,11 +5,6 @@
 
 #include "event_loop.h"
 
-struct loop_info {
-  IEventCallback *callback;
-  int fid;
-};
-
 EventLoop::EventLoop(struct fid_fabric *fabric, struct fid_domain *domain) {
   int ret;
   this->fabric = fabric;
@@ -52,7 +47,7 @@ void EventLoop::loop() {
       HPS_INFO("Epoll wait returned %d size=%d", ret, size);
       for (int j = 0; j < ret; j++) {
         struct fi_context *event = events[j];
-        struct loop_info *callback = (struct loop_info *) event->data.ptr;
+        struct loop_info *callback = (struct loop_info *) event->internal[0];
         if (callback != NULL) {
           IEventCallback *c = callback->callback;
           int f = callback->fid;
@@ -81,7 +76,6 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connectio
     this->fids[fid] = desc;
     this->connections[fid] = connection;
 
-    struct loop_info *info = new loop_info();
     ret = fi_poll_add(poll_fd, desc, 0);
     if (ret) {
       ret = -errno;
@@ -95,7 +89,7 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connectio
   return 0;
 }
 
-int EventLoop::UnRegister(int fid, struct fid *desc) {
+int EventLoop::UnRegister(struct fid *desc) {
   struct epoll_event event;
   int ret;
   if (fids.find(fid) != fids.end()) {

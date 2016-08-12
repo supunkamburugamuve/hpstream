@@ -33,6 +33,8 @@ private:
   int eq_fid;
   // event queue attribute
   struct fi_eq_attr eq_attr;
+  // the domain associated with the queues
+  struct fid_domain *domain;
   // the fabric
   struct fid_fabric *fabric;
   // the connection

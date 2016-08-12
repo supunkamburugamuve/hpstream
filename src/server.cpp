@@ -80,6 +80,12 @@ int Server::Init(void) {
     return ret;
   }
 
+  ret = fi_domain(this->fabric, this->info_pep, &domain, NULL);
+  if (ret) {
+    HPS_ERR("fi_domain %d", ret);
+    return ret;
+  }
+
   // open the event queue for passive end-point
   ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
   if (ret) {
@@ -107,7 +113,7 @@ int Server::Init(void) {
     return ret;
   }
 
-  this->eventLoop = new EventLoop(fabric  );
+  this->eventLoop = new EventLoop(fabric, domain);
   ret = this->eventLoop->RegisterRead(this->eq_fid, &eq->fid, this);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
@@ -164,14 +170,7 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   ssize_t rd;
   int ret;
   struct fid_ep *ep;
-  struct fid_domain *domain;
   Connection *con;
-
-  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
-  if (ret) {
-    HPS_ERR("fi_domain %d", ret);
-    goto err;
-  }
 
   // create the connection
   con = new Connection(this->options, this->info_hints,
