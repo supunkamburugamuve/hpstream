@@ -83,6 +83,11 @@ public:
 
   // disconnect
   int Disconnect();
+
+  uint32_t getPort();
+
+  char *getIPAddress();
+
 private:
   // options for initialization
   Options *options;
@@ -117,6 +122,8 @@ private:
   int rx_fd, tx_fd;
   // send and receive contexts
   struct fi_context tx_ctx, rx_ctx;
+  // loop info for transmit and recv
+  struct loop_info tx_loop, rx_loop;
 
   // buffer used for communication
   uint8_t *buf;

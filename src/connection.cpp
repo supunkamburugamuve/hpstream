@@ -9,6 +9,7 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
+#include <arpa/inet.h>
 
 #include "connection.h"
 
@@ -68,6 +69,11 @@ Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info
   this->rxcq = NULL;
   this->txcntr = NULL;
   this->rxcntr = NULL;
+
+  this->tx_loop.callback = this;
+  this->rx_loop.callback = this;
+  this->tx_loop.event = CQ_TRANSMIT;
+  this->rx_loop.event = CQ_READ;
 
   this->ep = NULL;
   this->alias_ep = NULL;
@@ -162,7 +168,7 @@ int Connection::AllocateActiveResources() {
   cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   cq_attr.size = info->tx_attr->size;
-  ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
+  ret = fi_cq_open(domain, &cq_attr, &txcq, &tx_loop);
   if (ret) {
     HPS_ERR("fi_cq_open for send %d", ret);
     return ret;
@@ -172,7 +178,7 @@ int Connection::AllocateActiveResources() {
   cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   cq_attr.size = info->rx_attr->size;
-  ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);
+  ret = fi_cq_open(domain, &cq_attr, &rxcq, &rx_loop);
   if (ret) {
     HPS_ERR("fi_cq_open for receive %d", ret);
     return ret;
@@ -764,4 +770,43 @@ int Connection::Disconnect() {
     HPS_ERR("Not connected");
   }
   return 1;
+}
+
+char* Connection::getIPAddress() {
+  struct sockaddr_storage addr;
+  size_t size;
+  int ret;
+
+  ret = fi_getpeer(ep, &addr, &size);
+  if (ret) {
+    if (ret == -FI_ETOOSMALL) {
+      HPS_ERR("FI_ETOOSMALL, we shouln't get this");
+    } else {
+      HPS_ERR("Failed to get peer address");
+    }
+  }
+
+  char *addr_str = new char[INET_ADDRSTRLEN];
+  struct sockaddr_in* addr_in = (struct sockaddr_in*)(&addr);
+  inet_ntop(addr_in->sin_family, &(addr_in->sin_addr), addr_str, INET_ADDRSTRLEN);
+  HPS_INFO("Address: %s", addr_str);
+  return addr_str;
+}
+
+uint32_t Connection::getPort() {
+  struct sockaddr_storage addr;
+  size_t size;
+  int ret;
+
+  ret = fi_getpeer(ep, &addr, &size);
+  if (ret) {
+    if (ret == -FI_ETOOSMALL) {
+      HPS_ERR("FI_ETOOSMALL, we shouln't get this");
+    } else {
+      HPS_ERR("Failed to get peer address");
+    }
+  }
+  uint32_t port = ntohs(((struct sockaddr_in*)(&addr))->sin_port);
+  HPS_INFO("Port: %d", port);
+  return port;
 }

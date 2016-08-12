@@ -23,6 +23,8 @@ Client::Client(Options *opts, fi_info *hints) {
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;
   this->eventLoop = NULL;
+  this->eq_loop.event = CONNECTION;
+  this->eq_loop.callback = this;
 }
 
 void Client::Free() {
@@ -95,7 +97,7 @@ int Client::Connect(void) {
 		return ret;
 	}
 
-	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
+	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, &this->eq_loop);
 	if (ret) {
 		HPS_ERR("fi_eq_open %d", ret);
 		return ret;

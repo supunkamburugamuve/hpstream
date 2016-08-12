@@ -19,6 +19,8 @@ Server::Server(Options *opts, fi_info *hints) {
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
   this->con = NULL;
   this->acceptConnections = true;
+  this->eq_loop.event = CONNECTION;
+  this->eq_loop.callback = this;
 }
 
 void Server::Free() {
@@ -87,7 +89,7 @@ int Server::Init(void) {
   }
 
   // open the event queue for passive end-point
-  ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
+  ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, &this->eq_loop);
   if (ret) {
     HPS_ERR("fi_eq_open %d", ret);
     return ret;
@@ -220,6 +222,9 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
     HPS_ERR("Failed to set up the buffers %d", ret);
     return ret;
   }
+
+  con->getPort();
+  con->getIPAddress();
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());

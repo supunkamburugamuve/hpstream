@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include <rdma/fabric.h>
+#include <list>
 
 #include "event_loop.h"
 #include "hps.h"
@@ -25,29 +26,28 @@ enum hps_loop_event {
 
 class IEventCallback {
 public:
-  virtual int OnEvent(void *fid, enum loop_status state) = 0;
+  virtual int OnEvent(enum hps_loop_event event, enum loop_status state) = 0;
 };
 
 struct loop_info {
   IEventCallback *callback;
   void *data;
+  enum hps_loop_event event;
 };
 
 class EventLoop {
 public:
   EventLoop(struct fid_fabric *fabric, struct fid_domain *domain);
-  int RegisterRead(int fid, struct fid *desc, IEventCallback *callback);
+  int RegisterRead(struct fid *desc, struct loop_info *connection);
   void loop();
 private:
   bool run;
   struct fid_fabric *fabric;
-  int epfd;
   struct fid_poll *poll_fd;
   fi_poll_attr poll_attr;
-  std::unordered_map<int, struct fid *> fids;
-  std::unordered_map<int, IEventCallback *> connections;
-
-  int UnRegister(int fid);
+  std::list<struct fid *> fids;
+  std::list<struct loop_info *> connections;
+  int UnRegister(struct fid *desc);
 };
 
 #endif

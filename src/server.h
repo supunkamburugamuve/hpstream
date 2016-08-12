@@ -46,6 +46,8 @@ private:
   struct fid_pep *pep;
   // the event queue to listen on for incoming connections
   struct fid_eq *eq;
+  // the event associated with this
+  struct loop_info eq_loop;
   // context associated with eq
   struct fi_context eq_ctx;
   // fid for event queue
