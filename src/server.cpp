@@ -116,7 +116,7 @@ int Server::Init(void) {
   }
 
   this->eventLoop = new EventLoop(fabric, domain);
-  ret = this->eventLoop->RegisterRead(this->eq_fid, &eq->fid, this);
+  ret = this->eventLoop->RegisterRead(&eq->fid, &this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
@@ -228,13 +228,13 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, con->getRxLoop());
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
+	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, con->getTxLoop());
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;
