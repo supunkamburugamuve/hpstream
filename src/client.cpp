@@ -165,7 +165,7 @@ int Client::Connect(void) {
   }
 
   this->eventLoop = new EventLoop(fabric, domain);
-  ret = this->eventLoop->RegisterRead(&this->eq->fid, &this->);
+  ret = this->eventLoop->RegisterRead(&this->eq->fid, &this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
