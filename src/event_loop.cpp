@@ -8,7 +8,8 @@ EventLoop::EventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
   this->run = true;
-
+  this->fid_list = NULL;
+  this->events = NULL;
   epfd = epoll_create1(0);
   if (epfd < 0) {
     ret = -errno;
