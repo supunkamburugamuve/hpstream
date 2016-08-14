@@ -18,11 +18,6 @@
 
 enum loop_status {AVIALBLE, TRYAGAIN};
 
-class IEventCallback {
-public:
-  virtual int OnEvent(enum hps_loop_event event, enum loop_status state) = 0;
-};
-
 enum hps_loop_event {
   CONNECTION,
   CQ_READ,
@@ -34,6 +29,11 @@ struct loop_info {
   int fid;
   void *data;
   enum hps_loop_event event;
+};
+
+class IEventCallback {
+public:
+  virtual int OnEvent(enum hps_loop_event event, enum loop_status state) = 0;
 };
 
 class EventLoop {
