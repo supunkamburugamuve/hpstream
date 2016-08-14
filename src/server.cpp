@@ -185,8 +185,8 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   struct loop_info *tx_loop;
   struct loop_info *rx_loop;
 
-  char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
-  std::cout << "FI ENTRY" << fi_str << std::endl;
+//  char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
+//  std::cout << "FI ENTRY" << fi_str << std::endl;
 
 //  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
 //  if (ret) {
