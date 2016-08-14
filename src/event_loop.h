@@ -24,6 +24,11 @@ enum hps_loop_event {
   CQ_TRANSMIT
 };
 
+class IEventCallback {
+public:
+  virtual int OnEvent(enum hps_loop_event event, enum loop_status state) = 0;
+};
+
 struct loop_info {
   IEventCallback *callback;
   int fid;
@@ -31,10 +36,6 @@ struct loop_info {
   enum hps_loop_event event;
 };
 
-class IEventCallback {
-public:
-  virtual int OnEvent(enum hps_loop_event event, enum loop_status state) = 0;
-};
 
 class EventLoop {
 public:
