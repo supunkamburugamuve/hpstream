@@ -144,7 +144,7 @@ int Server::OnEvent(enum hps_loop_event loop_event, enum loop_status state){
   uint32_t event;
   ssize_t rd;
   int ret = 0;
-  HPS_INFO("Waiting for connection");
+//  HPS_INFO("Waiting for connection");
   if (state == TRYAGAIN) {
     return 0;
   }

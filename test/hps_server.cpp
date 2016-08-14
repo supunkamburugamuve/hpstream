@@ -41,7 +41,7 @@ int exchange3() {
       while (read < 4000 && count < 10) {
         if (con->DataAvailableForRead()) {
           con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
-          HPS_INFO("read amount %d", current_read);
+//          HPS_INFO("read amount %d", current_read);
           read += current_read;
           count++;
         }
