@@ -79,7 +79,15 @@ public:
     return ep;
   }
 
-  int OnEvent(int fid, enum loop_status state);
+  struct loop_info * getRxLoop() {
+    return &rx_loop;
+  }
+
+  struct loop_info * getTxLoop() {
+    return &tx_loop;
+  }
+
+  int OnEvent(enum hps_loop_event event, enum loop_status state);
 
   // disconnect
   int Disconnect();
@@ -117,6 +125,8 @@ private:
   int rx_fd, tx_fd;
   // send and receive contexts
   struct fi_context tx_ctx, rx_ctx;
+  // loop info for transmit and recv
+  struct loop_info tx_loop, rx_loop;
 
   // buffer used for communication
   uint8_t *buf;

@@ -69,6 +69,11 @@ Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info
   this->txcntr = NULL;
   this->rxcntr = NULL;
 
+  this->tx_loop.callback = this;
+  this->rx_loop.callback = this;
+  this->tx_loop.event = CQ_TRANSMIT;
+  this->rx_loop.event = CQ_READ;
+
   this->ep = NULL;
   this->alias_ep = NULL;
   this->av = NULL;
@@ -271,12 +276,14 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
     HPS_ERR("Failed to get cq fd for transmission");
     return ret;
   }
+  this->tx_loop.fid = tx_fd;
 
   ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
   if (ret) {
     HPS_ERR("Failed to get cq fd for receive");
     return ret;
   }
+  this->rx_loop.fid = rx_fd;
 
   flags = !txcq ? FI_SEND : 0;
   if (this->info_hints->caps & (FI_WRITE | FI_READ)) {
@@ -749,12 +756,18 @@ Connection::~Connection() {
 
 }
 
-int Connection::OnEvent(int fid, enum loop_status state) {
-  return this->Ready(fid);
+int Connection::OnEvent(enum hps_loop_event event, enum loop_status state) {
+  // HPS_INFO("Connection ready %d", fd);
+  if (event == CQ_READ) {
+    TransmitComplete();
+  } else if (event == CQ_TRANSMIT) {
+    ReceiveComplete();
+  }
+  return 0;
 }
 
 int Connection::Disconnect() {
-  if (ep) {
+  if (this->ep) {
     int ret = fi_shutdown(ep, 0);
     if (ret) {
       HPS_ERR("Failed to shutdown connection");

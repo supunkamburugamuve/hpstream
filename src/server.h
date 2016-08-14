@@ -33,7 +33,7 @@ public:
   }
   int Start();
 
-  int OnEvent(int fid, enum loop_status state);
+  int OnEvent(enum hps_loop_event event, enum loop_status state);
 
   int Wait();
 private:
@@ -46,6 +46,8 @@ private:
   struct fid_pep *pep;
   // the event queue to listen on for incoming connections
   struct fid_eq *eq;
+  // the loop callback
+  struct loop_info eq_loop;
   // fid for event queue
   int eq_fid;
   struct fid_domain *domain;

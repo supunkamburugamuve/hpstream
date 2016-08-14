@@ -23,6 +23,8 @@ Client::Client(Options *opts, fi_info *hints) {
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;
   this->eventLoop = NULL;
+	this->eq_loop.callback = this;
+  this->eq_loop.event = CONNECTION;
 }
 
 void Client::Free() {
@@ -44,7 +46,7 @@ int Client::Start() {
   return 0;
 }
 
-int Client::OnEvent(int fid, enum loop_status state) {
+int Client::OnEvent(enum hps_loop_event loop_event, enum loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -107,6 +109,7 @@ int Client::Connect(void) {
     HPS_ERR("Failed to get event queue fid %d", ret);
     return ret;
   }
+  this->eq_loop.fid = eq_fid;
 
 	ret = fi_domain(this->fabric, this->info, &domain, NULL);
 	if (ret) {

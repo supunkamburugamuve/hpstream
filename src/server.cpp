@@ -21,6 +21,9 @@ Server::Server(Options *opts, fi_info *hints) {
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
   this->con = NULL;
   this->acceptConnections = true;
+
+  this->eq_loop.callback = this;
+  this->eq_loop.event = CONNECTION;
 }
 
 void Server::Free() {
@@ -104,6 +107,7 @@ int Server::Init(void) {
     HPS_ERR("Failed to get event queue fid %d", ret);
     return ret;
   }
+  this->eq_loop.fid = eq_fid;
 
   // allocates a passive end-point
   ret = fi_passive_ep(this->fabric, this->info_pep, &this->pep, NULL);
@@ -135,7 +139,7 @@ int Server::Init(void) {
   return 0;
 }
 
-int Server::OnEvent(int fid, enum loop_status state){
+int Server::OnEvent(enum hps_loop_event loop_event, enum loop_status state){
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -239,13 +243,15 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+  struct loop_info *rx_loop = con->getRxLoop();
+	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
+  struct loop_info *tx_loop = con->getRxLoop();
+	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;

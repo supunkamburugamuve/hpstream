@@ -4,11 +4,6 @@
 
 #include "event_loop.h"
 
-struct loop_info {
-  IEventCallback *callback;
-  int fid;
-};
-
 EventLoop::EventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
@@ -31,8 +26,8 @@ void EventLoop::loop() {
     // HPS_INFO("Size of the fids %d", size);
     struct fid **fid_list = new struct fid*[size];
     int i = 0;
-    for (std::unordered_map<int,struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
-      fid_list[i] = it->second;
+    for (std::list<struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
+      fid_list[i] = *it;
       i++;
     }
 
@@ -53,18 +48,15 @@ void EventLoop::loop() {
         struct loop_info *callback = (struct loop_info *) event->data.ptr;
         if (callback != NULL) {
           IEventCallback *c = callback->callback;
-          int f = callback->fid;
-          // HPS_ERR("Connection fd %d", f);
-          c->OnEvent(f, AVIALBLE);
+          c->OnEvent(callback->event, AVIALBLE);
         } else {
           HPS_ERR("Connection NULL");
         }
       }
     } else if (trywait == -FI_EAGAIN){
-      for (std::unordered_map<int, IEventCallback *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
-        IEventCallback *c = it->second;
-        HPS_ERR("Wait try again Connection fd %d", it->first);
-        c->OnEvent(it->first, TRYAGAIN);
+      for (std::list<struct loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+        struct loop_info *c = *it;
+        c->callback->OnEvent(c->event, TRYAGAIN);
       }
     }
     delete fid_list;
@@ -72,27 +64,21 @@ void EventLoop::loop() {
   }
 }
 
-int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connection) {
+int EventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
   struct epoll_event event;
   int ret;
-  if (fids.find(fid) == fids.end()) {
-    HPS_INFO("Register FID %d", fid);
-    this->fids[fid] = desc;
-    this->connections[fid] = connection;
+  int fid = *((int *)connection->data);
+  HPS_INFO("Register FID %d", fid);
+  this->fids.push_back(desc);
+  this->connections.push_back(connection);
 
-    struct loop_info *info = new loop_info();
-    info->callback = connection;
-    info->fid = fid;
-    event.data.ptr = (void *)info;
-    event.events = EPOLLIN;
-    ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
-    if (ret) {
-      ret = -errno;
-      HPS_ERR("epoll_ctl %d", ret);
-      return ret;
-    }
-  } else {
-    return 1;
+  event.data.ptr = (void *)connection;
+  event.events = EPOLLIN;
+  ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
+  if (ret) {
+    ret = -errno;
+    HPS_ERR("epoll_ctl %d", ret);
+    return ret;
   }
   // create a list of fids
   return 0;
@@ -101,13 +87,11 @@ int EventLoop::RegisterRead(int fid, struct fid *desc, IEventCallback *connectio
 int EventLoop::UnRegister(int fid) {
   struct epoll_event event;
   int ret;
-  if (fids.find(fid) != fids.end()) {
-    ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
-    if (ret) {
-      ret = -errno;
-      HPS_ERR("Failed to un-register connection %d", ret);
-      return ret;
-    }
+  ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
+  if (ret) {
+    ret = -errno;
+    HPS_ERR("Failed to un-register connection %d", ret);
+    return ret;
   }
   return 0;
 };

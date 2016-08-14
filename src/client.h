@@ -13,7 +13,7 @@ public:
   Connection *GetConnection();
   void Free();
   int Start();
-  int OnEvent(int fid, enum loop_status state);
+  int OnEvent(enum hps_loop_event event, enum loop_status state);
   /**
    * Start Loop through the events
    */
@@ -27,6 +27,9 @@ private:
   struct fi_info *info_hints;
   // the event queue to for  connection handling
   struct fid_eq *eq;
+  // the loop callback
+  struct loop_info eq_loop;
+  // the file descriptor for eq
   int eq_fid;
   // event queue attribute
   struct fi_eq_attr eq_attr;
