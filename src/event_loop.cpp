@@ -22,16 +22,7 @@ void EventLoop::loop() {
 
   while (run) {
     int size = (int) fids.size();
-    // get all the elements in fids and create a list
-    // HPS_INFO("Size of the fids %d", size);
-    struct fid **fid_list = new struct fid*[size];
-    int i = 0;
-    for (std::list<struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
-      fid_list[i] = *it;
-      i++;
-    }
 
-    struct epoll_event* events = new struct epoll_event [size];
     memset(events, 0, sizeof events);
     HPS_INFO("Wait.......... wit size %d", size);
     int trywait = fi_trywait(fabric, fid_list, size);
@@ -72,6 +63,23 @@ int EventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
   this->fids.push_back(desc);
   this->connections.push_back(connection);
 
+  int size = (int) fids.size();
+  // get all the elements in fids and create a list
+  if (fid_list) {
+    delete fid_list;
+  }
+  fid_list = new struct fid*[size];
+  int i = 0;
+  for (std::list<struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
+    fid_list[i] = *it;
+    i++;
+  }
+
+  if (events) {
+    delete events;
+  }
+  events = new struct epoll_event [size];
+
   event.data.ptr = (void *)connection;
   event.events = EPOLLIN;
   ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fid, &event);
@@ -80,7 +88,6 @@ int EventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
     HPS_ERR("epoll_ctl %d", ret);
     return ret;
   }
-  // create a list of fids
   return 0;
 }
 

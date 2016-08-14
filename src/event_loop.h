@@ -46,6 +46,9 @@ private:
   bool run;
   struct fid_fabric *fabric;
   int epfd;
+  struct fid **fid_list;
+  struct epoll_event* events;
+
   std::list<struct fid *> fids;
   std::list<struct loop_info *> connections;
 
