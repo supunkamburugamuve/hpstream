@@ -49,7 +49,7 @@ int exchange3() {
 //      for (int j = 0; j < 1000; j++) {
 //        printf("%d ", values[j]);
 //      }
-      printf("\n");
+//      printf("\n");
     }
 
     HPS_INFO("Done receiving.. switching to sending");
