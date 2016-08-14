@@ -145,7 +145,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t need_copy = 0;
   // number of bytes copied
   uint32_t read_size = 0;
-  HPS_INFO("Reading, base= %d, dataHead= %d", tail, buffers_filled);
+//  HPS_INFO("Reading, base= %d, dataHead= %d", tail, buffers_filled);
   while (read_size < size &&  buffers_filled > 0) {
     uint8_t *b = buffers[tail];
     uint32_t *r;
@@ -156,10 +156,10 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // now lets see how much we can copy
     uint32_t can_copy = 0;
     uint32_t tmp_index = current_read_indx;
-    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, *r, current_read_indx);
+//    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, *r, current_read_indx);
     // we can copy everything from this buffer
     if (size - read_size >= need_copy) {
-      HPS_INFO("Moving base");
+//      HPS_INFO("Moving base");
       can_copy = need_copy;
       current_read_indx = 0;
       // advance the base pointer
@@ -167,13 +167,13 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       buffers_filled--;
       tail = this->base;
     } else {
-      HPS_INFO("Not Moving base");
+//      HPS_INFO("Not Moving base");
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
       current_read_indx += can_copy;
     }
     // next copy the buffer
-    HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
+//    HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
 //    uint32_t *buffer = (uint32_t *) (b + sizeof(uint32_t));
 //    int i = 0;
 //    for (i = 0; i < ((buf_size - 4) / sizeof(int)); i++) {
@@ -183,7 +183,7 @@ int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
     memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
-    HPS_INFO("Reading, base= %d, dataHead= %d read_size=%" PRId32, tail, buffers_filled, read_size);
+//    HPS_INFO("Reading, base= %d, dataHead= %d read_size=%" PRId32, tail, buffers_filled, read_size);
     read_size += can_copy;
   }
 

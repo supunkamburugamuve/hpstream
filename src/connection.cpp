@@ -587,7 +587,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   while (submittedBuffers < noOfBuffers) {
     index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
-    HPS_INFO("Posting buffer with index %" PRId32, index);
+//    HPS_INFO("Posting buffer with index %" PRId32, index);
     ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
@@ -603,7 +603,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
 int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
-  HPS_INFO("Init writing");
+//  HPS_INFO("Init writing");
   // first lets get the available buffer
   Buffer *sbuf = this->send_buf;
   sbuf->acquireLock();
@@ -620,7 +620,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
     // we have space in the buffers
     if (free_space > 0) {
       // HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
-      HPS_INFO("Free space %d", free_space);
+//      HPS_INFO("Free space %d", free_space);
       head = sbuf->NextWriteIndex();
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
@@ -628,8 +628,8 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       //memcpy(current_buf, &current_size, sizeof(uint32_t));
       uint32_t *length = (uint32_t *) current_buf;
       *length = current_size;
-      HPS_INFO("Sending length %"
-                   PRIu32, *((uint32_t *) current_buf));
+//      HPS_INFO("Sending length %"
+//                   PRIu32, *((uint32_t *) current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       sbuf->IncrementFilled(1);
 //      uint32_t *buffer = (uint32_t *) (current_buf + sizeof(uint32_t));
@@ -657,7 +657,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       sbuf->waitFree();
     }
   }
-  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
+//  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
   sbuf->releaseLock();
   return 0;
 
@@ -674,11 +674,11 @@ int Connection::TransmitComplete() {
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
   max_completions = max_completions == 0 ? 0 : max_completions;
-  HPS_INFO("Transmit complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
+//  HPS_INFO("Transmit complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
-    HPS_INFO("Increment transmit tail %ld", cq_ret);
+//    HPS_INFO("Increment transmit tail %ld", cq_ret);
     if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
       this->send_buf->releaseLock();
@@ -711,7 +711,7 @@ int Connection::ReceiveComplete() {
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
   max_completions = max_completions == 0 ? 0 : max_completions;
-  HPS_INFO("Receive complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
+//  HPS_INFO("Receive complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
@@ -720,7 +720,7 @@ int Connection::ReceiveComplete() {
       this->recv_buf->releaseLock();
       return 1;
     }
-    HPS_INFO("Incremented read filled %ld %ld", this->recv_buf->GetFilledBuffers(), cq_ret);
+//    HPS_INFO("Incremented read filled %ld %ld", this->recv_buf->GetFilledBuffers(), cq_ret);
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
