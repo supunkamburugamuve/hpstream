@@ -653,7 +653,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         }
       }
     } else {
-      HPS_INFO("Waiting...");
+//      HPS_INFO("Waiting...");
       sbuf->waitFree();
     }
   }
@@ -733,7 +733,7 @@ int Connection::ReceiveComplete() {
       return (int) cq_ret;
     }
   } else if (cq_ret == -FI_EAGAIN) {
-    HPS_INFO("FI_EAGAIN");
+//    HPS_INFO("FI_EAGAIN");
   } else if (cq_ret == 0) {
     HPS_INFO("cq_ret %d", cq_ret);
   }
