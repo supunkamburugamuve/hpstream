@@ -51,8 +51,6 @@ void EventLoop::loop() {
         c->callback->OnEvent(c->event, TRYAGAIN);
       }
     }
-    delete fid_list;
-    delete events;
   }
 }
 
