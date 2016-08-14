@@ -643,7 +643,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         sent_size += current_size;
         // increment the head
         sbuf->IncrementSubmitted(1);
-        HPS_ERR("Posting....");
+//        HPS_ERR("Posting....");
       } else {
         HPS_ERR("Failed to post");
         error_count++;
@@ -696,7 +696,7 @@ int Connection::TransmitComplete() {
       return (int) cq_ret;
     }
   } else if (cq_ret == -FI_EAGAIN) {
-    HPS_INFO("FI_EAGAIN");
+//    HPS_INFO("FI_EAGAIN");
   } else if (cq_ret == 0) {
     HPS_INFO("cq_ret %d", cq_ret);
   }
