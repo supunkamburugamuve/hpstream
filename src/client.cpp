@@ -86,6 +86,8 @@ int Client::Connect(void) {
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;
 	Connection *con = NULL;
+  struct loop_info *rx_loop;
+  struct loop_info *tx_loop;
 
 	HPS_ERR("Client connect");
 	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
@@ -174,14 +176,14 @@ int Client::Connect(void) {
   }
 
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-  struct loop_info *rx_loop = con->getRxLoop();
+  rx_loop = con->getRxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-  struct loop_info *tx_loop = con->getTxLoop();
+  tx_loop = con->getTxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);

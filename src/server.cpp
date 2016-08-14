@@ -182,6 +182,8 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   struct fid_ep *ep;
   // struct fid_domain *domain;
   Connection *con;
+  struct loop_info *tx_loop;
+  struct loop_info *rx_loop;
 
   char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
   std::cout << "FI ENTRY" << fi_str << std::endl;
@@ -246,14 +248,14 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-  struct loop_info *rx_loop = con->getRxLoop();
+  rx_loop = con->getRxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-  struct loop_info *tx_loop = con->getTxLoop();
+  tx_loop = con->getTxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
