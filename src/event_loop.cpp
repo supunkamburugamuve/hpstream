@@ -67,7 +67,7 @@ void EventLoop::loop() {
 int EventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
   struct epoll_event event;
   int ret;
-  int fid = *((int *)connection->data);
+  int fid = connection->fid;
   HPS_INFO("Register FID %d", fid);
   this->fids.push_back(desc);
   this->connections.push_back(connection);
