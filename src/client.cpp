@@ -167,20 +167,22 @@ int Client::Connect(void) {
   }
 
   this->eventLoop = new EventLoop(fabric);
-  ret = this->eventLoop->RegisterRead(this->eq_fid, &this->eq->fid, this);
+  ret = this->eventLoop->RegisterRead(&this->eq->fid, &this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
   }
 
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-	ret = this->eventLoop->RegisterRead(con->GetRxFd(), &con->GetRxCQ()->fid, con);
+  struct loop_info *rx_loop = con->getRxLoop();
+	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-	ret = this->eventLoop->RegisterRead(con->GetTxFd(), &con->GetTxCQ()->fid, con);
+  struct loop_info *tx_loop = con->getTxLoop();
+	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;
