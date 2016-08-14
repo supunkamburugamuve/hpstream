@@ -91,6 +91,11 @@ public:
 
   // disconnect
   int Disconnect();
+
+  uint32_t getPort();
+
+  char *getIPAddress();
+
 private:
   // options for initialization
   Options *options;

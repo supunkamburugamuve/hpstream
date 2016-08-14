@@ -235,6 +235,9 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
+  con->getIPAddress();
+  con->getPort();
+
   ret = con->SetupBuffers();
   if (ret) {
     HPS_ERR("Failed to set up the buffers %d", ret);
