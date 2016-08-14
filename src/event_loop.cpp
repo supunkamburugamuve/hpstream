@@ -25,16 +25,16 @@ void EventLoop::loop() {
     int size = (int) fids.size();
 
     memset(events, 0, sizeof events);
-    HPS_INFO("Wait.......... wit size %d", size);
+//    HPS_INFO("Wait.......... wit size %d", size);
     int trywait = fi_trywait(fabric, fid_list, size);
     if (trywait == FI_SUCCESS) {
-      HPS_INFO("Wait success");
+//      HPS_INFO("Wait success");
       ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd, events, size, -1));
       if (ret < 0) {
         ret = -errno;
         HPS_ERR("epoll_wait %d", ret);
       }
-      HPS_INFO("Epoll wait returned %d size=%d", ret, size);
+//      HPS_INFO("Epoll wait returned %d size=%d", ret, size);
       for (int j = 0; j < ret; j++) {
         struct epoll_event *event = events + j;
         struct loop_info *callback = (struct loop_info *) event->data.ptr;
