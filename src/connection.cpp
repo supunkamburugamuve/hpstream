@@ -13,34 +13,6 @@
 
 #include "connection.h"
 
-#define HPS_POST(post_fn, comp_fn, seq, op_str, ...)        \
-  do {                  \
-    int timeout_save;            \
-    int ret, rc;              \
-                    \
-    while (1) {              \
-      ret = post_fn(__VA_ARGS__);        \
-      if (!ret)            \
-        break;            \
-                    \
-      if (ret != -FI_EAGAIN) {        \
-        HPS_ERR("%s %d", op_str, ret);      \
-        return ret;          \
-      }              \
-                    \
-      timeout_save = timeout;          \
-      timeout = 0;            \
-      rc = comp_fn(seq);          \
-      if (rc && rc != -FI_EAGAIN) {        \
-        HPS_ERR("Failed to get %s completion\n", op_str);  \
-        return rc;          \
-      }              \
-      timeout = timeout_save;          \
-    }                \
-    seq++;                \
-  } while (0)
-
-
 #define HPS_EP_BIND(ep, fd, flags)					\
 	do {								\
 		int ret;						\
@@ -480,10 +452,6 @@ int Connection::GetTXComp(uint64_t total) {
 }
 
 ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-//  HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
-//           buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-//           this->remote_fi_addr, ctx);
-
   int timeout_save;
   ssize_t ret, rc;
 
@@ -510,12 +478,7 @@ ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   return 0;
 }
 
-
 ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-//  HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
-//           MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-//           fi_mr_desc(mr),	0, ctx);
-
   int timeout_save;
   ssize_t ret, rc;
 
