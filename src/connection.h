@@ -57,8 +57,6 @@ public:
   /** GEt the send buffer */
   Buffer *SendBuffer();
 
-  int Ready(int fd);
-
   struct fid_cq * GetTxCQ() {
     return txcq;
   }

@@ -480,17 +480,65 @@ int Connection::GetTXComp(uint64_t total) {
 }
 
 ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
-           buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
-           this->remote_fi_addr, ctx);
+//  HPS_POST(fi_send, GetTXComp, tx_seq, "transmit", ep,
+//           buf,	size + hps_utils_tx_prefix_size(info), fi_mr_desc(mr),
+//           this->remote_fi_addr, ctx);
+
+  int timeout_save;
+  ssize_t ret, rc;
+
+  while (1) {
+    ret = fi_send(this->ep, buf, size + hps_utils_rx_prefix_size(info), fi_mr_desc(mr),	0, ctx);
+    if (!ret)
+      break;
+
+    if (ret != -FI_EAGAIN) {
+      HPS_ERR("%s %d", "receive", ret);
+      return ret;
+    }
+
+    timeout_save = timeout;
+    timeout = 0;
+    rc = GetTXComp(tx_cq_cntr + 1);
+    if (rc && rc != -FI_EAGAIN) {
+      HPS_ERR("Failed to get %s completion\n", "receive");
+      return rc;
+    }
+    timeout = timeout_save;
+  }
+  tx_seq++;
   return 0;
 }
 
 
 ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
-           MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
-           fi_mr_desc(mr),	0, ctx);
+//  HPS_POST(fi_recv, GetRXComp, rx_seq, "receive", this->ep, buf,
+//           MAX(size, HPS_MAX_CTRL_MSG) + hps_utils_rx_prefix_size(info),
+//           fi_mr_desc(mr),	0, ctx);
+
+  int timeout_save;
+  ssize_t ret, rc;
+
+  while (1) {
+    ret = fi_recv(this->ep, buf, size + hps_utils_rx_prefix_size(info), fi_mr_desc(mr),	0, ctx);
+    if (!ret)
+      break;
+
+    if (ret != -FI_EAGAIN) {
+      HPS_ERR("%s %d", "receive", ret);
+      return ret;
+    }
+
+    timeout_save = timeout;
+    timeout = 0;
+    rc = GetRXComp(rx_cq_cntr + 1);
+    if (rc && rc != -FI_EAGAIN) {
+      HPS_ERR("Failed to get %s completion\n", "receive");
+      return rc;
+    }
+    timeout = timeout_save;
+  }
+  rx_seq++;
 //  HPS_INFO("Finished posting buffer with size %ld", size);
   return 0;
 }
@@ -625,19 +673,12 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
-      //memcpy(current_buf, &current_size, sizeof(uint32_t));
       uint32_t *length = (uint32_t *) current_buf;
       *length = current_size;
 //      HPS_INFO("Sending length %"
 //                   PRIu32, *((uint32_t *) current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       sbuf->IncrementFilled(1);
-//      uint32_t *buffer = (uint32_t *) (current_buf + sizeof(uint32_t));
-//      int i = 0;
-//      for (i = 0; i < ((buf_size - 4) / sizeof(int)); i++) {
-//        printf("%d ", buffer[i]);
-//      }
-//      printf("\nwritten=%d \n", i);
       // send the current buffer
       if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
         sent_size += current_size;
@@ -695,10 +736,6 @@ int Connection::TransmitComplete() {
       this->send_buf->releaseLock();
       return (int) cq_ret;
     }
-  } else if (cq_ret == -FI_EAGAIN) {
-//    HPS_INFO("FI_EAGAIN");
-  } else if (cq_ret == 0) {
-    HPS_INFO("cq_ret %d", cq_ret);
   }
   this->send_buf->releaseLock();
   return 0;
@@ -732,24 +769,8 @@ int Connection::ReceiveComplete() {
       this->recv_buf->releaseLock();
       return (int) cq_ret;
     }
-  } else if (cq_ret == -FI_EAGAIN) {
-//    HPS_INFO("FI_EAGAIN");
-  } else if (cq_ret == 0) {
-    HPS_INFO("cq_ret %d", cq_ret);
   }
   this->recv_buf->releaseLock();
-  return 0;
-}
-
-int Connection::Ready(int fd) {
-  // HPS_INFO("Connection ready %d", fd);
-  if (fd == tx_fd) {
-    TransmitComplete();
-  }
-
-  if (fd == rx_fd) {
-    ReceiveComplete();
-  }
   return 0;
 }
 
