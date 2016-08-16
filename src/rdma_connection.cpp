@@ -412,15 +412,6 @@ int Connection::GetRXComp(uint64_t total) {
 
   if (rxcq) {
     ret = GetCQComp(rxcq, &rx_cq_cntr, total, timeout);
-  } else if (rxcntr) {
-    while (fi_cntr_read(rxcntr) < total) {
-      ret = fi_cntr_wait(rxcntr, total, timeout);
-      if (ret) {
-        HPS_ERR("fi_cntr_wait %d", ret);
-      } else {
-        break;
-      }
-    }
   } else {
     HPS_ERR("Trying to get a RX completion when no RX CQ or counter were opened");
     ret = -FI_EOTHER;
