@@ -7,7 +7,6 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
-#include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
 #include <arpa/inet.h>
 
@@ -30,7 +29,6 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
                        struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
 
   print_short_info(info);
-
   this->options = opts;
   this->info = info;
   this->info_hints = info_hints;
@@ -54,18 +52,9 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
   this->rx_fd = -1;
   this->tx_fd = -1;
 
-  this->tx_buf = NULL;
   this->buf = NULL;
-  this->rx_buf = NULL;
-
-  this->buf_size = 0;
-  this->tx_size = 0;
-  this->rx_size = 0;
   this->recv_buf = NULL;
   this->send_buf = NULL;
-
-  this->remote_cq_data = 0;
-  this->waitset = NULL;
 
   this->cq_attr = {};
   this->cntr_attr = {};
@@ -86,10 +75,6 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
 
   this->av_attr.type = FI_AV_MAP;
   this->av_attr.count = 1;
-
-  this->remote_fi_addr = FI_ADDR_UNSPEC;
-  this->remote = {};
-
   this->timeout = -1;
 }
 
@@ -103,16 +88,7 @@ void Connection::Free() {
   HPS_CLOSE_FID(txcq);
   HPS_CLOSE_FID(av);
   HPS_CLOSE_FID(domain);
-  HPS_CLOSE_FID(waitset);
   HPS_CLOSE_FID(fabric);
-}
-
-RDMABuffer * Connection::ReceiveBuffer() {
-  return this->recv_buf;
-}
-
-RDMABuffer * Connection::SendBuffer() {
-  return this->send_buf;
 }
 
 int Connection::AllocateActiveResources() {
@@ -175,6 +151,8 @@ int Connection::AllocateBuffers(void) {
   int ret = 0;
   long alignment = 1;
   RDMAOptions *opts = this->options;
+  uint8_t *tx_buf, *rx_buf;
+  size_t buf_size, tx_size, rx_size;
 
   tx_size = opts->buf_size / 2;
   if (tx_size > info->ep_attr->max_msg_size) {
@@ -207,8 +185,6 @@ int Connection::AllocateBuffers(void) {
   rx_buf = buf;
   tx_buf = buf + MAX(rx_size, HPS_MAX_CTRL_MSG);
   tx_buf = (uint8_t *) (((uintptr_t) tx_buf + alignment - 1) & ~(alignment - 1));
-
-  remote_cq_data = hps_utils_init_cq_data(info);
 
   if (!ft_skip_mr && ((info->mode & FI_LOCAL_MR) ||
                       (info->caps & (FI_RMA | FI_ATOMIC)))) {
@@ -485,78 +461,6 @@ ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
 //  HPS_INFO("Finished posting buffer with size %ld", size);
   return 0;
 }
-
-
-int Connection::ExchangeServerKeys() {
-  struct fi_rma_iov *peer_iov = &this->remote;
-  struct fi_rma_iov *rma_iov;
-  ssize_t ret;
-  HPS_INFO("Exchange key");
-  print_short_info(this->info);
-  HPS_INFO("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
-  ret = GetRXComp(rx_seq);
-  if (ret) {
-    HPS_ERR("Failed to RX Completion");
-    return (int) ret;
-  }
-  HPS_INFO("Exchange key 3 \n");
-  rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
-  *peer_iov = *rma_iov;
-  HPS_INFO("Exchange key 4 \n");
-  ret = PostRX(rx_size, rx_buf, &rx_ctx);
-  if (ret) {
-    HPS_ERR("Failed to post RX");
-    return (int) ret;
-  }
-  HPS_INFO("Received keys");
-  rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
-  rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
-                  0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
-  rma_iov->key = fi_mr_key(mr);
-  ret = PostTX(sizeof *rma_iov, tx_buf, &tx_ctx);
-  if (ret) {
-    HPS_ERR("Failed to TX");
-    return (int) ret;
-  }
-  HPS_INFO("Sent keys");
-  return (int) ret;
-}
-
-int Connection::ExchangeClientKeys() {
-  struct fi_rma_iov *peer_iov = &this->remote;
-  struct fi_rma_iov *rma_iov;
-  ssize_t ret;
-  HPS_INFO("Exchange key");
-  print_short_info(this->info);
-  HPS_INFO("Exchange key 2 %d\n", hps_utils_tx_prefix_size(this->info));
-  rma_iov = (fi_rma_iov *)(tx_buf + hps_utils_tx_prefix_size(info));
-  rma_iov->addr = info->domain_attr->mr_mode == FI_MR_SCALABLE ?
-                  0 : (uintptr_t) rx_buf + hps_utils_rx_prefix_size(info);
-  rma_iov->key = fi_mr_key(mr);
-  ret = PostTX(sizeof *rma_iov, tx_buf, &tx_ctx);
-  HPS_INFO("Sent keys");
-  if (ret) {
-    HPS_ERR("Failed to TX");
-    return (int) ret;
-  }
-
-  ret = GetRXComp(rx_seq);
-  if (ret) {
-    HPS_ERR("Failed to get rx completion");
-    return (int) ret;
-  }
-
-  rma_iov = (fi_rma_iov *)(rx_buf + hps_utils_rx_prefix_size(info));
-  *peer_iov = *rma_iov;
-  ret = PostRX(rx_size, rx_buf, &rx_ctx);
-  if (ret) {
-    HPS_ERR("Failed to post RX");
-    return (int) ret;
-  }
-  HPS_INFO("Received keys");
-  return (int) ret;
-}
-
 
 bool Connection::DataAvailableForRead() {
   RDMABuffer *sbuf = this->recv_buf;

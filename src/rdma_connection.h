@@ -36,12 +36,6 @@ public:
 
   virtual ~Connection();
 
-  /**
-   * Exchange keys with the peer
-   */
-  int ExchangeServerKeys();
-  int ExchangeClientKeys();
-
   int SetupBuffers();
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
@@ -51,11 +45,6 @@ public:
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 
   bool DataAvailableForRead();
-
-  /** Get the receive buffer */
-  RDMABuffer *ReceiveBuffer();
-  /** GEt the send buffer */
-  RDMABuffer *SendBuffer();
 
   struct fid_cq * GetTxCQ() {
     return txcq;
@@ -116,29 +105,20 @@ private:
   struct fi_cntr_attr cntr_attr;
   // vector attribute for getting completion notifications
   struct fi_av_attr av_attr;
-
   // transfer cq and receive cq
   struct fid_cq *txcq, *rxcq;
-
-  struct fid_wait *waitset;
-
   // receive cq fd and transmit cq fd
   int rx_fd, tx_fd;
   // send and receive contexts
   struct fi_context tx_ctx, rx_ctx;
   // loop info for transmit and recv
   struct rdma_loop_info tx_loop, rx_loop;
-
   // buffer used for communication
   uint8_t *buf;
-  uint8_t *tx_buf, *rx_buf;
-  size_t buf_size, tx_size, rx_size;
   RDMABuffer *recv_buf;
   RDMABuffer *send_buf;
-
   int ft_skip_mr;
 
-  uint64_t remote_cq_data;
   struct fid_mr *mr;
   struct fid_mr no_mr;
 
@@ -151,13 +131,9 @@ private:
   // receive completed
   uint64_t rx_cq_cntr;
 
-  // remote address
-  fi_addr_t remote_fi_addr;
-  // remote address keys
-  struct fi_rma_iov remote;
-
   int timeout;
 
+  /** Private methods */
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
   ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
 
