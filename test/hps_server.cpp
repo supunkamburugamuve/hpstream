@@ -1,13 +1,13 @@
 #include "hps_utils.h"
 
 //Connection *con;
-Options options;
+RDMAOptions options;
 struct fi_info *hints;
-Server *server;
+RDMAServer *server;
 
 int connect3() {
   int ret = 0;
-  server = new Server(&options, hints);
+  server = new RDMAServer(&options, hints);
   server->Init();
   //server->Connect();
 //  con = server.GetConnection();

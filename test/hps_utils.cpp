@@ -63,7 +63,7 @@ void rdma_parseinfo(int op, char *optarg, struct fi_info *hints) {
   }
 }
 
-void rdma_parse_addr_opts(int op, char *optarg, Options *opts) {
+void rdma_parse_addr_opts(int op, char *optarg, RDMAOptions *opts) {
   switch (op) {
     case 's':
       printf("source addr: %s\n", optarg);

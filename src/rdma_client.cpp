@@ -6,15 +6,15 @@
 #include <rdma/fi_cm.h>
 #include <rdma/fi_errno.h>
 
-#include "client.h"
+#include "rdma_client.h"
 
 static void* loopEventsThread(void *param) {
-	Client* client = static_cast<Client *>(param);
-	client->loop();
+	RDMAClient* client = static_cast<RDMAClient *>(param);
+	client->Loop();
 	return NULL;
 }
 
-Client::Client(Options *opts, fi_info *hints) {
+RDMAClient::RDMAClient(RDMAOptions *opts, fi_info *hints) {
 	this->info_hints = hints;
 	this->options = opts;
 	this->eq = NULL;
@@ -27,16 +27,16 @@ Client::Client(Options *opts, fi_info *hints) {
   this->eq_loop.event = CONNECTION;
 }
 
-void Client::Free() {
+void RDMAClient::Free() {
 	HPS_CLOSE_FID(eq);
 	HPS_CLOSE_FID(fabric);
 }
 
-Connection* Client::GetConnection() {
+Connection* RDMAClient::GetConnection() {
 	return this->con;
 }
 
-int Client::Start() {
+int RDMAClient::Start() {
   // now start accept thread
   int ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
   if (ret) {
@@ -46,7 +46,7 @@ int Client::Start() {
   return 0;
 }
 
-int Client::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state) {
+int RDMAClient::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -74,11 +74,11 @@ int Client::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state
   return ret;
 }
 
-int Client::Disconnect() {
+int RDMAClient::Disconnect() {
   return this->con->Disconnect();
 }
 
-int Client::Connect(void) {
+int RDMAClient::Connect(void) {
 	struct fi_eq_cm_entry entry;
 	uint32_t event;
 	ssize_t rd;
@@ -86,8 +86,8 @@ int Client::Connect(void) {
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;
 	Connection *con = NULL;
-  struct loop_info *rx_loop;
-  struct loop_info *tx_loop;
+  struct rdma_loop_info *rx_loop;
+  struct rdma_loop_info *tx_loop;
 
 	HPS_ERR("Client connect");
 	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
@@ -195,7 +195,7 @@ int Client::Connect(void) {
 	return 0;
 }
 
-int Client::loop() {
+int RDMAClient::Loop() {
   if (eventLoop == NULL) {
     HPS_ERR("Event loop not created");
     return 1;

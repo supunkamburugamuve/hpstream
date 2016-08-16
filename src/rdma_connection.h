@@ -13,14 +13,14 @@
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
 
-#include "buffer.h"
+#include "rdma_buffer.h"
 #include "utils.h"
 #include "options.h"
 #include "rdma_event_loop.h"
 
 class Connection : public IRDMAEventCallback {
 public:
-  Connection(Options *opts, struct fi_info *info_hints,
+  Connection(RDMAOptions *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
              struct fid_domain *domain, struct fid_eq *eq);
   void Free();
@@ -53,9 +53,9 @@ public:
   bool DataAvailableForRead();
 
   /** Get the receive buffer */
-  Buffer *ReceiveBuffer();
+  RDMABuffer *ReceiveBuffer();
   /** GEt the send buffer */
-  Buffer *SendBuffer();
+  RDMABuffer *SendBuffer();
 
   struct fid_cq * GetTxCQ() {
     return txcq;
@@ -77,11 +77,11 @@ public:
     return ep;
   }
 
-  struct loop_info * getRxLoop() {
+  struct rdma_loop_info * getRxLoop() {
     return &rx_loop;
   }
 
-  struct loop_info * getTxLoop() {
+  struct rdma_loop_info * getTxLoop() {
     return &tx_loop;
   }
 
@@ -96,7 +96,7 @@ public:
 
 private:
   // options for initialization
-  Options *options;
+  RDMAOptions *options;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information
@@ -129,14 +129,14 @@ private:
   // send and receive contexts
   struct fi_context tx_ctx, rx_ctx;
   // loop info for transmit and recv
-  struct loop_info tx_loop, rx_loop;
+  struct rdma_loop_info tx_loop, rx_loop;
 
   // buffer used for communication
   uint8_t *buf;
   uint8_t *tx_buf, *rx_buf;
   size_t buf_size, tx_size, rx_size;
-  Buffer *recv_buf;
-  Buffer *send_buf;
+  RDMABuffer *recv_buf;
+  RDMABuffer *send_buf;
 
   int ft_skip_mr;
 

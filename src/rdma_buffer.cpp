@@ -5,9 +5,9 @@
 #include <cstring>
 
 #include "hps.h"
-#include "buffer.h"
+#include "rdma_buffer.h"
 
-Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
+RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->buf = buf;
   this->buf_size = buf_size / no_bufs;
   this->no_bufs = no_bufs;
@@ -24,43 +24,43 @@ Buffer::Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   Init();
 }
 
-int Buffer::acquireLock() {
+int RDMABuffer::acquireLock() {
   return pthread_mutex_lock(&lock);
 }
 
-int Buffer::releaseLock() {
+int RDMABuffer::releaseLock() {
   return pthread_mutex_unlock(&lock);
 }
 
-uint8_t * Buffer::GetBuffer(int i) {
+uint8_t * RDMABuffer::GetBuffer(int i) {
   return buffers[i];
 }
 
-uint32_t Buffer::BufferSize() {
+uint32_t RDMABuffer::BufferSize() {
   return buf_size;
 };
 
-uint32_t Buffer::NoOfBuffers() {
+uint32_t RDMABuffer::NoOfBuffers() {
   return no_bufs;
 }
 
-uint32_t Buffer::Base() {
+uint32_t RDMABuffer::Base() {
   return base;
 }
 
-void Buffer::SetBase(uint32_t tail) {
+void RDMABuffer::SetBase(uint32_t tail) {
   this->base = tail;
 }
 
-uint32_t Buffer::CurrentReadIndex() {
+uint32_t RDMABuffer::CurrentReadIndex() {
   return this->current_read_index;
 }
 
-void Buffer::SetCurrentReadIndex(uint32_t indx) {
+void RDMABuffer::SetCurrentReadIndex(uint32_t indx) {
   this->current_read_index = indx;
 }
 
-int Buffer::Init() {
+int RDMABuffer::Init() {
   uint32_t i = 0;
   this->buffers = (uint8_t **)malloc(sizeof(uint8_t *) * no_bufs);
   this->content_sizes = (uint32_t *)malloc(sizeof(uint32_t) * no_bufs);
@@ -75,7 +75,7 @@ int increment(int size, int current) {
   return size - 1 == current ? 0 : current + 1;
 }
 
-int Buffer::IncrementFilled(uint32_t count) {
+int RDMABuffer::IncrementFilled(uint32_t count) {
   uint32_t temp = this->filled_buffs + count;
   if (temp > this->no_bufs) {
     HPS_ERR("Failed to increment the submitted, inconsistant state temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
@@ -85,7 +85,7 @@ int Buffer::IncrementFilled(uint32_t count) {
   return 0;
 }
 
-int Buffer::IncrementSubmitted(uint32_t count) {
+int RDMABuffer::IncrementSubmitted(uint32_t count) {
   uint32_t temp = this->submitted_buffs + count;
   if (temp > this->no_bufs) {
     HPS_ERR("Failed to increment the submitted, inconsistant state temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
@@ -95,7 +95,7 @@ int Buffer::IncrementSubmitted(uint32_t count) {
   return 0;
 }
 
-int Buffer::IncrementTail(uint32_t count) {
+int RDMABuffer::IncrementTail(uint32_t count) {
   if (this->filled_buffs - count < 0 || this->submitted_buffs - count < 0) {
     HPS_ERR("Failed to decrement the buffer, inconsistent state");
     return 1;
@@ -109,7 +109,7 @@ int Buffer::IncrementTail(uint32_t count) {
   return 0;
 }
 
-void Buffer::Free() {
+void RDMABuffer::Free() {
   if (this->buffers) {
     free(this->buffers);
   }
@@ -118,21 +118,21 @@ void Buffer::Free() {
   }
 }
 
-uint64_t Buffer::GetAvailableWriteSpace() {
+uint64_t RDMABuffer::GetAvailableWriteSpace() {
   // get the total free space available
   int free_slots = this->no_bufs - this->filled_buffs;
   return free_slots * this->buf_size;
 }
 
-uint32_t Buffer::NextWriteIndex() {
+uint32_t RDMABuffer::NextWriteIndex() {
   return (base + this->filled_buffs - 1) % this->no_bufs;
 }
 
-int Buffer::waitFree() {
+int RDMABuffer::waitFree() {
   return pthread_cond_wait(&cond_empty, &lock);
 }
 
-int Buffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
+int RDMABuffer::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   // nothing to read
   if (filled_buffs == 0) {
     *read = 0;

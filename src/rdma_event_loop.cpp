@@ -37,7 +37,7 @@ void RDMAEventLoop::Loop() {
 //      HPS_INFO("Epoll wait returned %d size=%d", ret, size);
       for (int j = 0; j < ret; j++) {
         struct epoll_event *event = events + j;
-        struct loop_info *callback = (struct loop_info *) event->data.ptr;
+        struct rdma_loop_info *callback = (struct rdma_loop_info *) event->data.ptr;
         if (callback != NULL) {
           IRDMAEventCallback *c = callback->callback;
           c->OnEvent(callback->event, AVAILABLE);
@@ -46,15 +46,15 @@ void RDMAEventLoop::Loop() {
         }
       }
     } else if (trywait == -FI_EAGAIN){
-      for (std::list<struct loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
-        struct loop_info *c = *it;
+      for (std::list<struct rdma_loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+        struct rdma_loop_info *c = *it;
         c->callback->OnEvent(c->event, TRYAGAIN);
       }
     }
   }
 }
 
-int RDMAEventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
+int RDMAEventLoop::RegisterRead(struct fid *desc, struct rdma_loop_info *connection) {
   struct epoll_event event;
   int ret;
   int fid = connection->fid;

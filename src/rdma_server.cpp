@@ -1,14 +1,14 @@
 #include <pthread.h>
 #include <iostream>
-#include "server.h"
+#include "rdma_server.h"
 
 static void* loopEventsThread(void *param) {
-  Server* server = static_cast<Server *>(param);
+  RDMAServer* server = static_cast<RDMAServer *>(param);
   server->loop();
   return NULL;
 }
 
-Server::Server(Options *opts, fi_info *hints) {
+RDMAServer::RDMAServer(RDMAOptions *opts, fi_info *hints) {
   this->options = opts;
   this->info_hints = hints;
   this->pep = NULL;
@@ -26,7 +26,7 @@ Server::Server(Options *opts, fi_info *hints) {
   this->eq_loop.event = CONNECTION;
 }
 
-void Server::Free() {
+void RDMAServer::Free() {
   HPS_CLOSE_FID(pep);
   HPS_CLOSE_FID(eq);
   HPS_CLOSE_FID(fabric);
@@ -44,11 +44,11 @@ void Server::Free() {
   }
 }
 
-Connection* Server::GetConnection() {
+Connection* RDMAServer::GetConnection() {
   return this->con;
 }
 
-int Server::Start() {
+int RDMAServer::Start() {
   int ret;
 
   // start the loop thread
@@ -61,7 +61,7 @@ int Server::Start() {
   return 0;
 }
 
-int Server::Wait() {
+int RDMAServer::Wait() {
   pthread_join(loopThreadId, NULL);
   return 0;
 }
@@ -69,7 +69,7 @@ int Server::Wait() {
 /**
  * Initialize the server
  */
-int Server::Init(void) {
+int RDMAServer::Init(void) {
   int ret;
   printf("Start server\n");
   // info for passive end-point
@@ -139,7 +139,7 @@ int Server::Init(void) {
   return 0;
 }
 
-int Server::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state){
+int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state){
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -175,18 +175,15 @@ int Server::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state
   return ret;
 }
 
-int Server::Connect(struct fi_eq_cm_entry *entry) {
+int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   uint32_t event;
   ssize_t rd;
   int ret;
   struct fid_ep *ep;
   // struct fid_domain *domain;
   Connection *con;
-  struct loop_info *tx_loop;
-  struct loop_info *rx_loop;
-
-//  char *fi_str = fi_tostr(entry->info, FI_TYPE_INFO);
-//  std::cout << "FI ENTRY" << fi_str << std::endl;
+  struct rdma_loop_info *tx_loop;
+  struct rdma_loop_info *rx_loop;
 
 //  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
 //  if (ret) {
@@ -274,11 +271,11 @@ int Server::Connect(struct fi_eq_cm_entry *entry) {
   return ret;
 }
 
-int Server::Disconnect(Connection *con) {
+int RDMAServer::Disconnect(Connection *con) {
   return con->Disconnect();
 }
 
-int Server::loop() {
+int RDMAServer::loop() {
   if (eventLoop == NULL) {
     HPS_ERR("Event loop not created");
     return 1;

@@ -4,7 +4,7 @@
 #include "options.h"
 #include "utils.h"
 
-Options::Options() {
+RDMAOptions::RDMAOptions() {
   this->dst_addr = NULL;
   this->dst_port = NULL;
   this->src_addr = NULL;
@@ -18,7 +18,7 @@ Options::Options() {
   this->no_buffers = 4;
 }
 
-void Options::Free() {
+void RDMAOptions::Free() {
   if (this->dst_addr) {
     free(this->dst_addr);
   }

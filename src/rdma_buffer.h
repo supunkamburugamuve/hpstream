@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <pthread.h>
 
-class Buffer {
+class RDMABuffer {
 public:
-  Buffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs);
+  RDMABuffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs);
 
   // increment the head
   int IncrementSubmitted(uint32_t count);

@@ -3,12 +3,12 @@
 
 #include "utils.h"
 #include "options.h"
-#include "connection.h"
+#include "rdma_connection.h"
 #include "rdma_event_loop.h"
 
-class Client : IRDMAEventCallback {
+class RDMAClient : IRDMAEventCallback {
 public:
-  Client(Options *opts, fi_info *hints);
+  RDMAClient(RDMAOptions *opts, fi_info *hints);
   int Connect(void);
   Connection *GetConnection();
   void Free();
@@ -17,10 +17,10 @@ public:
   /**
    * Start Loop through the events
    */
-  int loop();
+  int Loop();
 private:
   // options for initialization
-  Options *options;
+  RDMAOptions *options;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information
@@ -28,7 +28,7 @@ private:
   // the event queue to for  connection handling
   struct fid_eq *eq;
   // the loop callback
-  struct loop_info eq_loop;
+  struct rdma_loop_info eq_loop;
   // the file descriptor for eq
   int eq_fid;
   // event queue attribute

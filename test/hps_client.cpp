@@ -1,11 +1,11 @@
 #include "hps_utils.h"
 
 Connection *con;
-Options options;
+RDMAOptions options;
 struct fi_info *hints;
 
 int connect3() {
-  Client client(&options, hints);
+  RDMAClient client(&options, hints);
   client.Connect();
   con = client.GetConnection();
   client.Start();

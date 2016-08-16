@@ -5,12 +5,12 @@
 
 #include "options.h"
 #include "utils.h"
-#include "connection.h"
+#include "rdma_connection.h"
 #include "rdma_event_loop.h"
 
-class Server : public IRDMAEventCallback {
+class RDMAServer : public IRDMAEventCallback {
 public:
-  Server(Options *opts, fi_info *hints);
+  RDMAServer(RDMAOptions *opts, fi_info *hints);
   void Free();
   /**
    * Start the server
@@ -37,7 +37,7 @@ public:
 
   int Wait();
 private:
-  Options *options;
+  RDMAOptions *options;
   // hints to be used to obtain fabric information
   struct fi_info *info_hints;
   // hints to be used by passive endpoint
@@ -47,7 +47,7 @@ private:
   // the event queue to listen on for incoming connections
   struct fid_eq *eq;
   // the loop callback
-  struct loop_info eq_loop;
+  struct rdma_loop_info eq_loop;
   // fid for event queue
   int eq_fid;
   struct fid_domain *domain;

@@ -4,8 +4,8 @@
 #include <cstring>
 #include <cstdlib>
 
-#include "client.h"
-#include "server.h"
+#include "rdma_client.h"
+#include "rdma_server.h"
 
 #define ADDR_OPTS "b:p:s:a:r:"
 #define INFO_OPTS "n:f:e:"

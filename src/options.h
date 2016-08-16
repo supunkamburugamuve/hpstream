@@ -5,7 +5,7 @@
 
 #include "hps.h"
 
-class Options {
+class RDMAOptions {
 public:
   char *src_port;
   char *dst_port;
@@ -27,7 +27,7 @@ public:
    */
   enum hps_comp_method comp_method;
 
-  Options();
+  RDMAOptions();
   void Free();
 private:
 };

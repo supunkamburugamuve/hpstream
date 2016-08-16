@@ -29,7 +29,7 @@ public:
   virtual int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) = 0;
 };
 
-struct loop_info {
+struct rdma_loop_info {
   IRDMAEventCallback *callback;
   int fid;
   enum rdma_loop_event event;
@@ -39,7 +39,7 @@ struct loop_info {
 class RDMAEventLoop {
 public:
   RDMAEventLoop(struct fid_fabric *fabric);
-  int RegisterRead(struct fid *desc, struct loop_info *loop);
+  int RegisterRead(struct fid *desc, struct rdma_loop_info *loop);
   void Loop();
 private:
   bool run;
@@ -49,7 +49,7 @@ private:
   struct epoll_event* events;
 
   std::list<struct fid *> fids;
-  std::list<struct loop_info *> connections;
+  std::list<struct rdma_loop_info *> connections;
 
   int UnRegister(int fid);
 };

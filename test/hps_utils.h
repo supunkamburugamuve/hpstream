@@ -4,8 +4,8 @@
 #include <cstring>
 #include <cstdlib>
 
-#include "client.h"
-#include "server.h"
+#include "rdma_client.h"
+#include "rdma_server.h"
 
 #define ADDR_OPTS "b:p:s:a:r:"
 #define INFO_OPTS "n:f:e:"
@@ -20,5 +20,5 @@ struct test_size_param {
 extern struct test_size_param test_size[];
 
 void rdma_parseinfo(int op, char *optarg, struct fi_info *hints);
-void rdma_parse_addr_opts(int op, char *optarg, Options *opts);
+void rdma_parse_addr_opts(int op, char *optarg, RDMAOptions *opts);
 

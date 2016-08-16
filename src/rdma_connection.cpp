@@ -11,7 +11,7 @@
 #include <rdma/fi_errno.h>
 #include <arpa/inet.h>
 
-#include "connection.h"
+#include "rdma_connection.h"
 
 #define HPS_EP_BIND(ep, fd, flags)					\
 	do {								\
@@ -26,7 +26,7 @@
 	} while (0)
 
 
-Connection::Connection(Options *opts, struct fi_info *info_hints, struct fi_info *info,
+Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_info *info,
                        struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
 
   print_short_info(info);
@@ -111,11 +111,11 @@ void Connection::Free() {
   HPS_CLOSE_FID(fabric);
 }
 
-Buffer * Connection::ReceiveBuffer() {
+RDMABuffer * Connection::ReceiveBuffer() {
   return this->recv_buf;
 }
 
-Buffer * Connection::SendBuffer() {
+RDMABuffer * Connection::SendBuffer() {
   return this->send_buf;
 }
 
@@ -178,7 +178,7 @@ int Connection::AllocateActiveResources() {
 int Connection::AllocateBuffers(void) {
   int ret = 0;
   long alignment = 1;
-  Options *opts = this->options;
+  RDMAOptions *opts = this->options;
 
   tx_size = opts->buf_size / 2;
   if (tx_size > info->ep_attr->max_msg_size) {
@@ -226,8 +226,8 @@ int Connection::AllocateBuffers(void) {
     mr = &no_mr;
   }
 
-  this->send_buf = new Buffer(tx_buf, tx_size, opts->no_buffers);
-  this->recv_buf = new Buffer(rx_buf, rx_size, opts->no_buffers);
+  this->send_buf = new RDMABuffer(tx_buf, tx_size, opts->no_buffers);
+  this->recv_buf = new RDMABuffer(rx_buf, rx_size, opts->no_buffers);
   return 0;
 }
 
@@ -287,7 +287,7 @@ int Connection::  SetupBuffers() {
   this->tx_cq_cntr = 0;
   this->tx_seq = 0;
   ssize_t ret = 0;
-  Buffer *rBuf = this->recv_buf;
+  RDMABuffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->NoOfBuffers();
   HPS_INFO("base, filled submitted %ld %ld %ld", rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   for (uint32_t i = 0; i < noBufs; i++) {
@@ -579,7 +579,7 @@ int Connection::ExchangeClientKeys() {
 
 
 bool Connection::DataAvailableForRead() {
-  Buffer *sbuf = this->recv_buf;
+  RDMABuffer *sbuf = this->recv_buf;
   return sbuf->GetFilledBuffers() > 0;
 }
 
@@ -587,7 +587,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
 
   // go through the buffers
-  Buffer *rbuf = this->recv_buf;
+  RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
   rbuf->acquireLock();
   ret = rbuf->ReadData(buf, size, read);
@@ -616,7 +616,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
 //  HPS_INFO("Init writing");
   // first lets get the available buffer
-  Buffer *sbuf = this->send_buf;
+  RDMABuffer *sbuf = this->send_buf;
   sbuf->acquireLock();
   // now determine the buffer no to use
   uint32_t sent_size = 0;
