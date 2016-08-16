@@ -66,14 +66,11 @@ int RDMAServer::Wait() {
  */
 int RDMAServer::Init(void) {
   int ret;
-  printf("Start server\n");
   // info for passive end-point
   ret = hps_utils_get_info(this->options, this->info_hints, &this->info_pep);
   if (ret) {
     return ret;
   }
-  char *fi_str = fi_tostr(this->info_hints, FI_TYPE_INFO);
-  std::cout << "FI PEP" << fi_str << std::endl;
 
   // create the fabric for passive end-point
   ret = fi_fabric(this->info_pep->fabric_attr, &fabric, NULL);
@@ -82,13 +79,11 @@ int RDMAServer::Init(void) {
     return ret;
   }
 
-  HPS_INFO("Domain before");
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
     HPS_ERR("fi_domain %d", ret);
     return ret;
   }
-  HPS_INFO("Domain after");
 
   // open the event queue for passive end-point
   ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
