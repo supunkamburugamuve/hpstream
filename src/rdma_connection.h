@@ -119,8 +119,6 @@ private:
 
   // transfer cq and receive cq
   struct fid_cq *txcq, *rxcq;
-  // transfer counter and receive counter
-  struct fid_cntr *txcntr, *rxcntr;
 
   struct fid_wait *waitset;
 

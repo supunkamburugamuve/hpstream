@@ -39,8 +39,6 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
 
   this->txcq = NULL;
   this->rxcq = NULL;
-  this->txcntr = NULL;
-  this->rxcntr = NULL;
 
   this->tx_loop.callback = this;
   this->rx_loop.callback = this;
@@ -103,8 +101,6 @@ void Connection::Free() {
   HPS_CLOSE_FID(ep);
   HPS_CLOSE_FID(rxcq);
   HPS_CLOSE_FID(txcq);
-  HPS_CLOSE_FID(rxcntr);
-  HPS_CLOSE_FID(txcntr);
   HPS_CLOSE_FID(av);
   HPS_CLOSE_FID(domain);
   HPS_CLOSE_FID(waitset);
@@ -265,14 +261,12 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
     flags |= FI_WRITE | FI_READ;
   }
 
-  HPS_EP_BIND(ep, txcntr, flags);
   flags = !rxcq ? FI_RECV : 0;
   if (this->info_hints->caps & (FI_REMOTE_WRITE | FI_REMOTE_READ)) {
     flags |= this->info_hints->caps & (FI_REMOTE_WRITE | FI_REMOTE_READ);
   } else if (this->info_hints->caps & FI_RMA) {
     flags |= FI_REMOTE_WRITE | FI_REMOTE_READ;
   }
-  HPS_EP_BIND(ep, rxcntr, flags);
   ret = fi_enable(ep);
   if (ret) {
     HPS_ERR("fi_enable %d", ret);
@@ -439,11 +433,6 @@ int Connection::GetTXComp(uint64_t total) {
 
   if (txcq) {
     ret = GetCQComp(txcq, &tx_cq_cntr, total, -1);
-  } else if (txcntr) {
-    ret = fi_cntr_wait(txcntr, total, -1);
-    if (ret) {
-      HPS_ERR("fi_cntr_wait %d", ret);
-    }
   } else {
     HPS_ERR("Trying to get a TX completion when no TX CQ or counter were opened");
     ret = -FI_EOTHER;
