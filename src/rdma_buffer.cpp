@@ -12,7 +12,6 @@ RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->buf_size = buf_size / no_bufs;
   this->no_bufs = no_bufs;
   this->base = 0;
-  this->content_sizes = NULL;
   this->current_read_index = 0;
   this->buffers = NULL; // do error handling
   this->submitted_buffs = 0;
@@ -36,34 +35,25 @@ uint8_t * RDMABuffer::GetBuffer(int i) {
   return buffers[i];
 }
 
-uint32_t RDMABuffer::BufferSize() {
+uint32_t RDMABuffer::GetBufferSize() {
   return buf_size;
 };
 
-uint32_t RDMABuffer::NoOfBuffers() {
+uint32_t RDMABuffer::GetNoOfBuffers() {
   return no_bufs;
 }
 
-uint32_t RDMABuffer::Base() {
+uint32_t RDMABuffer::GetBase() {
   return base;
 }
 
-void RDMABuffer::SetBase(uint32_t tail) {
-  this->base = tail;
-}
-
-uint32_t RDMABuffer::CurrentReadIndex() {
+uint32_t RDMABuffer::GetCurrentReadIndex() {
   return this->current_read_index;
-}
-
-void RDMABuffer::SetCurrentReadIndex(uint32_t indx) {
-  this->current_read_index = indx;
 }
 
 int RDMABuffer::Init() {
   uint32_t i = 0;
   this->buffers = (uint8_t **)malloc(sizeof(uint8_t *) * no_bufs);
-  this->content_sizes = (uint32_t *)malloc(sizeof(uint32_t) * no_bufs);
   for (i = 0; i < no_bufs; i++) {
     this->buffers[i] = this->buf + buf_size * i;
   }
@@ -112,9 +102,6 @@ int RDMABuffer::IncrementTail(uint32_t count) {
 void RDMABuffer::Free() {
   if (this->buffers) {
     free(this->buffers);
-  }
-  if (this->content_sizes) {
-    free(this->content_sizes);
   }
 }
 

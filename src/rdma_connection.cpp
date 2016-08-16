@@ -82,6 +82,20 @@ void Connection::Free() {
   HPS_CLOSE_FID(av);
   HPS_CLOSE_FID(domain);
   HPS_CLOSE_FID(fabric);
+
+  if (buf) {
+    free(buf);
+  }
+
+  if (recv_buf) {
+    recv_buf->Free();
+    delete recv_buf;
+  }
+
+  if (send_buf) {
+    send_buf->Free();
+    delete send_buf;
+  }
 }
 
 int Connection::AllocateActiveResources() {
@@ -221,18 +235,18 @@ int Connection::  SetupBuffers() {
   this->tx_seq = 0;
   ssize_t ret = 0;
   RDMABuffer *rBuf = this->recv_buf;
-  uint32_t noBufs = rBuf->NoOfBuffers();
-  HPS_INFO("base, filled submitted %ld %ld %ld", rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
+  uint32_t noBufs = rBuf->GetNoOfBuffers();
+  HPS_INFO("base, filled submitted %ld %ld %ld", rBuf->GetBase(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   for (uint32_t i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
-    ret = PostRX(rBuf->BufferSize(), buf, &rx_ctx);
+    ret = PostRX(rBuf->GetBufferSize(), buf, &rx_ctx);
     if (ret) {
       HPS_ERR("PostRX %d", ret);
       return (int) ret;
     }
     rBuf->IncrementSubmitted(1);
   }
-  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, rBuf->Base(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
+  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, rBuf->GetBase(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   return 0;
 }
 
@@ -423,9 +437,9 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     *read = 0;
     return 0;
   }
-  uint32_t tail = rbuf->Base();
+  uint32_t tail = rbuf->GetBase();
   uint32_t buffers_filled = rbuf->GetFilledBuffers();
-  uint32_t current_read_indx = rbuf->CurrentReadIndex();
+  uint32_t current_read_indx = rbuf->GetCurrentReadIndex();
   // need to copy
   uint32_t need_copy = 0;
   // number of bytes copied
@@ -450,7 +464,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       // advance the base pointer
       rbuf->IncrementTail(1);
       buffers_filled--;
-      tail = rbuf->Base();
+      tail = rbuf->GetBase();
     } else {
 //      HPS_INFO("Not Moving base");
       // we cannot copy everything from this buffer
@@ -466,14 +480,14 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
   *read = read_size;
 
-  base = rbuf->Base();
+  base = rbuf->GetBase();
   submittedBuffers = rbuf->GetSubmittedBuffers();
-  noOfBuffers = rbuf->NoOfBuffers();
+  noOfBuffers = rbuf->GetNoOfBuffers();
   while (submittedBuffers < noOfBuffers) {
     index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
 //    HPS_INFO("Posting buffer with index %" PRId32, index);
-    ret = PostRX(rbuf->BufferSize(), send_buf, &this->rx_ctx);
+    ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
       rbuf->releaseLock();
@@ -498,7 +512,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   uint32_t head = 0;
   uint32_t error_count = 0;
 
-  uint32_t buf_size = sbuf->BufferSize() - 4;
+  uint32_t buf_size = sbuf->GetBufferSize() - 4;
   // we need to send everything by using the buffers available
   while (sent_size < size) {
     uint64_t free_space = sbuf->GetAvailableWriteSpace();

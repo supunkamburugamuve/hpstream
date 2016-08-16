@@ -29,12 +29,10 @@ public:
 
   /** Getters and setters */
   uint8_t *GetBuffer(int i);
-  uint32_t BufferSize();
-  uint32_t NoOfBuffers();
-  uint32_t Base();
-  void SetBase(uint32_t tail);
-  uint32_t CurrentReadIndex();
-  void SetCurrentReadIndex(uint32_t indx);
+  uint32_t GetBufferSize();
+  uint32_t GetNoOfBuffers();
+  uint32_t GetBase();
+  uint32_t GetCurrentReadIndex();
 
   // wait until a buffer becomes available for write
   int waitFree();
