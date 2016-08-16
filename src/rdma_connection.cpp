@@ -273,25 +273,6 @@ int Connection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
 /*
  * fi_cq_err_entry can be cast to any CQ entry format.
  */
-int Connection::WaitForCompletion(struct fid_cq *cq, uint64_t *cur,
-                                  uint64_t total, int timeout) {
-  struct fi_cq_err_entry comp;
-  ssize_t ret;
-  while (total - *cur > 0) {
-    ret = fi_cq_sread(cq, &comp, 1, NULL, timeout);
-    if (ret > 0) {
-      (*cur)++;
-    }
-    else if (ret < 0 && ret != -FI_EAGAIN) {
-      return (int) ret;
-    }
-  }
-  return 0;
-}
-
-/*
- * fi_cq_err_entry can be cast to any CQ entry format.
- */
 int Connection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
                               uint64_t total, int timeout) {
   struct fi_cq_err_entry comp;
@@ -323,9 +304,6 @@ int Connection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
   int ret;
 
   switch (this->options->comp_method) {
-    case HPS_COMP_SREAD:
-      ret = WaitForCompletion(cq, cur, total, timeout);
-      break;
     case HPS_COMP_WAIT_FD:
       ret = FDWaitForComp(cq, cur, total, timeout);
       break;
