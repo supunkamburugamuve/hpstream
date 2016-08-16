@@ -168,7 +168,7 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
     // this is the correct fi_info associated with active end-point
     Connect(&entry);
   } else if (event == FI_CONNECTED) {
-
+    Connected(&entry);
   } else {
     HPS_ERR("Unexpected CM event %d", event);
     ret = -FI_EOTHER;
