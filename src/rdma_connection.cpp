@@ -180,7 +180,6 @@ int Connection::AllocateBuffers(void) {
 }
 
 int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
-  uint64_t flags;
   int ret;
   printf("Init EP\n");
 
@@ -206,19 +205,6 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   }
   this->rx_loop.fid = rx_fd;
 
-  flags = !txcq ? FI_SEND : 0;
-  if (this->info_hints->caps & (FI_WRITE | FI_READ)) {
-    flags |= this->info_hints->caps & (FI_WRITE | FI_READ);
-  } else if (this->info_hints->caps & FI_RMA) {
-    flags |= FI_WRITE | FI_READ;
-  }
-
-  flags = !rxcq ? FI_RECV : 0;
-  if (this->info_hints->caps & (FI_REMOTE_WRITE | FI_REMOTE_READ)) {
-    flags |= this->info_hints->caps & (FI_REMOTE_WRITE | FI_REMOTE_READ);
-  } else if (this->info_hints->caps & FI_RMA) {
-    flags |= FI_REMOTE_WRITE | FI_REMOTE_READ;
-  }
   ret = fi_enable(ep);
   if (ret) {
     HPS_ERR("fi_enable %d", ret);
