@@ -10,7 +10,7 @@ project(hpstream)
 set(hpstream_VERSION_MAJOR 1)
 set(hpstream_VERSION_MINOR 0)
 set(CMAKE_BUILD_TYPE Release)
-set(SOURCE_FILES src/buffer.cpp src/connection.cpp src/client.cpp src/options.cpp src/utils.cpp src/server.cpp src/event_loop.cpp)
+set(SOURCE_FILES src/buffer.cpp src/connection.cpp src/client.cpp src/options.cpp src/utils.cpp src/server.cpp src/rdma_event_loop.cpp)
 
 link_directories(/home/supun/dev/projects/stream/fabric-build/lib /home/supun/dev/projects/stream/hpstream)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include /home/supun/dev/projects/stream/fabric-build/include ${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -2,9 +2,9 @@
 #include <rdma/fi_errno.h>
 #include <map>
 
-#include "event_loop.h"
+#include "rdma_event_loop.h"
 
-EventLoop::EventLoop(struct fid_fabric *fabric) {
+RDMAEventLoop::RDMAEventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
   this->run = true;
@@ -18,7 +18,7 @@ EventLoop::EventLoop(struct fid_fabric *fabric) {
   }
 }
 
-void EventLoop::loop() {
+void RDMAEventLoop::Loop() {
   int ret;
 
   while (run) {
@@ -39,8 +39,8 @@ void EventLoop::loop() {
         struct epoll_event *event = events + j;
         struct loop_info *callback = (struct loop_info *) event->data.ptr;
         if (callback != NULL) {
-          IEventCallback *c = callback->callback;
-          c->OnEvent(callback->event, AVIALBLE);
+          IRDMAEventCallback *c = callback->callback;
+          c->OnEvent(callback->event, AVAILABLE);
         } else {
           HPS_ERR("Connection NULL");
         }
@@ -54,7 +54,7 @@ void EventLoop::loop() {
   }
 }
 
-int EventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
+int RDMAEventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
   struct epoll_event event;
   int ret;
   int fid = connection->fid;
@@ -90,7 +90,7 @@ int EventLoop::RegisterRead(struct fid *desc, struct loop_info *connection) {
   return 0;
 }
 
-int EventLoop::UnRegister(int fid) {
+int RDMAEventLoop::UnRegister(int fid) {
   struct epoll_event event;
   int ret;
   ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);

@@ -6,9 +6,9 @@
 #include "options.h"
 #include "utils.h"
 #include "connection.h"
-#include "event_loop.h"
+#include "rdma_event_loop.h"
 
-class Server : public IEventCallback {
+class Server : public IRDMAEventCallback {
 public:
   Server(Options *opts, fi_info *hints);
   void Free();
@@ -33,7 +33,7 @@ public:
   }
   int Start();
 
-  int OnEvent(enum hps_loop_event event, enum loop_status state);
+  int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
 
   int Wait();
 private:
@@ -56,7 +56,7 @@ private:
   // the fabric
   struct fid_fabric *fabric;
   // event loop associated with this server
-  EventLoop *eventLoop;
+  RDMAEventLoop *eventLoop;
   // indicates weather we run the accept connection thread
   bool acceptConnections;
 

@@ -23,7 +23,7 @@ int exchange3() {
 
   std::list<Connection *> *pList = server->GetConnections();
   int count = 0;
-  while (pList->size() != 1) {
+  while (pList->size() != 2) {
     if (count++ == 10000) {
       HPS_INFO("Size %d", pList->size());
     }

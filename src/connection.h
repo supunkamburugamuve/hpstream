@@ -16,9 +16,9 @@
 #include "buffer.h"
 #include "utils.h"
 #include "options.h"
-#include "event_loop.h"
+#include "rdma_event_loop.h"
 
-class Connection : public IEventCallback {
+class Connection : public IRDMAEventCallback {
 public:
   Connection(Options *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
@@ -85,7 +85,7 @@ public:
     return &tx_loop;
   }
 
-  int OnEvent(enum hps_loop_event event, enum loop_status state);
+  int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
 
   // disconnect
   int Disconnect();

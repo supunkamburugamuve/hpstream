@@ -123,7 +123,7 @@ int Server::Init(void) {
     return ret;
   }
 
-  this->eventLoop = new EventLoop(fabric);
+  this->eventLoop = new RDMAEventLoop(fabric);
   ret = this->eventLoop->RegisterRead(&eq->fid, &this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
@@ -139,7 +139,7 @@ int Server::Init(void) {
   return 0;
 }
 
-int Server::OnEvent(enum hps_loop_event loop_event, enum loop_status state){
+int Server::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state){
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -283,6 +283,6 @@ int Server::loop() {
     HPS_ERR("Event loop not created");
     return 1;
   }
-  eventLoop->loop();
+  eventLoop->Loop();
   return 0;
 }

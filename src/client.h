@@ -4,16 +4,16 @@
 #include "utils.h"
 #include "options.h"
 #include "connection.h"
-#include "event_loop.h"
+#include "rdma_event_loop.h"
 
-class Client : IEventCallback {
+class Client : IRDMAEventCallback {
 public:
   Client(Options *opts, fi_info *hints);
   int Connect(void);
   Connection *GetConnection();
   void Free();
   int Start();
-  int OnEvent(enum hps_loop_event event, enum loop_status state);
+  int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
   /**
    * Start Loop through the events
    */
@@ -38,7 +38,7 @@ private:
   // the connection
   Connection *con;
 
-  EventLoop *eventLoop;
+  RDMAEventLoop *eventLoop;
   // looping thread id
   pthread_t loopThreadId;
 

@@ -13,35 +13,34 @@
 #include <rdma/fabric.h>
 #include <list>
 
-#include "event_loop.h"
+#include "rdma_event_loop.h"
 #include "hps.h"
 
-enum loop_status {AVIALBLE, TRYAGAIN};
+enum rdma_loop_status {AVAILABLE, TRYAGAIN};
 
-enum hps_loop_event {
+enum rdma_loop_event {
   CONNECTION,
   CQ_READ,
   CQ_TRANSMIT
 };
 
-class IEventCallback {
+class IRDMAEventCallback {
 public:
-  virtual int OnEvent(enum hps_loop_event event, enum loop_status state) = 0;
+  virtual int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) = 0;
 };
 
 struct loop_info {
-  IEventCallback *callback;
+  IRDMAEventCallback *callback;
   int fid;
-  void *data;
-  enum hps_loop_event event;
+  enum rdma_loop_event event;
 };
 
 
-class EventLoop {
+class RDMAEventLoop {
 public:
-  EventLoop(struct fid_fabric *fabric);
+  RDMAEventLoop(struct fid_fabric *fabric);
   int RegisterRead(struct fid *desc, struct loop_info *loop);
-  void loop();
+  void Loop();
 private:
   bool run;
   struct fid_fabric *fabric;

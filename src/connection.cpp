@@ -741,7 +741,7 @@ Connection::~Connection() {
 
 }
 
-int Connection::OnEvent(enum hps_loop_event event, enum loop_status state) {
+int Connection::OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) {
   // HPS_INFO("Connection ready %d", fd);
   if (event == CQ_READ) {
     TransmitComplete();
