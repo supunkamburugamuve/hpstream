@@ -18,9 +18,10 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
+enum State { INIT = 0, WAIT_CONFIRM, CONNECTED, DISCONNECTED };
+
 class Connection : public IRDMAEventCallback {
 public:
-  enum State { INIT = 0, WAIT_CONFIRM, CONNECTED, DISCONNECTED };
 
   Connection(RDMAOptions *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,

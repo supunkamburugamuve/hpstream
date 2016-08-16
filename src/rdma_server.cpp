@@ -178,8 +178,6 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
 }
 
 int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
-  uint32_t event;
-  ssize_t rd;
   int ret;
   struct fid_ep *ep;
   Connection *con;
@@ -192,7 +190,6 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   if (ret) {
     goto err;
   }
-
   // create the end point for this connection
   // associate the connection to the context
   ret = fi_endpoint(domain, entry->info, &ep, con);
@@ -214,6 +211,7 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
+  con->SetState(WAIT_CONFIRM);
   // add the connection to pending and wait for confirmation
   pending_connections.push_back(con);
   return 0;
@@ -275,7 +273,7 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
     return ret;
   }
   HPS_INFO("Connection established");
-
+  con->SetState(CONNECTED);
   // add the connection to list
   this->connections.push_back(con);
   return 0;
