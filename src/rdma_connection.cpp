@@ -136,7 +136,7 @@ int Connection::AllocateBuffers(void) {
     tx_size = info->ep_attr->max_msg_size;
   }
   rx_size = tx_size;
-  buf_size = MAX(tx_size, HPS_MAX_CTRL_MSG) + MAX(rx_size, HPS_MAX_CTRL_MSG);
+  buf_size = tx_size + rx_size;
 
   if (opts->options & HPS_OPT_ALIGN) {
     alignment = sysconf(_SC_PAGESIZE);
@@ -159,7 +159,7 @@ int Connection::AllocateBuffers(void) {
   }
   memset(buf, 0, buf_size);
   rx_buf = buf;
-  tx_buf = buf + MAX(rx_size, HPS_MAX_CTRL_MSG);
+  tx_buf = buf + rx_size;
   tx_buf = (uint8_t *) (((uintptr_t) tx_buf + alignment - 1) & ~(alignment - 1));
 
   if (!ft_skip_mr && ((info->mode & FI_LOCAL_MR) ||
