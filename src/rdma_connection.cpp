@@ -57,8 +57,6 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
   this->send_buf = NULL;
 
   this->cq_attr = {};
-  this->cntr_attr = {};
-  this->av_attr = {};
   this->tx_ctx = {};
   this->rx_ctx = {};
 
@@ -70,11 +68,6 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
   this->ft_skip_mr = 0;
 
   this->cq_attr.wait_obj = FI_WAIT_NONE;
-  this->cntr_attr.events = FI_CNTR_EVENTS_COMP;
-  this->cntr_attr.wait_obj = FI_WAIT_NONE;
-
-  this->av_attr.type = FI_AV_MAP;
-  this->av_attr.count = 1;
   this->timeout = -1;
 }
 
@@ -126,22 +119,6 @@ int Connection::AllocateActiveResources() {
   if (ret) {
     HPS_ERR("fi_cq_open for receive %d", ret);
     return ret;
-  }
-
-
-  if (this->info->ep_attr->type == FI_EP_RDM || this->info->ep_attr->type == FI_EP_DGRAM) {
-    if (this->info->domain_attr->av_type != FI_AV_UNSPEC) {
-      av_attr.type = info->domain_attr->av_type;
-    }
-
-    if (this->options->av_name) {
-      av_attr.name = this->options->av_name;
-    }
-    ret = fi_av_open(this->domain, &this->av_attr, &this->av, NULL);
-    if (ret) {
-      HPS_ERR("fi_av_open %d", ret);
-      return ret;
-    }
   }
 
   return 0;

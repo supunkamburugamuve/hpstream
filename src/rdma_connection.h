@@ -101,10 +101,6 @@ private:
 
   // cq attribute for getting completion notifications
   struct fi_cq_attr cq_attr;
-  // cntr attribute for getting counter notifications
-  struct fi_cntr_attr cntr_attr;
-  // vector attribute for getting completion notifications
-  struct fi_av_attr av_attr;
   // transfer cq and receive cq
   struct fid_cq *txcq, *rxcq;
   // receive cq fd and transmit cq fd
