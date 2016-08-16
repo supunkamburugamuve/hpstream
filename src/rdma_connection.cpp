@@ -593,7 +593,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
   rbuf->acquireLock();
-  ret = rbuf->ReadData(buf, size, read);
+//  ret = rbuf->ReadData(buf, size, read);
 
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
