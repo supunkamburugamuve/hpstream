@@ -171,6 +171,7 @@ int Connection::AllocateBuffers(void) {
       return ret;
     }
   } else {
+    HPS_INFO("No mr");
     mr = &no_mr;
   }
 
