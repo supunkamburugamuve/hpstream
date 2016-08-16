@@ -36,8 +36,6 @@ public:
   uint32_t CurrentReadIndex();
   void SetCurrentReadIndex(uint32_t indx);
 
-  int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
-
   // wait until a buffer becomes available for write
   int waitFree();
   int acquireLock();
