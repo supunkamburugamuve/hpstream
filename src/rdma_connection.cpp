@@ -593,7 +593,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
   rbuf->acquireLock();
-//  ret = rbuf->ReadData(buf, size, read);
 
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
@@ -634,14 +633,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       current_read_indx += can_copy;
     }
     // next copy the buffer
-//    HPS_INFO("Memcopy %d %d", sizeof(uint32_t) + tmp_index, can_copy);
-//    uint32_t *buffer = (uint32_t *) (b + sizeof(uint32_t));
-//    int i = 0;
-//    for (i = 0; i < ((buf_size - 4) / sizeof(int)); i++) {
-//      printf("%d ", buffer[i]);
-//    }
-//    printf("\nwritten=%d \n", i);
-
     memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
 //    HPS_INFO("Reading, base= %d, dataHead= %d read_size=%" PRId32, tail, buffers_filled, read_size);
