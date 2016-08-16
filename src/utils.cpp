@@ -50,63 +50,6 @@ int hps_utils_get_eq_fd(RDMAOptions *opts, struct fid_eq *eq, int *fd) {
   return ret;
 }
 
-size_t hps_utils_tx_prefix_size(struct fi_info *fi) {
-  return (fi->tx_attr->mode & FI_MSG_PREFIX) ?
-         fi->ep_attr->msg_prefix_size : 0;
-}
-
-size_t hps_utils_rx_prefix_size(struct fi_info *fi) {
-  return (fi->rx_attr->mode & FI_MSG_PREFIX) ?
-         fi->ep_attr->msg_prefix_size : 0;
-}
-
-uint64_t hps_utils_init_cq_data(struct fi_info *info) {
-  if (info->domain_attr->cq_data_size >= sizeof(uint64_t)) {
-    return 0x0123456789abcdefULL;
-  } else {
-    return 0x0123456789abcdef &
-           ((0x1ULL << (info->domain_attr->cq_data_size * 8)) - 1);
-  }
-}
-
-void hps_utils_cq_set_wait_attr(RDMAOptions *opts, struct fid_wait *waitset, struct fi_cq_attr *cq_attr) {
-  switch (opts->comp_method) {
-    case HPS_COMP_SREAD:
-      cq_attr->wait_obj = FI_WAIT_UNSPEC;
-      cq_attr->wait_cond = FI_CQ_COND_NONE;
-      break;
-    case HPS_COMP_WAITSET:
-      cq_attr->wait_obj = FI_WAIT_SET;
-      cq_attr->wait_cond = FI_CQ_COND_NONE;
-      cq_attr->wait_set = waitset;
-      break;
-    case HPS_COMP_WAIT_FD:
-      cq_attr->wait_obj = FI_WAIT_FD;
-      cq_attr->wait_cond = FI_CQ_COND_NONE;
-      break;
-    default:
-      cq_attr->wait_obj = FI_WAIT_NONE;
-      break;
-  }
-}
-
-void hps_utils_cntr_set_wait_attr(RDMAOptions *opts, struct fid_wait *waitset, struct fi_cntr_attr *cntr_attr) {
-  switch (opts->comp_method) {
-    case HPS_COMP_SREAD:
-      cntr_attr->wait_obj = FI_WAIT_UNSPEC;
-      break;
-    case HPS_COMP_WAITSET:
-      cntr_attr->wait_obj = FI_WAIT_SET;
-      break;
-    case HPS_COMP_WAIT_FD:
-      cntr_attr->wait_obj = FI_WAIT_FD;
-      break;
-    default:
-      cntr_attr->wait_obj = FI_WAIT_NONE;
-      break;
-  }
-}
-
 static int hps_utils_dupaddr(void **dst_addr, size_t *dst_addrlen,
                               void *src_addr, size_t src_addrlen) {
   *dst_addr = malloc(src_addrlen);

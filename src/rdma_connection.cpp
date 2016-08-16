@@ -135,8 +135,7 @@ int Connection::AllocateBuffers(void) {
   if (tx_size > info->ep_attr->max_msg_size) {
     tx_size = info->ep_attr->max_msg_size;
   }
-  rx_size = tx_size + hps_utils_rx_prefix_size(this->info);
-  tx_size += hps_utils_tx_prefix_size(this->info);
+  rx_size = tx_size;
   buf_size = MAX(tx_size, HPS_MAX_CTRL_MSG) + MAX(rx_size, HPS_MAX_CTRL_MSG);
 
   if (opts->options & HPS_OPT_ALIGN) {
@@ -389,7 +388,7 @@ ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   ssize_t ret, rc;
 
   while (1) {
-    ret = fi_send(this->ep, buf, size + hps_utils_rx_prefix_size(info), fi_mr_desc(mr),	0, ctx);
+    ret = fi_send(this->ep, buf, size, fi_mr_desc(mr),	0, ctx);
     if (!ret)
       break;
 
@@ -416,7 +415,7 @@ ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   ssize_t ret, rc;
 
   while (1) {
-    ret = fi_recv(this->ep, buf, size + hps_utils_rx_prefix_size(info), fi_mr_desc(mr),	0, ctx);
+    ret = fi_recv(this->ep, buf, size, fi_mr_desc(mr),	0, ctx);
     if (!ret)
       break;
 
