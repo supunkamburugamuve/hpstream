@@ -163,6 +163,11 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
       struct fid_ep *ep = con->GetEp();
 
     }
+    Connection *c = (Connection *) entry.fid->context;
+    if (c != NULL) {
+      HPS_INFO("Connection is found TX=%d RX=%d", c->GetTxFd(), c->GetRxCQ());
+      c->Disconnect();
+    }
     return 0;
   } else if (event == FI_CONNREQ) {
     // this is the correct fi_info associated with active end-point
@@ -201,7 +206,8 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   }
 
   // create the end point for this connection
-  ret = fi_endpoint(domain, entry->info, &ep, NULL);
+  // associate the connection to the context
+  ret = fi_endpoint(domain, entry->info, &ep, con);
   if (ret) {
     HPS_ERR("fi_endpoint %d", ret);
     goto err;
