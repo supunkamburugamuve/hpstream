@@ -176,14 +176,14 @@ int RDMAClient::Connect(void) {
   }
 
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-  rx_loop = con->getRxLoop();
+  rx_loop = con->GetRxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-  tx_loop = con->getTxLoop();
+  tx_loop = con->GetTxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);

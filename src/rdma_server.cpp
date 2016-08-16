@@ -166,7 +166,9 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
     Connection *c = (Connection *) entry.fid->context;
     if (c != NULL) {
       HPS_INFO("Connection is found TX=%d RX=%d", c->GetTxFd(), c->GetRxCQ());
-//      c->Disconnect();
+      // lets remove from the event loop
+      eventLoop.
+      c->Disconnect();
     }
     return 0;
   } else if (event == FI_CONNREQ) {
@@ -251,14 +253,14 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
 
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-  rx_loop = con->getRxLoop();
+  rx_loop = con->GetRxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-  tx_loop = con->getTxLoop();
+  tx_loop = con->GetTxLoop();
 	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);

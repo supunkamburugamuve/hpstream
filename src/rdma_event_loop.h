@@ -40,6 +40,7 @@ class RDMAEventLoop {
 public:
   RDMAEventLoop(struct fid_fabric *fabric);
   int RegisterRead(struct fid *desc, struct rdma_loop_info *loop);
+  int UnRegister(int fid);
   void Loop();
 private:
   bool run;
@@ -51,7 +52,6 @@ private:
   std::list<struct fid *> fids;
   std::list<struct rdma_loop_info *> connections;
 
-  int UnRegister(int fid);
 };
 
 #endif

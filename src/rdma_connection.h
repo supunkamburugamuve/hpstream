@@ -20,6 +20,8 @@
 
 class Connection : public IRDMAEventCallback {
 public:
+  enum State { DISCONNECTED = 0, CONNECTING, CONNECTED };
+
   Connection(RDMAOptions *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
              struct fid_domain *domain, struct fid_eq *eq);
@@ -66,12 +68,16 @@ public:
     return ep;
   }
 
-  struct rdma_loop_info * getRxLoop() {
+  struct rdma_loop_info * GetRxLoop() {
     return &rx_loop;
   }
 
-  struct rdma_loop_info * getTxLoop() {
+  struct rdma_loop_info * GetTxLoop() {
     return &tx_loop;
+  }
+
+  State GetState() {
+    return state;
   }
 
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
@@ -86,6 +92,8 @@ public:
 private:
   // options for initialization
   RDMAOptions *options;
+  // status of the connection
+  State state;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information
