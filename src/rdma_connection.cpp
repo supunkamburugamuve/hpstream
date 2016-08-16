@@ -34,6 +34,7 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
   this->info_hints = info_hints;
   this->fabric = fabric;
   this->domain = domain;
+  this->state = INIT;
 
   this->txcq = NULL;
   this->rxcq = NULL;

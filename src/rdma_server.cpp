@@ -19,7 +19,6 @@ RDMAServer::RDMAServer(RDMAOptions *opts, fi_info *hints) {
   this->domain = NULL;
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
-  this->con = NULL;
   this->acceptConnections = true;
 
   this->eq_loop.callback = this;
@@ -42,10 +41,6 @@ void RDMAServer::Free() {
     fi_freeinfo(this->info_hints);
     this->info_hints = NULL;
   }
-}
-
-Connection* RDMAServer::GetConnection() {
-  return this->con;
 }
 
 int RDMAServer::Start() {
@@ -139,12 +134,11 @@ int RDMAServer::Init(void) {
   return 0;
 }
 
-int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state){
+int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
   int ret = 0;
-//  HPS_INFO("Waiting for connection");
   if (state == TRYAGAIN) {
     return 0;
   }
@@ -173,6 +167,8 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
   } else if (event == FI_CONNREQ) {
     // this is the correct fi_info associated with active end-point
     Connect(&entry);
+  } else if (event == FI_CONNECTED) {
+
   } else {
     HPS_ERR("Unexpected CM event %d", event);
     ret = -FI_EOTHER;
@@ -186,16 +182,7 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   ssize_t rd;
   int ret;
   struct fid_ep *ep;
-  // struct fid_domain *domain;
   Connection *con;
-  struct rdma_loop_info *tx_loop;
-  struct rdma_loop_info *rx_loop;
-
-//  ret = fi_domain(this->fabric, entry->info, &domain, NULL);
-//  if (ret) {
-//    HPS_ERR("fi_domain %d", ret);
-//    goto err;
-//  }
 
   // create the connection
   con = new Connection(this->options, this->info_hints,
@@ -227,18 +214,40 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-  // read the confirmation
-  rd = fi_eq_sread(eq, &event, entry, sizeof (struct fi_eq_cm_entry), -1, 0);
-  if (rd != sizeof (struct fi_eq_cm_entry)) {
-    HPS_ERR("fi_eq_sread accept %d", (int)rd);
-    ret = (int) rd;
-    goto err;
+  // add the connection to pending and wait for confirmation
+  pending_connections.push_back(con);
+  return 0;
+
+  err:
+  HPS_INFO("Error label");
+  fi_reject(pep, entry->info->handle, NULL, 0);
+  return ret;
+}
+
+int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
+  ssize_t rd;
+  struct rdma_loop_info *tx_loop;
+  struct rdma_loop_info *rx_loop;
+  int ret;
+
+  // first lets find this in the pending connections
+  Connection *con = NULL;
+  std::list<Connection *>::iterator it = pending_connections.begin();
+  while (it != pending_connections.end()) {
+    Connection *temp = *it;
+    if (&temp->GetEp()->fid == entry->fid) {
+      con = temp;
+      pending_connections.erase(it);
+      break;
+    } else {
+      it++;
+    }
   }
 
-  if (event != FI_CONNECTED || entry->fid != &ep->fid) {
-    HPS_ERR("Unexpected CM event %d fid %p (ep %p)", event, entry->fid, ep);
-    ret = -FI_EOTHER;
-    goto err;
+  // we didn't find this connection in pending
+  if (con == NULL) {
+    HPS_ERR("Connected event received for non-pending connection, ignoring");
+    return 0;
   }
 
   con->getIPAddress();
@@ -253,29 +262,23 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
   rx_loop = con->GetRxLoop();
-	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
+  ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
   tx_loop = con->GetTxLoop();
-	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
+  ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;
   }
   HPS_INFO("Connection established");
-  this->con = con;
 
   // add the connection to list
   this->connections.push_back(con);
   return 0;
-
-  err:
-  HPS_INFO("Error label");
-  fi_reject(pep, entry->info->handle, NULL, 0);
-  return ret;
 }
 
 int RDMAServer::Disconnect(Connection *con) {

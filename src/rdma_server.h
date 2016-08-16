@@ -66,6 +66,8 @@ private:
   Connection *con;
   // list of connections
   std::list<Connection *> connections;
+  // list of connections halfway through fullty establishing
+  std::list<Connection *> pending_connections;
 
   /**
  * Accept new connections
@@ -78,6 +80,8 @@ private:
    * @return
    */
   int Disconnect(Connection *con);
+
+  int Connected(fi_eq_cm_entry *entry);
 };
 
 

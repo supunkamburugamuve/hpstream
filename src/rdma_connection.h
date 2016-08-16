@@ -20,7 +20,7 @@
 
 class Connection : public IRDMAEventCallback {
 public:
-  enum State { DISCONNECTED = 0, CONNECTING, CONNECTED };
+  enum State { INIT = 0, WAIT_CONFIRM, CONNECTED, DISCONNECTED };
 
   Connection(RDMAOptions *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
@@ -78,6 +78,10 @@ public:
 
   State GetState() {
     return state;
+  }
+
+  void SetState(State st) {
+    this->state = st;
   }
 
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
