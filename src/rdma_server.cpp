@@ -155,7 +155,7 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
     }
     Connection *c = (Connection *) entry.fid->context;
     if (c != NULL) {
-      HPS_INFO("Connection is found TX=%d RX=%d", c->GetTxFd(), c->GetRxCQ());
+      HPS_INFO("Connection is found TX=%d RX=%d", c->GetTxFd(), c->GetRxFd());
       // lets remove from the event loop
       if (eventLoop->UnRegister(c->GetRxLoop())) {
         HPS_ERR("Failed to un-register read from loop");
@@ -165,7 +165,7 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
         HPS_ERR("Failed to un-register transmit from loop");
       }
       // now disconnect
-      c->Disconnect();
+      // c->Disconnect();
     }
     return 0;
   } else if (event == FI_CONNREQ) {
