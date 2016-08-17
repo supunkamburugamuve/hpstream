@@ -109,8 +109,6 @@ private:
   struct fid_domain *domain;
   // end point
   struct fid_ep *ep, *alias_ep;
-  // address vector
-  struct fid_av *av;
 
   // cq attribute for getting completion notifications
   struct fi_cq_attr cq_attr;

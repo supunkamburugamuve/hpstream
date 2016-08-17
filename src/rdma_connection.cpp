@@ -46,7 +46,6 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
 
   this->ep = NULL;
   this->alias_ep = NULL;
-  this->av = NULL;
   this->mr = NULL;
   this->no_mr = {};
 
@@ -80,7 +79,6 @@ void Connection::Free() {
   HPS_CLOSE_FID(ep);
   HPS_CLOSE_FID(rxcq);
   HPS_CLOSE_FID(txcq);
-  HPS_CLOSE_FID(av);
   HPS_CLOSE_FID(domain);
   HPS_CLOSE_FID(fabric);
 
@@ -203,7 +201,6 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   if (this->info->ep_attr->type == FI_EP_MSG) {
     HPS_EP_BIND(ep, eq, 0);
   }
-  HPS_EP_BIND(ep, av, 0);
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
 
