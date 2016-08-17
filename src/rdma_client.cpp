@@ -7,6 +7,7 @@
 #include <rdma/fi_errno.h>
 
 #include "rdma_client.h"
+#include "rdma_fabric.h"
 
 static void* loopEventsThread(void *param) {
 	RDMAClient* client = static_cast<RDMAClient *>(param);
@@ -14,11 +15,12 @@ static void* loopEventsThread(void *param) {
 	return NULL;
 }
 
-RDMAClient::RDMAClient(RDMAOptions *opts, fi_info *hints) {
-	this->info_hints = hints;
+RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
+	this->info_hints = rdmaFabric->GetHints();
+	this->eventLoop = loop;
 	this->options = opts;
 	this->eq = NULL;
-	this->fabric = NULL;
+	this->fabric = rdmaFabric->GetFabric();
 	this->eq_attr = {};
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;
@@ -89,16 +91,16 @@ int RDMAClient::Connect(void) {
   struct rdma_loop_info *rx_loop;
   struct rdma_loop_info *tx_loop;
 
-	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
-	if (ret) {
-    return ret;
-  }
-
-	ret = fi_fabric(this->info->fabric_attr, &this->fabric, NULL);
-	if (ret) {
-		HPS_ERR("fi_fabric %d", ret);
-		return ret;
-	}
+//	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
+//	if (ret) {
+//    return ret;
+//  }
+//
+//	ret = fi_fabric(this->info->fabric_attr, &this->fabric, NULL);
+//	if (ret) {
+//		HPS_ERR("fi_fabric %d", ret);
+//		return ret;
+//	}
 
 	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
 	if (ret) {
@@ -169,7 +171,6 @@ int RDMAClient::Connect(void) {
     return ret;
   }
 
-  this->eventLoop = new RDMAEventLoop(fabric);
   ret = this->eventLoop->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);

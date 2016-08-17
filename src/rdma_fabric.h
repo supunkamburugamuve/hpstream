@@ -8,6 +8,11 @@ class RDMAFabric {
 public:
   RDMAFabric(RDMAOptions *options, struct fi_info *info_hints);
   int Init();
+
+  struct fi_info *GetHints() {
+    return info_hints;
+  }
+
   struct fi_info *GetInfo() {
     return info;
   }

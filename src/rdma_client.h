@@ -5,10 +5,11 @@
 #include "options.h"
 #include "rdma_connection.h"
 #include "rdma_event_loop.h"
+#include "rdma_fabric.h"
 
 class RDMAClient : IRDMAEventCallback {
 public:
-  RDMAClient(RDMAOptions *opts, fi_info *hints);
+  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   int Connect(void);
   Connection *GetConnection();
   void Free();

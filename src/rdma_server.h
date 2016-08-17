@@ -7,10 +7,11 @@
 #include "utils.h"
 #include "rdma_connection.h"
 #include "rdma_event_loop.h"
+#include "rdma_fabric.h"
 
 class RDMAServer : public IRDMAEventCallback {
 public:
-  RDMAServer(RDMAOptions *opts, fi_info *hints);
+  RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   void Free();
   /**
    * Start the server

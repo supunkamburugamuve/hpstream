@@ -3,9 +3,13 @@
 Connection *con;
 RDMAOptions options;
 struct fi_info *hints;
+RDMAEventLoop *eventLoop;
+RDMAFabric *fabric;
 
 int connect3() {
-  RDMAClient client(&options, hints);
+  fabric = new RDMAFabric(&options, hints);
+  eventLoop = new RDMAEventLoop(fabric->GetFabric());
+  RDMAClient client(&options, fabric, eventLoop);
   client.Connect();
   con = client.GetConnection();
   client.Start();

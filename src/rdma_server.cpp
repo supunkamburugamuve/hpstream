@@ -8,11 +8,12 @@ static void* loopEventsThread(void *param) {
   return NULL;
 }
 
-RDMAServer::RDMAServer(RDMAOptions *opts, fi_info *hints) {
+RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
   this->options = opts;
-  this->info_hints = hints;
+  this->info_hints = rdmaFabric->GetHints();
+  this->eventLoop = loop;
   this->pep = NULL;
-  this->info_pep = NULL;
+  this->info_pep = rdmaFabric->GetInfo();
   this->eq = NULL;
   this->fabric = NULL;
   this->eq_attr = {};
@@ -67,17 +68,17 @@ int RDMAServer::Wait() {
 int RDMAServer::Init(void) {
   int ret;
   // info for passive end-point
-  ret = hps_utils_get_info(this->options, this->info_hints, &this->info_pep);
-  if (ret) {
-    return ret;
-  }
-
-  // create the fabric for passive end-point
-  ret = fi_fabric(this->info_pep->fabric_attr, &fabric, NULL);
-  if (ret) {
-    HPS_ERR("fi_fabric %d", ret);
-    return ret;
-  }
+//  ret = hps_utils_get_info(this->options, this->info_hints, &this->info_pep);
+//  if (ret) {
+//    return ret;
+//  }
+//
+//  // create the fabric for passive end-point
+//  ret = fi_fabric(this->info_pep->fabric_attr, &fabric, NULL);
+//  if (ret) {
+//    HPS_ERR("fi_fabric %d", ret);
+//    return ret;
+//  }
 
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
@@ -114,7 +115,6 @@ int RDMAServer::Init(void) {
     return ret;
   }
 
-  this->eventLoop = new RDMAEventLoop(fabric);
   ret = this->eventLoop->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);

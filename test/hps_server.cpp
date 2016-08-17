@@ -4,10 +4,15 @@
 RDMAOptions options;
 struct fi_info *hints;
 RDMAServer *server;
+RDMAEventLoop *eventLoop;
+RDMAFabric *fabric;
 
 int connect3() {
   int ret = 0;
-  server = new RDMAServer(&options, hints);
+  fabric = new RDMAFabric(&options, hints);
+  eventLoop = new RDMAEventLoop(fabric->GetFabric());
+
+  server = new RDMAServer(&options, fabric, eventLoop);
   server->Init();
   //server->Connect();
 //  con = server.GetConnection();
