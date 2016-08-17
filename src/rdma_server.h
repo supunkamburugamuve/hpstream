@@ -18,18 +18,11 @@ public:
    */
   int Init(void);
 
-
-  bool IsAcceptConnection() {
-    return acceptConnections;
-  }
-
   std::list<Connection *> * GetConnections() {
     return &connections;
   }
 
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
-
-  int Wait();
 private:
   RDMAOptions *options;
   // hints to be used to obtain fabric information
