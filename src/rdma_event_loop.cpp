@@ -106,7 +106,7 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
     HPS_ERR("Failed to un-register connection %d", ret);
     return ret;
   }
-
+  HPS_INFO("Size of fids before 1");
   // remove the fid
   fidIt = fids.begin();
   while (fidIt != fids.end()) {
@@ -119,6 +119,7 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
     }
   }
 
+  HPS_INFO("Size of fids before 2");
   // remove the connection
   std::list<struct rdma_loop_info*>::iterator lpIt = connections.begin();
   while (lpIt != connections.end()) {
@@ -130,7 +131,7 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
       fidIt++;
     }
   }
-
+  HPS_INFO("Size of fids before 3");
 
   // lets re-calculate the lists
   size = (int) fids.size();
