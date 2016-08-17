@@ -27,7 +27,6 @@ public:
    */
   int loop();
 
-  Connection * GetConnection();
   std::list<Connection *> * GetConnections() {
     return &connections;
   }
