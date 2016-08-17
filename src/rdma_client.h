@@ -13,12 +13,7 @@ public:
   int Connect(void);
   Connection *GetConnection();
   void Free();
-  int Start();
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
-  /**
-   * Start Loop through the events
-   */
-  int Loop();
 private:
   // options for initialization
   RDMAOptions *options;

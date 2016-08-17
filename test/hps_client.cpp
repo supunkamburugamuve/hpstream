@@ -14,7 +14,7 @@ int connect3() {
   client = new RDMAClient(&options, fabric, eventLoop);
   client->Connect();
   con = client->GetConnection();
-  client->Start();
+  eventLoop->Start();
   return 1;
 }
 

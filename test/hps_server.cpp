@@ -17,7 +17,7 @@ int connect3() {
   server->Init();
   //server->Connect();
 //  con = server.GetConnection();
-  server->Start();
+  eventLoop->Start();
   return ret;
 }
 

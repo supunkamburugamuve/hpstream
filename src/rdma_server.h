@@ -23,15 +23,9 @@ public:
     return acceptConnections;
   }
 
-  /**
-   * Start and run the event loop
-   */
-  int loop();
-
   std::list<Connection *> * GetConnections() {
     return &connections;
   }
-  int Start();
 
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
 
@@ -60,8 +54,6 @@ private:
   // indicates weather we run the accept connection thread
   bool acceptConnections;
 
-  pthread_t acceptThreadId;
-  pthread_t loopThreadId;
   // connections
   Connection *con;
   // list of connections

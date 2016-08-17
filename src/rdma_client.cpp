@@ -8,12 +8,6 @@
 
 #include "rdma_client.h"
 
-static void* loopEventsThread(void *param) {
-	RDMAClient* client = static_cast<RDMAClient *>(param);
-	client->Loop();
-	return NULL;
-}
-
 RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
 	this->info_hints = rdmaFabric->GetHints();
 	this->eventLoop = loop;
@@ -35,16 +29,6 @@ void RDMAClient::Free() {
 
 Connection* RDMAClient::GetConnection() {
 	return this->con;
-}
-
-int RDMAClient::Start() {
-  // now start accept thread
-  int ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
-  if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
-    return ret;
-  }
-  return 0;
 }
 
 int RDMAClient::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state) {
@@ -196,14 +180,6 @@ int RDMAClient::Connect(void) {
 	return 0;
 }
 
-int RDMAClient::Loop() {
-  if (eventLoop == NULL) {
-    HPS_ERR("Event loop not created");
-    return 1;
-  }
-	eventLoop->Loop();
-  return 0;
-}
 
 
 

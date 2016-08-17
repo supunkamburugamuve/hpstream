@@ -2,12 +2,6 @@
 #include <iostream>
 #include "rdma_server.h"
 
-static void* loopEventsThread(void *param) {
-  RDMAServer* server = static_cast<RDMAServer *>(param);
-  server->loop();
-  return NULL;
-}
-
 RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
   this->options = opts;
   this->info_hints = rdmaFabric->GetHints();
@@ -42,24 +36,6 @@ void RDMAServer::Free() {
     fi_freeinfo(this->info_hints);
     this->info_hints = NULL;
   }
-}
-
-int RDMAServer::Start() {
-  int ret;
-
-  // start the loop thread
-  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
-  if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
-    return ret;
-  }
-
-  return 0;
-}
-
-int RDMAServer::Wait() {
-  pthread_join(loopThreadId, NULL);
-  return 0;
 }
 
 /**
@@ -285,13 +261,4 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
 
 int RDMAServer::Disconnect(Connection *con) {
   return con->Disconnect();
-}
-
-int RDMAServer::loop() {
-  if (eventLoop == NULL) {
-    HPS_ERR("Event loop not created");
-    return 1;
-  }
-  eventLoop->Loop();
-  return 0;
 }

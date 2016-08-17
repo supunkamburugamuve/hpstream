@@ -4,6 +4,12 @@
 
 #include "rdma_event_loop.h"
 
+static void* loopEventsThread(void *param) {
+  RDMAEventLoop* server = static_cast<RDMAEventLoop *>(param);
+  server->Loop();
+  return NULL;
+}
+
 RDMAEventLoop::RDMAEventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
@@ -16,6 +22,23 @@ RDMAEventLoop::RDMAEventLoop(struct fid_fabric *fabric) {
     HPS_ERR("epoll_create1", ret);
     throw ret;
   }
+}
+
+int RDMAEventLoop::Start() {
+  int ret;
+  // start the loop thread
+  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
+
+  return 0;
+}
+
+int RDMAEventLoop::Wait() {
+  pthread_join(loopThreadId, NULL);
+  return 0;
 }
 
 void RDMAEventLoop::Loop() {
