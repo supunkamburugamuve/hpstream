@@ -89,10 +89,10 @@ int RDMAClient::Connect(void) {
   struct rdma_loop_info *rx_loop;
   struct rdma_loop_info *tx_loop;
 
-	HPS_ERR("Client connect");
 	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
-	if (ret)
-		return ret;
+	if (ret) {
+    return ret;
+  }
 
 	ret = fi_fabric(this->info->fabric_attr, &this->fabric, NULL);
 	if (ret) {
