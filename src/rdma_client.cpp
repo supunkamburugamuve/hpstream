@@ -21,6 +21,7 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
 	this->options = opts;
 	this->eq = NULL;
 	this->fabric = rdmaFabric->GetFabric();
+	this->info = rdmaFabric->GetInfo();
 	this->eq_attr = {};
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;

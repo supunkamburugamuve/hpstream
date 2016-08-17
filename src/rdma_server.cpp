@@ -15,7 +15,7 @@ RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
   this->pep = NULL;
   this->info_pep = rdmaFabric->GetInfo();
   this->eq = NULL;
-  this->fabric = NULL;
+  this->fabric = rdmaFabric->GetFabric();
   this->eq_attr = {};
   this->domain = NULL;
   // initialize this attribute, search weather this is correct
