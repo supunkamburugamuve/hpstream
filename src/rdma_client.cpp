@@ -24,7 +24,6 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
 	this->eq_attr = {};
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;
-  this->eventLoop = NULL;
 	this->eq_loop.callback = this;
   this->eq_loop.event = CONNECTION;
 }

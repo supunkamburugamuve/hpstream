@@ -59,19 +59,10 @@ int RDMAEventLoop::RegisterRead(struct rdma_loop_info *connection) {
   int ret;
   int fid = connection->fid;
   HPS_INFO("Register FID %d", fid);
-  if (connection == NULL) {
-    HPS_INFO("Connect NULL");
-  }
-  if (connection->desc == NULL) {
-    HPS_INFO("Connect desc NULL");
-  }
   this->fids.push_back(connection->desc);
-  HPS_INFO("Fids size %d", -1);
   this->connections.push_back(connection);
-  HPS_INFO("Fids size %d", -2);
 
   int size = (int) fids.size();
-  HPS_INFO("Fids size %d", size);
   // get all the elements in fids and create a list
   if (fid_list) {
     delete fid_list;
