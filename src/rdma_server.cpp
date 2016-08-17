@@ -98,8 +98,9 @@ int RDMAServer::Init(void) {
     return ret;
   }
   this->eq_loop.fid = eq_fid;
+  this->eq_loop.desc = &eq->fid;
 
-  // allocates a passive end-point
+      // allocates a passive end-point
   ret = fi_passive_ep(this->fabric, this->info_pep, &this->pep, NULL);
   if (ret) {
     HPS_ERR("fi_passive_ep %d", ret);
@@ -114,7 +115,7 @@ int RDMAServer::Init(void) {
   }
 
   this->eventLoop = new RDMAEventLoop(fabric);
-  ret = this->eventLoop->RegisterRead(&eq->fid, &this->eq_loop);
+  ret = this->eventLoop->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
@@ -257,14 +258,14 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
   // registe with the loop
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
   rx_loop = con->GetRxLoop();
-  ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
+  ret = this->eventLoop->RegisterRead(rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
   tx_loop = con->GetTxLoop();
-  ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
+  ret = this->eventLoop->RegisterRead(tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;

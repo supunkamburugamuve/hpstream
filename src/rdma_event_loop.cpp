@@ -54,12 +54,12 @@ void RDMAEventLoop::Loop() {
   }
 }
 
-int RDMAEventLoop::RegisterRead(struct fid *desc, struct rdma_loop_info *connection) {
+int RDMAEventLoop::RegisterRead(struct rdma_loop_info *connection) {
   struct epoll_event event;
   int ret;
   int fid = connection->fid;
   HPS_INFO("Register FID %d", fid);
-  this->fids.push_back(desc);
+  this->fids.push_back(connection->desc);
   this->connections.push_back(connection);
 
   int size = (int) fids.size();
@@ -90,14 +90,14 @@ int RDMAEventLoop::RegisterRead(struct fid *desc, struct rdma_loop_info *connect
   return 0;
 }
 
-int RDMAEventLoop::UnRegister(Connection *con) {
+int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
   struct epoll_event event;
   int ret;
   int size;
   int i = 0;
   std::list<struct fid *>::iterator fidIt;
-  // remove the tx fid
-  int fid = con->GetTxFd();
+  // remove the fid
+  int fid = con->fid;
   ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
   if (ret) {
     ret = -errno;
@@ -105,20 +105,11 @@ int RDMAEventLoop::UnRegister(Connection *con) {
     return ret;
   }
 
-  // remove the rx fid
-  fid = con->GetRxFd();
-  ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
-  if (ret) {
-    ret = -errno;
-    HPS_ERR("Failed to un-register connection %d", ret);
-    return ret;
-  }
-
-  // remove tx and rx cq fid
+  // remove the fid
   fidIt = fids.begin();
   while (fidIt != fids.end()) {
     struct fid *temp = *fidIt;
-    if (temp == &con->GetRxCQ()->fid || temp == &con->GetTxCQ()->fid) {
+    if (temp == con->desc) {
       fids.erase(fidIt);
       break;
     } else {
@@ -130,7 +121,7 @@ int RDMAEventLoop::UnRegister(Connection *con) {
   std::list<struct rdma_loop_info*>::iterator lpIt = connections.begin();
   while (lpIt != connections.end()) {
     struct rdma_loop_info* temp = *lpIt;
-    if (temp->callback == con) {
+    if (temp == con) {
       connections.erase(lpIt);
       break;
     } else {

@@ -112,6 +112,7 @@ int RDMAClient::Connect(void) {
     return ret;
   }
   this->eq_loop.fid = eq_fid;
+	this->eq_loop.desc = &eq->fid;
 
 	ret = fi_domain(this->fabric, this->info, &domain, NULL);
 	if (ret) {
@@ -169,7 +170,7 @@ int RDMAClient::Connect(void) {
   }
 
   this->eventLoop = new RDMAEventLoop(fabric);
-  ret = this->eventLoop->RegisterRead(&this->eq->fid, &this->eq_loop);
+  ret = this->eventLoop->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
@@ -177,14 +178,14 @@ int RDMAClient::Connect(void) {
 
   HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
   rx_loop = con->GetRxLoop();
-	ret = this->eventLoop->RegisterRead(&con->GetRxCQ()->fid, rx_loop);
+	ret = this->eventLoop->RegisterRead(rx_loop);
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
   tx_loop = con->GetTxLoop();
-	ret = this->eventLoop->RegisterRead(&con->GetTxCQ()->fid, tx_loop);
+	ret = this->eventLoop->RegisterRead(tx_loop);
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;

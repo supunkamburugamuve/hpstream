@@ -15,7 +15,6 @@
 
 #include "rdma_event_loop.h"
 #include "hps.h"
-#include "rdma_connection.h"
 
 enum rdma_loop_status {AVAILABLE, TRYAGAIN};
 
@@ -33,6 +32,7 @@ public:
 struct rdma_loop_info {
   IRDMAEventCallback *callback;
   int fid;
+  fid_t desc;
   enum rdma_loop_event event;
 };
 
@@ -40,9 +40,9 @@ struct rdma_loop_info {
 class RDMAEventLoop {
 public:
   RDMAEventLoop(struct fid_fabric *fabric);
-  int RegisterRead(struct fid *desc, struct rdma_loop_info *loop);
+  int RegisterRead(struct rdma_loop_info *connection);
   void Loop();
-  int UnRegister(Connection *con);
+  int UnRegister(struct rdma_loop_info *con);
 
 private:
   bool run;
