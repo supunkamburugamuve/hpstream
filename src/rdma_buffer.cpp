@@ -61,14 +61,12 @@ int RDMABuffer::Init() {
   return 0;
 }
 
-int increment(int size, int current) {
-  return size - 1 == current ? 0 : current + 1;
-}
-
 int RDMABuffer::IncrementFilled(uint32_t count) {
   uint32_t temp = this->filled_buffs + count;
   if (temp > this->no_bufs) {
-    HPS_ERR("Failed to increment the submitted, inconsistant state temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
+    HPS_ERR("Failed to increment the submitted, inconsistant "
+                "state temp=%" PRIu32 " submitted=%" PRId32 " "
+        "filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
     return 1;
   }
   this->filled_buffs = temp;
@@ -78,7 +76,9 @@ int RDMABuffer::IncrementFilled(uint32_t count) {
 int RDMABuffer::IncrementSubmitted(uint32_t count) {
   uint32_t temp = this->submitted_buffs + count;
   if (temp > this->no_bufs) {
-    HPS_ERR("Failed to increment the submitted, inconsistant state temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
+    HPS_ERR("Failed to increment the submitted, inconsistant state "
+                "temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32,
+            temp, this->submitted_buffs, this->filled_buffs);
     return 1;
   }
   this->submitted_buffs = temp;
@@ -95,7 +95,6 @@ int RDMABuffer::IncrementTail(uint32_t count) {
   this->submitted_buffs -= count;
   this->filled_buffs -= count;
   // signal that we have an empty buffer
-  // HPS_INFO("Increment tail, wait no longer");
   pthread_cond_signal(&cond_empty);
   return 0;
 }
