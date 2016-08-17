@@ -54,7 +54,6 @@ private:
   pthread_t loopThreadId;
   std::list<struct fid *> fids;
   std::list<struct rdma_loop_info *> connections;
-
 };
 
 #endif

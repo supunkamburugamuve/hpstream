@@ -43,19 +43,6 @@ void RDMAServer::Free() {
  */
 int RDMAServer::Init(void) {
   int ret;
-  // info for passive end-point
-//  ret = hps_utils_get_info(this->options, this->info_hints, &this->info_pep);
-//  if (ret) {
-//    return ret;
-//  }
-//
-//  // create the fabric for passive end-point
-//  ret = fi_fabric(this->info_pep->fabric_attr, &fabric, NULL);
-//  if (ret) {
-//    HPS_ERR("fi_fabric %d", ret);
-//    return ret;
-//  }
-
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
     HPS_ERR("fi_domain %d", ret);
@@ -141,7 +128,7 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
         HPS_ERR("Failed to un-register transmit from loop");
       }
       // now disconnect
-      // c->Disconnect();
+      c->Disconnect();
     }
     return 0;
   } else if (event == FI_CONNREQ) {

@@ -36,10 +36,10 @@ int RDMAClient::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
   uint32_t event;
   ssize_t rd;
   int ret = 0;
+
   if (state == TRYAGAIN) {
     return 0;
   }
-  HPS_INFO("Waiting for connection");
   // read the events for incoming messages
   rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
   if (rd != sizeof entry) {
@@ -71,19 +71,6 @@ int RDMAClient::Connect(void) {
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;
 	Connection *con = NULL;
-  struct rdma_loop_info *rx_loop;
-  struct rdma_loop_info *tx_loop;
-
-//	ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
-//	if (ret) {
-//    return ret;
-//  }
-//
-//	ret = fi_fabric(this->info->fabric_attr, &this->fabric, NULL);
-//	if (ret) {
-//		HPS_ERR("fi_fabric %d", ret);
-//		return ret;
-//	}
 
 	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
 	if (ret) {
@@ -160,16 +147,13 @@ int RDMAClient::Connect(void) {
     return ret;
   }
 
-  HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-  rx_loop = con->GetRxLoop();
-	ret = this->eventLoop->RegisterRead(rx_loop);
+	ret = this->eventLoop->RegisterRead(con->GetRxLoop());
   if (ret) {
     HPS_ERR("Failed to register receive cq to event loop %d", ret);
     return ret;
   }
 
-  tx_loop = con->GetTxLoop();
-	ret = this->eventLoop->RegisterRead(tx_loop);
+	ret = this->eventLoop->RegisterRead(con->GetTxLoop());
   if (ret) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;
