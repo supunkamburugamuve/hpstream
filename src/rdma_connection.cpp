@@ -548,7 +548,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         }
       }
     } else {
-//      HPS_INFO("Waiting...");
+      HPS_INFO("Waiting...");
       sbuf->waitFree();
     }
   }
