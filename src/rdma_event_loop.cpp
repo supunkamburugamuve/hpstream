@@ -96,6 +96,8 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
   int size;
   int i = 0;
   std::list<struct fid *>::iterator fidIt;
+  size = (int) fids.size();
+  HPS_INFO("Size of fids before %d", size);
   // remove the fid
   int fid = con->fid;
   ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
@@ -129,8 +131,10 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
     }
   }
 
+
   // lets re-calculate the lists
   size = (int) fids.size();
+  HPS_INFO("Size of fids after %d", size);
   // get all the elements in fids and create a list
   if (fid_list) {
     delete fid_list;
