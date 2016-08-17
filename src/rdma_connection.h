@@ -83,6 +83,21 @@ public:
 
   char *getIPAddress();
 
+  /**
+ * Allocate the resources for this connection
+ */
+  int AllocateActiveResources();
+
+  /**
+   * Set and initialize the end point
+   */
+  int InitEndPoint(fid_ep *ep, fid_eq *eq);
+
+  /**
+   * Setup the read and write buffers
+   */
+  int SetupBuffers();
+
 private:
   // options for initialization
   RDMAOptions *options;
@@ -131,20 +146,6 @@ private:
   /** Private methods */
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
   ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
-  /**
-   * Allocate the resources for this connection
-   */
-  int AllocateActiveResources();
-
-  /**
-   * Set and initialize the end point
-   */
-  int InitEndPoint(fid_ep *ep, fid_eq *eq);
-
-  /**
-   * Setup the read and write buffers
-   */
-  int SetupBuffers();
 
   int GetTXComp(uint64_t total);
   int GetRXComp(uint64_t total);
