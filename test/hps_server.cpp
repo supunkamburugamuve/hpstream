@@ -64,7 +64,7 @@ int exchange3() {
 
   printf("Done rma\n");
 
-  server->Wait();
+  eventLoop->Wait();
   return 0;
 }
 
