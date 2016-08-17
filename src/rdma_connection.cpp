@@ -99,7 +99,6 @@ void Connection::Free() {
 
 int Connection::AllocateActiveResources() {
   int ret;
-  HPS_INFO("Allocating resources for the connection");
   if (info_hints->caps & FI_RMA) {
     ret = hps_utils_set_rma_caps(info);
     if (ret)
