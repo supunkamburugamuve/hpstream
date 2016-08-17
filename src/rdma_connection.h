@@ -27,19 +27,8 @@ public:
              struct fi_info *info, struct fid_fabric *fabric,
              struct fid_domain *domain, struct fid_eq *eq);
   void Free();
-  /**
-   * Allocate the resources for this connection
-   */
-  int AllocateActiveResources();
-
-  /**
-   * Set and initialize the end point
-   */
-  int InitEndPoint(fid_ep *ep, fid_eq *eq);
 
   virtual ~Connection();
-
-  int SetupBuffers();
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
    */
@@ -109,7 +98,6 @@ private:
   struct fid_domain *domain;
   // end point
   struct fid_ep *ep, *alias_ep;
-
   // cq attribute for getting completion notifications
   struct fi_cq_attr cq_attr;
   // transfer cq and receive cq
@@ -143,6 +131,20 @@ private:
   /** Private methods */
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
   ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
+  /**
+   * Allocate the resources for this connection
+   */
+  int AllocateActiveResources();
+
+  /**
+   * Set and initialize the end point
+   */
+  int InitEndPoint(fid_ep *ep, fid_eq *eq);
+
+  /**
+   * Setup the read and write buffers
+   */
+  int SetupBuffers();
 
   int GetTXComp(uint64_t total);
   int GetRXComp(uint64_t total);

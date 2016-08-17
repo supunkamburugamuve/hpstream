@@ -339,8 +339,7 @@ int Connection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
 }
 
 int Connection::GetRXComp(uint64_t total) {
-  int ret = FI_SUCCESS;
-
+  int ret;
   if (rxcq) {
     ret = GetCQComp(rxcq, &rx_cq_cntr, total, timeout);
   } else {
