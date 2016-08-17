@@ -8,6 +8,7 @@ RDMAFabric *fabric;
 
 int connect3() {
   fabric = new RDMAFabric(&options, hints);
+  fabric->Init();
   eventLoop = new RDMAEventLoop(fabric->GetFabric());
   RDMAClient client(&options, fabric, eventLoop);
   client.Connect();

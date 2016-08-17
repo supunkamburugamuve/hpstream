@@ -10,6 +10,7 @@ RDMAFabric *fabric;
 int connect3() {
   int ret = 0;
   fabric = new RDMAFabric(&options, hints);
+  fabric->Init();
   eventLoop = new RDMAEventLoop(fabric->GetFabric());
 
   server = new RDMAServer(&options, fabric, eventLoop);
