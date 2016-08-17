@@ -141,6 +141,10 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
     i++;
   }
 
+  if (events) {
+    delete events;
+  }
+  events = new struct epoll_event [size];
   return 0;
 };
 
