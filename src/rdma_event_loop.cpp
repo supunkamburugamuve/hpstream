@@ -3,6 +3,7 @@
 #include <map>
 
 #include "rdma_event_loop.h"
+#include "rdma_connection.h"
 
 RDMAEventLoop::RDMAEventLoop(struct fid_fabric *fabric) {
   int ret;
@@ -90,15 +91,67 @@ int RDMAEventLoop::RegisterRead(struct fid *desc, struct rdma_loop_info *connect
   return 0;
 }
 
-int RDMAEventLoop::UnRegister(int fid) {
+int RDMAEventLoop::UnRegister(Connection *con) {
   struct epoll_event event;
   int ret;
+  int size;
+  int i = 0;
+  std::list<struct fid *>::iterator fidIt;
+  // remove the tx fid
+  int fid = con->GetTxFd();
   ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
   if (ret) {
     ret = -errno;
     HPS_ERR("Failed to un-register connection %d", ret);
     return ret;
   }
+
+  // remove the rx fid
+  fid = con->GetRxFd();
+  ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fid, &event);
+  if (ret) {
+    ret = -errno;
+    HPS_ERR("Failed to un-register connection %d", ret);
+    return ret;
+  }
+
+  // remove tx and rx cq fid
+  fidIt = fids.begin();
+  while (fidIt != fids.end()) {
+    struct fid *temp = *fidIt;
+    if (temp == &con->GetRxCQ()->fid || temp == &con->GetTxCQ()->fid) {
+      fids.erase(fidIt);
+      break;
+    } else {
+      fidIt++;
+    }
+  }
+
+  // remove the connection
+  std::list<struct rdma_loop_info*>::iterator lpIt = connections.begin();
+  while (lpIt != connections.end()) {
+    struct rdma_loop_info* temp = *lpIt;
+    if (temp->callback == con) {
+      connections.erase(lpIt);
+      break;
+    } else {
+      fidIt++;
+    }
+  }
+
+  // lets re-calculate the lists
+  size = (int) fids.size();
+  // get all the elements in fids and create a list
+  if (fid_list) {
+    delete fid_list;
+  }
+  fid_list = new struct fid*[size];
+  i = 0;
+  for (std::list<struct fid *>::iterator it=fids.begin(); it!=fids.end(); ++it) {
+    fid_list[i] = *it;
+    i++;
+  }
+
   return 0;
 };
 

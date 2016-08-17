@@ -156,7 +156,9 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
     if (c != NULL) {
       HPS_INFO("Connection is found TX=%d RX=%d", c->GetTxFd(), c->GetRxCQ());
       // lets remove from the event loop
-//      c->Disconnect();
+      eventLoop->UnRegister(c);
+      // now disconnect
+      c->Disconnect();
     }
     return 0;
   } else if (event == FI_CONNREQ) {
