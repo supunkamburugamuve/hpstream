@@ -128,7 +128,7 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
         HPS_ERR("Failed to un-register transmit from loop");
       }
       // now disconnect
-      c->Disconnect();
+//      c->Disconnect();
     }
     return 0;
   } else if (event == FI_CONNREQ) {
