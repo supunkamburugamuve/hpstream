@@ -95,6 +95,7 @@ int RDMABuffer::IncrementTail(uint32_t count) {
   this->submitted_buffs -= count;
   this->filled_buffs -= count;
   // signal that we have an empty buffer
+  HPS_INFO("Increment tail, wait no longer");
   pthread_cond_signal(&cond_empty);
   return 0;
 }
