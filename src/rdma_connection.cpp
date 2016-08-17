@@ -647,7 +647,6 @@ char* Connection::getIPAddress() {
   char *addr_str = new char[INET_ADDRSTRLEN];
   struct sockaddr_in* addr_in = (struct sockaddr_in*)(&addr);
   inet_ntop(addr_in->sin_family, &(addr_in->sin_addr), addr_str, INET_ADDRSTRLEN);
-  HPS_INFO("Address: %s", addr_str);
   return addr_str;
 }
 
@@ -665,6 +664,5 @@ uint32_t Connection::getPort() {
     }
   }
   uint32_t port = ntohs(((struct sockaddr_in*)(&addr))->sin_port);
-  HPS_INFO("Port: %d", port);
   return port;
 }
