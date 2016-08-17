@@ -7,7 +7,6 @@
 #include <rdma/fi_errno.h>
 
 #include "rdma_client.h"
-#include "rdma_fabric.h"
 
 static void* loopEventsThread(void *param) {
 	RDMAClient* client = static_cast<RDMAClient *>(param);
