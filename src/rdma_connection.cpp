@@ -447,7 +447,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t need_copy = 0;
   // number of bytes copied
   uint32_t read_size = 0;
-//  HPS_INFO("Reading, base= %d, dataHead= %d", tail, buffers_filled);
   while (read_size < size &&  buffers_filled > 0) {
     uint8_t *b = rbuf->GetBuffer(tail);
     uint32_t *r;
@@ -458,10 +457,8 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // now lets see how much we can copy
     uint32_t can_copy = 0;
     uint32_t tmp_index = current_read_indx;
-//    HPS_INFO("Copy size=%" PRIu32 " read_size=%" PRIu32 " need_copy=%" PRIu32 " r=%" PRIu32 " read_idx=%" PRIu32, size, read_size, need_copy, *r, current_read_indx);
     // we can copy everything from this buffer
     if (size - read_size >= need_copy) {
-//      HPS_INFO("Moving base");
       can_copy = need_copy;
       current_read_indx = 0;
       // advance the base pointer
@@ -469,7 +466,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       buffers_filled--;
       tail = rbuf->GetBase();
     } else {
-//      HPS_INFO("Not Moving base");
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
       current_read_indx += can_copy;
@@ -477,7 +473,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     // next copy the buffer
     memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
-//    HPS_INFO("Reading, base= %d, dataHead= %d read_size=%" PRId32, tail, buffers_filled, read_size);
     read_size += can_copy;
   }
 
@@ -489,7 +484,6 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   while (submittedBuffers < noOfBuffers) {
     index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
-//    HPS_INFO("Posting buffer with index %" PRId32, index);
     ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
       HPS_ERR("Failed to post the receive buffer");
@@ -505,10 +499,8 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 
 int Connection::WriteData(uint8_t *buf, uint32_t size) {
   int ret;
-//  HPS_INFO("Init writing");
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
-  sbuf->acquireLock();
   // now determine the buffer no to use
   uint32_t sent_size = 0;
   uint32_t current_size = 0;
@@ -516,21 +508,18 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   uint32_t error_count = 0;
 
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
+  sbuf->acquireLock();
   // we need to send everything by using the buffers available
   while (sent_size < size) {
     uint64_t free_space = sbuf->GetAvailableWriteSpace();
     // we have space in the buffers
     if (free_space > 0) {
-      // HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
-//      HPS_INFO("Free space %d", free_space);
       head = sbuf->NextWriteIndex();
       uint8_t *current_buf = sbuf->GetBuffer(head);
       // now lets copy from send buffer to current buffer chosen
       current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
       uint32_t *length = (uint32_t *) current_buf;
       *length = current_size;
-//      HPS_INFO("Sending length %"
-//                   PRIu32, *((uint32_t *) current_buf));
       memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
       sbuf->IncrementFilled(1);
       // send the current buffer
@@ -538,7 +527,6 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         sent_size += current_size;
         // increment the head
         sbuf->IncrementSubmitted(1);
-//        HPS_ERR("Posting....");
       } else {
         HPS_ERR("Failed to post");
         error_count++;
@@ -548,11 +536,9 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
         }
       }
     } else {
-//      HPS_INFO("Waiting...");
       sbuf->waitFree();
     }
   }
-//  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, sbuf->Base(), sbuf->GetFilledBuffers(), sbuf->GetSubmittedBuffers());
   sbuf->releaseLock();
   return 0;
 
@@ -569,11 +555,9 @@ int Connection::TransmitComplete() {
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
   max_completions = max_completions == 0 ? 0 : max_completions;
-//  HPS_INFO("Transmit complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
-//    HPS_INFO("Increment transmit tail %ld", cq_ret);
     if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
       HPS_ERR("Failed to increment buffer data pointer");
       this->send_buf->releaseLock();
@@ -602,7 +586,6 @@ int Connection::ReceiveComplete() {
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
   max_completions = max_completions == 0 ? 0 : max_completions;
-//  HPS_INFO("Receive complete max_completions=%ld tx_seq=%ld tx_cq_cntr=%ld rx_seq=%ld rx_cq_cntr=%ld", max_completions, tx_seq, tx_cq_cntr, rx_seq, rx_cq_cntr);
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
@@ -611,7 +594,6 @@ int Connection::ReceiveComplete() {
       this->recv_buf->releaseLock();
       return 1;
     }
-//    HPS_INFO("Incremented read filled %ld %ld", this->recv_buf->GetFilledBuffers(), cq_ret);
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
