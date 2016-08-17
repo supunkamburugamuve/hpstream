@@ -3,7 +3,6 @@
 #include <map>
 
 #include "rdma_event_loop.h"
-#include "rdma_connection.h"
 
 RDMAEventLoop::RDMAEventLoop(struct fid_fabric *fabric) {
   int ret;
