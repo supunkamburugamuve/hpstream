@@ -5,15 +5,16 @@ RDMAOptions options;
 struct fi_info *hints;
 RDMAEventLoop *eventLoop;
 RDMAFabric *fabric;
+RDMAClient *client;
 
 int connect3() {
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
   eventLoop = new RDMAEventLoop(fabric->GetFabric());
-  RDMAClient client(&options, fabric, eventLoop);
-  client.Connect();
-  con = client.GetConnection();
-  client.Start();
+  client = new RDMAClient(&options, fabric, eventLoop);
+  client->Connect();
+  con = client->GetConnection();
+  client->Start();
   return 1;
 }
 
