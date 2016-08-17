@@ -128,7 +128,7 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
       connections.erase(lpIt);
       break;
     } else {
-      fidIt++;
+      lpIt++;
     }
   }
   HPS_INFO("Size of fids before 3");
