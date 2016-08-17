@@ -60,7 +60,9 @@ int RDMAEventLoop::RegisterRead(struct rdma_loop_info *connection) {
   int fid = connection->fid;
   HPS_INFO("Register FID %d", fid);
   this->fids.push_back(connection->desc);
+  HPS_INFO("Fids size %d", -1);
   this->connections.push_back(connection);
+  HPS_INFO("Fids size %d", -2);
 
   int size = (int) fids.size();
   HPS_INFO("Fids size %d", size);
