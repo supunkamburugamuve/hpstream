@@ -236,7 +236,6 @@ int Connection::  SetupBuffers() {
   ssize_t ret = 0;
   RDMABuffer *rBuf = this->recv_buf;
   uint32_t noBufs = rBuf->GetNoOfBuffers();
-  HPS_INFO("base, filled submitted %ld %ld %ld", rBuf->GetBase(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   for (uint32_t i = 0; i < noBufs; i++) {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->GetBufferSize(), buf, &rx_ctx);
@@ -246,7 +245,6 @@ int Connection::  SetupBuffers() {
     }
     rBuf->IncrementSubmitted(1);
   }
-  HPS_INFO("base, filled submitted % " PRId32 "% " PRId32 "% " PRId32, rBuf->GetBase(), rBuf->GetFilledBuffers(), rBuf->GetSubmittedBuffers());
   return 0;
 }
 

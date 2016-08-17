@@ -109,7 +109,6 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
   }
 
   if (event == FI_SHUTDOWN) {
-    HPS_ERR("Recv shut down, Ignoring");
     std::list<Connection *>::const_iterator iterator;
     for (iterator = connections.begin(); iterator != connections.end(); ++iterator) {
       Connection *con = *iterator;
@@ -118,7 +117,6 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
     }
     Connection *c = (Connection *) entry.fid->context;
     if (c != NULL) {
-      HPS_INFO("Connection is found TX=%d RX=%d", c->GetTxFd(), c->GetRxFd());
       // lets remove from the event loop
       if (eventLoop->UnRegister(c->GetRxLoop())) {
         HPS_ERR("Failed to un-register read from loop");
@@ -194,7 +192,8 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
   struct rdma_loop_info *tx_loop;
   struct rdma_loop_info *rx_loop;
   int ret;
-
+  char *peer_host;
+  int peer_port;
   // first lets find this in the pending connections
   Connection *con = NULL;
   std::list<Connection *>::iterator it = pending_connections.begin();
@@ -214,9 +213,6 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
     HPS_ERR("Connected event received for non-pending connection, ignoring");
     return 0;
   }
-
-  con->getIPAddress();
-  con->getPort();
 
   ret = con->SetupBuffers();
   if (ret) {
@@ -239,7 +235,10 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
     HPS_ERR("Failed to register transmit cq to event loop %d", ret);
     return ret;
   }
-  HPS_INFO("Connection established");
+
+  peer_host = con->getIPAddress();
+  peer_port = con->getPort();
+  HPS_INFO("Connection established %s %d", peer_host, peer_port);
   con->SetState(CONNECTED);
   // add the connection to list
   this->connections.push_back(con);
