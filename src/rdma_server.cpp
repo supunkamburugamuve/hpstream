@@ -14,7 +14,6 @@ RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
   this->domain = NULL;
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
-  this->acceptConnections = true;
 
   this->eq_loop.callback = this;
   this->eq_loop.event = CONNECTION;
@@ -110,11 +109,6 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
 
   if (event == FI_SHUTDOWN) {
     std::list<Connection *>::const_iterator iterator;
-    for (iterator = connections.begin(); iterator != connections.end(); ++iterator) {
-      Connection *con = *iterator;
-      struct fid_ep *ep = con->GetEp();
-
-    }
     Connection *c = (Connection *) entry.fid->context;
     if (c != NULL) {
       // lets remove from the event loop

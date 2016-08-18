@@ -1,5 +1,5 @@
-#ifndef SERVER_H_
-#define SERVER_H_
+#ifndef RDMA_SERVER_H_
+#define RDMA_SERVER_H_
 
 #include <list>
 
@@ -22,6 +22,9 @@ public:
     return &connections;
   }
 
+  /**
+   * Listen for connection events.
+   */
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
 private:
   RDMAOptions *options;
@@ -44,20 +47,20 @@ private:
   struct fid_fabric *fabric;
   // event loop associated with this server
   RDMAEventLoop *eventLoop;
-  // indicates weather we run the accept connection thread
-  bool acceptConnections;
-
-  // connections
-  Connection *con;
   // list of connections
   std::list<Connection *> connections;
-  // list of connections halfway through fullty establishing
+  // list of connections halfway through fully establishing
   std::list<Connection *> pending_connections;
 
   /**
- * Accept new connections
- */
+   * Accept a new connection
+  */
   int Connect(struct fi_eq_cm_entry *entry);
+
+  /**
+   * We are in the second part of connection establishment
+   */
+  int Connected(fi_eq_cm_entry *entry);
 
   /**
    * Disconnect the connection
@@ -66,7 +69,7 @@ private:
    */
   int Disconnect(Connection *con);
 
-  int Connected(fi_eq_cm_entry *entry);
+
 };
 
 
