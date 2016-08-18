@@ -77,10 +77,6 @@ void rdma_parse_addr_opts(int op, char *optarg, RDMAOptions *opts) {
       printf("dst port: %s\n", optarg);
       opts->dst_port = optarg;
       break;
-    case 'r':
-      printf("fname: %s\n", optarg);
-      opts->fname = strdup(optarg);
-      break;
     default:
       /* let getopt handle unknown opts*/
       break;
