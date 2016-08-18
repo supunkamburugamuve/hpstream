@@ -59,6 +59,8 @@ int exchange3() {
     }
 
     HPS_INFO("Done receiving.. switching to sending");
+    current_write = 0;
+    write = 0;
     while (current_write < 4000) {
       con->WriteData((uint8_t *) values, sizeof(values), &write);
       current_write += write;
