@@ -35,7 +35,6 @@ public:
   uint32_t GetCurrentReadIndex();
 
   // wait until a buffer becomes available for write
-  int waitFree();
   int acquireLock();
   int releaseLock();
   /** Free the buffer */
@@ -65,10 +64,6 @@ private:
 
   // the thread lock
   pthread_mutex_t lock;
-  // condition full
-  pthread_cond_t cond_full;
-  // condition empty
-  pthread_cond_t cond_empty;
   // number of buffers submitted to RDMA
   uint32_t submitted_buffs;
   // number of buffers filled by RDMA

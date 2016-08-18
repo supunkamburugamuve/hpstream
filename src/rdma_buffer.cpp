@@ -18,8 +18,6 @@ RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
   this->filled_buffs = 0;
 
   pthread_mutex_init(&lock, NULL);
-  pthread_cond_init(&cond_empty, NULL);
-  pthread_cond_init(&cond_full, NULL);
   Init();
 }
 
@@ -94,8 +92,6 @@ int RDMABuffer::IncrementTail(uint32_t count) {
   // dec submitted and filled
   this->submitted_buffs -= count;
   this->filled_buffs -= count;
-  // signal that we have an empty buffer
-  pthread_cond_signal(&cond_empty);
   return 0;
 }
 
@@ -113,10 +109,6 @@ uint64_t RDMABuffer::GetAvailableWriteSpace() {
 
 uint32_t RDMABuffer::NextWriteIndex() {
   return (base + this->filled_buffs - 1) % this->no_bufs;
-}
-
-int RDMABuffer::waitFree() {
-  return pthread_cond_wait(&cond_empty, &lock);
 }
 
 
