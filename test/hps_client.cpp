@@ -37,6 +37,8 @@ int exchange3() {
   }
 
   for (int i = 0; i < 10000; i++) {
+    current_write = 0;
+    write = 0;
     while (current_write < 4000) {
       con->WriteData((uint8_t *) values[i % 10], sizeof(values[i]), &write);
       current_write += write;
