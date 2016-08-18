@@ -21,6 +21,10 @@ int connect3() {
 int exchange3() {
   int ret = 0;
   int values[10][1000];
+  uint32_t read = 0, write = 0;
+  read = 0;
+  int count = 0;
+  uint32_t current_read = 0, current_write = 0;
 
   for (int j = 0; j < 10; j++) {
     for (int i = 0; i < 1000; i++) {
@@ -33,13 +37,12 @@ int exchange3() {
   }
 
   for (int i = 0; i < 10000; i++) {
-    con->WriteData((uint8_t *) values[i%10], sizeof(values[i]));
+    while (current_write < 4000) {
+      con->WriteData((uint8_t *) values[i % 10], sizeof(values[i]), &write);
+      current_write += write;
+    }
   }
 
-  uint32_t read = 0;
-  read = 0;
-  int count = 0;
-  uint32_t current_read = 0;
   HPS_INFO("Done sending.. switching to receive");
   while (read < 4000 && count < 10) {
     if (con->DataAvailableForRead()) {

@@ -409,7 +409,6 @@ ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
     timeout = timeout_save;
   }
   rx_seq++;
-//  HPS_INFO("Finished posting buffer with size %ld", size);
   return 0;
 }
 
@@ -490,7 +489,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   return 0;
 }
 
-int Connection::WriteData(uint8_t *buf, uint32_t size) {
+int Connection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   int ret;
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
@@ -503,35 +502,34 @@ int Connection::WriteData(uint8_t *buf, uint32_t size) {
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
-  while (sent_size < size) {
-    uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  while (sent_size < size && free_space > 0) {
     // we have space in the buffers
-    if (free_space > 0) {
-      head = sbuf->NextWriteIndex();
-      uint8_t *current_buf = sbuf->GetBuffer(head);
-      // now lets copy from send buffer to current buffer chosen
-      current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
-      uint32_t *length = (uint32_t *) current_buf;
-      *length = current_size;
-      memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
-      sbuf->IncrementFilled(1);
-      // send the current buffer
-      if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
-        sent_size += current_size;
-        // increment the head
-        sbuf->IncrementSubmitted(1);
-      } else {
-        HPS_ERR("Failed to post");
-        error_count++;
-        if (error_count > MAX_ERRORS) {
-          HPS_ERR("Failed to send the buffer completely. sent %d", sent_size);
-          goto err;
-        }
-      }
+    head = sbuf->NextWriteIndex();
+    uint8_t *current_buf = sbuf->GetBuffer(head);
+    // now lets copy from send buffer to current buffer chosen
+    current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
+    uint32_t *length = (uint32_t *) current_buf;
+    // set the first 4 bytes as the content length
+    *length = current_size;
+    memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
+    sbuf->IncrementFilled(1);
+    // send the current buffer
+    if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+      sent_size += current_size;
+      // increment the head
+      sbuf->IncrementSubmitted(1);
     } else {
-      sbuf->waitFree();
+      HPS_ERR("Failed to post");
+      error_count++;
+      if (error_count > MAX_ERRORS) {
+        HPS_ERR("Failed to send the buffer completely. sent %d", sent_size);
+        goto err;
+      }
     }
+    free_space = sbuf->GetAvailableWriteSpace();
   }
+  *write = sent_size;
   sbuf->releaseLock();
   return 0;
 

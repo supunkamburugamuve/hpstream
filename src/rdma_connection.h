@@ -32,7 +32,7 @@ public:
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
    */
-  int WriteData(uint8_t *buf, uint32_t size);
+  int WriteData(uint8_t *buf, uint32_t size, uint32_t *write);
 
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 

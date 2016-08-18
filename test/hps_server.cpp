@@ -23,8 +23,8 @@ int connect3() {
 
 int exchange3() {
   int values[1000];
-  uint32_t read = 0;
-  uint32_t current_read = 0;
+  uint32_t read = 0, write = 0;
+  uint32_t current_read = 0, current_write = 0;
   std::list<Connection *>::const_iterator iterator;
 
   std::list<Connection *> *pList = server->GetConnections();
@@ -59,7 +59,10 @@ int exchange3() {
     }
 
     HPS_INFO("Done receiving.. switching to sending");
-    con->WriteData((uint8_t *)values, sizeof(values));
+    while (current_write < 4000) {
+      con->WriteData((uint8_t *) values, sizeof(values), &write);
+      current_write += write;
+    }
   }
 
   printf("Done rma\n");
