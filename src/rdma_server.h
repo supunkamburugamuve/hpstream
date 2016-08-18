@@ -60,7 +60,7 @@ private:
   /**
    * We are in the second part of connection establishment
    */
-  int Connected(fi_eq_cm_entry *entry);
+  int Connected(struct fi_eq_cm_entry *entry);
 
   /**
    * Disconnect the connection
