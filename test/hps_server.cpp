@@ -25,9 +25,9 @@ int exchange3() {
   int values[1000];
   uint32_t read = 0, write = 0;
   uint32_t current_read = 0, current_write = 0;
-  std::list<Connection *>::const_iterator iterator;
+  std::list<RDMAConnection *>::const_iterator iterator;
 
-  std::list<Connection *> *pList = server->GetConnections();
+  std::list<RDMAConnection *> *pList = server->GetConnections();
   int count = 0;
   while (pList->size() != 2) {
     if (count++ == 10000) {
@@ -36,7 +36,7 @@ int exchange3() {
   }
 
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
-    Connection *con = *iterator;
+    RDMAConnection *con = *iterator;
 
     for (int i = 0; i < 10000; i++) {
       for (int j = 0; j < 1000; j++) {

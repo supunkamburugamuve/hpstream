@@ -18,7 +18,7 @@ public:
    */
   int Init(void);
 
-  std::list<Connection *> * GetConnections() {
+  std::list<RDMAConnection *> * GetConnections() {
     return &connections;
   }
 
@@ -48,9 +48,9 @@ private:
   // event loop associated with this server
   RDMAEventLoop *eventLoop;
   // list of connections
-  std::list<Connection *> connections;
+  std::list<RDMAConnection *> connections;
   // list of connections halfway through fully establishing
-  std::list<Connection *> pending_connections;
+  std::list<RDMAConnection *> pending_connections;
 
   /**
    * Accept a new connection
@@ -67,7 +67,7 @@ private:
    * @param con
    * @return
    */
-  int Disconnect(Connection *con);
+  int Disconnect(RDMAConnection *con);
 
 
 };

@@ -131,10 +131,6 @@ int print_short_info(struct fi_info *info) {
         printf("    domain: %s\n", cur->domain_attr->name),
         printf("    version: %d.%d\n", FI_MAJOR(cur->fabric_attr->prov_version),
                FI_MINOR(cur->fabric_attr->prov_version));
-    if (!1) {
-      printf("    type: %s\n", fi_tostr(&cur->ep_attr->type, FI_TYPE_EP_TYPE));
-      printf("    protocol: %s\n", fi_tostr(&cur->ep_attr->protocol, FI_TYPE_PROTOCOL));
-    }
   }
   return EXIT_SUCCESS;
 }
@@ -153,11 +149,6 @@ int hps_utils_get_info(RDMAOptions *options, struct fi_info *hints, struct fi_in
     hints->ep_attr->type = FI_EP_RDM;
   }
 
-  //std::cout << "First ******************" << std::endl;
-  // fi_str = fi_tostr(hints, FI_TYPE_INFO);
-  // std::cout << "FI" << fi_str << std::endl;
-  //print_short_info(hints);
-
   // now lets retrieve the available network services
   // according to hints
   HPS_INFO("node=%s service=%s flags=%d\n", node, service, (int)flags);
@@ -166,21 +157,6 @@ int hps_utils_get_info(RDMAOptions *options, struct fi_info *hints, struct fi_in
     HPS_ERR("Fi_info failed %d", ret);
     return 1;
   }
-
-//  if (*info) {
-//    fi_info *next = *info;
-//    while (next) {
-//      fi_fabric_attr *attr = next->fabric_attr;
-//      printf("fabric attr name=%s prov_name=%s\n", attr->name, attr->prov_name);
-//      fi_str = fi_tostr(next, FI_TYPE_INFO);
-//      std::cout << "FI" << fi_str << std::endl;
-//      print_short_info(next);
-//      next = next->next;
-//    }
-//  } else {
-//    HPS_ERR("No information returned");
-//    return 1;
-//  }
 
   return 0;
 }

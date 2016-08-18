@@ -11,7 +11,7 @@ class RDMAClient : IRDMAEventCallback {
 public:
   RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   int Connect(void);
-  Connection *GetConnection();
+  RDMAConnection *GetConnection();
   void Free();
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
 private:
@@ -32,7 +32,7 @@ private:
   // the fabric
   struct fid_fabric *fabric;
   // the connection
-  Connection *con;
+  RDMAConnection *con;
 
   RDMAEventLoop *eventLoop;
   // looping thread id

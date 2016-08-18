@@ -25,7 +25,7 @@
 	} while (0)
 
 
-Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_info *info,
+RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_info *info,
                        struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
 
   print_short_info(info);
@@ -71,7 +71,7 @@ Connection::Connection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_
   this->timeout = -1;
 }
 
-void Connection::Free() {
+void RDMAConnection::Free() {
   if (mr != &no_mr) {
     HPS_CLOSE_FID(mr);
   }
@@ -97,7 +97,7 @@ void Connection::Free() {
   }
 }
 
-int Connection::AllocateActiveResources() {
+int RDMAConnection::AllocateActiveResources() {
   int ret;
   if (info_hints->caps & FI_RMA) {
     ret = hps_utils_set_rma_caps(info);
@@ -136,7 +136,7 @@ int Connection::AllocateActiveResources() {
   return 0;
 }
 
-int Connection::AllocateBuffers(void) {
+int RDMAConnection::AllocateBuffers(void) {
   int ret = 0;
   long alignment = 1;
   RDMAOptions *opts = this->options;
@@ -192,7 +192,7 @@ int Connection::AllocateBuffers(void) {
   return 0;
 }
 
-int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
+int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   int ret;
   printf("Init EP\n");
 
@@ -227,7 +227,7 @@ int Connection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   return 0;
 }
 
-int Connection::  SetupBuffers() {
+int RDMAConnection::  SetupBuffers() {
   this->rx_seq = 0;
   this->rx_cq_cntr = 0;
   this->tx_cq_cntr = 0;
@@ -250,7 +250,7 @@ int Connection::  SetupBuffers() {
 /*
  * fi_cq_err_entry can be cast to any CQ entry format.
  */
-int Connection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
+int RDMAConnection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
                                   uint64_t total, int timeout) {
   struct fi_cq_err_entry comp;
   struct timespec a, b;
@@ -285,7 +285,7 @@ int Connection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
 /*
  * fi_cq_err_entry can be cast to any CQ entry format.
  */
-int Connection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
+int RDMAConnection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
                               uint64_t total, int timeout) {
   struct fi_cq_err_entry comp;
   struct fid *fids[1];
@@ -311,7 +311,7 @@ int Connection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
   return 0;
 }
 
-int Connection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
+int RDMAConnection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
                           uint64_t total, int timeout) {
   int ret;
 
@@ -335,7 +335,7 @@ int Connection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
   return ret;
 }
 
-int Connection::GetRXComp(uint64_t total) {
+int RDMAConnection::GetRXComp(uint64_t total) {
   int ret;
   if (rxcq) {
     ret = GetCQComp(rxcq, &rx_cq_cntr, total, timeout);
@@ -346,7 +346,7 @@ int Connection::GetRXComp(uint64_t total) {
   return ret;
 }
 
-int Connection::GetTXComp(uint64_t total) {
+int RDMAConnection::GetTXComp(uint64_t total) {
   int ret;
 
   if (txcq) {
@@ -358,7 +358,7 @@ int Connection::GetTXComp(uint64_t total) {
   return ret;
 }
 
-ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+ssize_t RDMAConnection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   int timeout_save;
   ssize_t ret, rc;
 
@@ -385,7 +385,7 @@ ssize_t Connection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   return 0;
 }
 
-ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+ssize_t RDMAConnection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   int timeout_save;
   ssize_t ret, rc;
 
@@ -412,12 +412,12 @@ ssize_t Connection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   return 0;
 }
 
-bool Connection::DataAvailableForRead() {
+bool RDMAConnection::DataAvailableForRead() {
   RDMABuffer *sbuf = this->recv_buf;
   return sbuf->GetFilledBuffers() > 0;
 }
 
-int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
+int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   uint32_t base;
   uint32_t submittedBuffers;
@@ -489,7 +489,7 @@ int Connection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   return 0;
 }
 
-int Connection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
+int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   int ret;
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
@@ -538,7 +538,7 @@ int Connection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     return 1;
 }
 
-int Connection::TransmitComplete() {
+int RDMAConnection::TransmitComplete() {
   struct fi_cq_err_entry comp;
   int ret;
   this->send_buf->acquireLock();
@@ -570,7 +570,7 @@ int Connection::TransmitComplete() {
   return 0;
 }
 
-int Connection::ReceiveComplete() {
+int RDMAConnection::ReceiveComplete() {
   struct fi_cq_err_entry comp;
   // lets get the number of completions
   this->recv_buf->acquireLock();
@@ -601,11 +601,11 @@ int Connection::ReceiveComplete() {
   return 0;
 }
 
-Connection::~Connection() {
+RDMAConnection::~RDMAConnection() {
 
 }
 
-int Connection::OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) {
+int RDMAConnection::OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) {
   // HPS_INFO("Connection ready %d", fd);
   if (event == CQ_READ) {
     TransmitComplete();
@@ -615,7 +615,7 @@ int Connection::OnEvent(enum rdma_loop_event event, enum rdma_loop_status state)
   return 0;
 }
 
-int Connection::Disconnect() {
+int RDMAConnection::Disconnect() {
   if (this->ep) {
     int ret = fi_shutdown(ep, 0);
     if (ret) {
@@ -628,7 +628,7 @@ int Connection::Disconnect() {
   return 1;
 }
 
-char* Connection::getIPAddress() {
+char* RDMAConnection::getIPAddress() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;
@@ -648,7 +648,7 @@ char* Connection::getIPAddress() {
   return addr_str;
 }
 
-uint32_t Connection::getPort() {
+uint32_t RDMAConnection::getPort() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;

@@ -1,6 +1,6 @@
 #include "hps_utils.h"
 
-Connection *con;
+RDMAConnection *con;
 RDMAOptions options;
 struct fi_info *hints;
 RDMAEventLoop *eventLoop;

@@ -27,7 +27,7 @@ void RDMAClient::Free() {
 	HPS_CLOSE_FID(fabric);
 }
 
-Connection* RDMAClient::GetConnection() {
+RDMAConnection* RDMAClient::GetConnection() {
 	return this->con;
 }
 
@@ -70,7 +70,7 @@ int RDMAClient::Connect(void) {
 	int ret;
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;
-	Connection *con = NULL;
+	RDMAConnection *con = NULL;
 
 	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
 	if (ret) {
@@ -93,7 +93,7 @@ int RDMAClient::Connect(void) {
 	}
 
 	// create the connection
-	con = new Connection(this->options, this->info_hints,
+	con = new RDMAConnection(this->options, this->info_hints,
 											 this->info, this->fabric, domain, this->eq);
 
 	// allocate the resources

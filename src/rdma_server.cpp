@@ -108,8 +108,8 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
   }
 
   if (event == FI_SHUTDOWN) {
-    std::list<Connection *>::const_iterator iterator;
-    Connection *c = (Connection *) entry.fid->context;
+    std::list<RDMAConnection *>::const_iterator iterator;
+    RDMAConnection *c = (RDMAConnection *) entry.fid->context;
     if (c != NULL) {
       // lets remove from the event loop
       if (eventLoop->UnRegister(c->GetRxLoop())) {
@@ -139,10 +139,10 @@ int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status s
 int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   int ret;
   struct fid_ep *ep;
-  Connection *con;
+  RDMAConnection *con;
 
   // create the connection
-  con = new Connection(this->options, this->info_hints,
+  con = new RDMAConnection(this->options, this->info_hints,
                        entry->info, this->fabric, domain, this->eq);
   // allocate the queues and counters
   ret = con->AllocateActiveResources();
@@ -189,10 +189,10 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
   char *peer_host;
   int peer_port;
   // first lets find this in the pending connections
-  Connection *con = NULL;
-  std::list<Connection *>::iterator it = pending_connections.begin();
+  RDMAConnection *con = NULL;
+  std::list<RDMAConnection *>::iterator it = pending_connections.begin();
   while (it != pending_connections.end()) {
-    Connection *temp = *it;
+    RDMAConnection *temp = *it;
     if (&temp->GetEp()->fid == entry->fid) {
       con = temp;
       pending_connections.erase(it);
@@ -239,6 +239,6 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
   return 0;
 }
 
-int RDMAServer::Disconnect(Connection *con) {
+int RDMAServer::Disconnect(RDMAConnection *con) {
   return con->Disconnect();
 }

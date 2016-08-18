@@ -20,15 +20,15 @@
 
 enum State { INIT = 0, WAIT_CONFIRM, CONNECTED, DISCONNECTED };
 
-class Connection : public IRDMAEventCallback {
+class RDMAConnection : public IRDMAEventCallback {
 public:
 
-  Connection(RDMAOptions *opts, struct fi_info *info_hints,
+  RDMAConnection(RDMAOptions *opts, struct fi_info *info_hints,
              struct fi_info *info, struct fid_fabric *fabric,
              struct fid_domain *domain, struct fid_eq *eq);
   void Free();
 
-  virtual ~Connection();
+  virtual ~RDMAConnection();
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
    */

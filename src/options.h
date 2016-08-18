@@ -11,8 +11,6 @@ public:
   char *dst_port;
   char *src_addr;
   char *dst_addr;
-  char *fname;
-  char *av_name;
   int options;
   hps_rma_opcodes rma_op;
 
