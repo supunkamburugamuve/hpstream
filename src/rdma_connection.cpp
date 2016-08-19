@@ -216,6 +216,7 @@ int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   int ret;
   this->ep = ep;
   if (this->info->ep_attr->type == FI_EP_MSG) {
+    HPS_INFO("Binding ep to eq");
     HPS_EP_BIND(ep, eq, 0);
   }
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
