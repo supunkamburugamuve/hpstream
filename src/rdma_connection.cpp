@@ -2,7 +2,6 @@
 #include <cstring>
 #include <cstdio>
 #include <iostream>
-#include <cinttypes>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
@@ -25,16 +24,16 @@
 	} while (0)
 
 
-RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info_hints, struct fi_info *info,
-                       struct fid_fabric *fabric, struct fid_domain *domain, struct fid_eq *eq) {
+RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
+                       struct fid_fabric *fabric, struct fid_domain *domain, RDMAEventLoop *loop) {
 
-  print_short_info(info);
   this->options = opts;
   this->info = info;
   this->info_hints = info_hints;
   this->fabric = fabric;
   this->domain = domain;
   this->state = INIT;
+  this->eventLoop = loop;
 
   this->txcq = NULL;
   this->rxcq = NULL;
@@ -79,8 +78,6 @@ void RDMAConnection::Free() {
   HPS_CLOSE_FID(ep);
   HPS_CLOSE_FID(rxcq);
   HPS_CLOSE_FID(txcq);
-  HPS_CLOSE_FID(domain);
-  HPS_CLOSE_FID(fabric);
 
   if (buf) {
     free(buf);
@@ -99,11 +96,11 @@ void RDMAConnection::Free() {
 
 int RDMAConnection::AllocateActiveResources() {
   int ret;
-  if (info_hints->caps & FI_RMA) {
-    ret = hps_utils_set_rma_caps(info);
-    if (ret)
-      return ret;
-  }
+//  if (info_hints->caps & FI_RMA) {
+//    ret = hps_utils_set_rma_caps(info);
+//    if (ret)
+//      return ret;
+//  }
 
   ret = AllocateBuffers();
   if (ret) {
@@ -187,15 +184,13 @@ int RDMAConnection::AllocateBuffers(void) {
     mr = &no_mr;
   }
 
-  this->send_buf = new RDMABuffer(tx_buf, tx_size, opts->no_buffers);
-  this->recv_buf = new RDMABuffer(rx_buf, rx_size, opts->no_buffers);
+  this->send_buf = new RDMABuffer(tx_buf, (uint32_t) tx_size, opts->no_buffers);
+  this->recv_buf = new RDMABuffer(rx_buf, (uint32_t) rx_size, opts->no_buffers);
   return 0;
 }
 
 int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   int ret;
-  printf("Init EP\n");
-
   this->ep = ep;
   if (this->info->ep_attr->type == FI_EP_MSG) {
     HPS_EP_BIND(ep, eq, 0);
@@ -227,7 +222,7 @@ int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   return 0;
 }
 
-int RDMAConnection::  SetupBuffers() {
+int RDMAConnection::SetupBuffers() {
   this->rx_seq = 0;
   this->rx_cq_cntr = 0;
   this->tx_cq_cntr = 0;
@@ -490,7 +485,6 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 }
 
 int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
-  int ret;
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
   // now determine the buffer no to use

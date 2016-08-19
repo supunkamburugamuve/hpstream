@@ -18,14 +18,14 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
-enum State { INIT = 0, WAIT_CONFIRM, CONNECTED, DISCONNECTED };
+enum State { INIT = 0, WAIT_CONNECT_CONFIRM, CONNECTED, DISCONNECTED, TO_BE_DISCONNECTED };
 
 class RDMAConnection {
 public:
 
-  RDMAConnection(RDMAOptions *opts, struct fi_info *info_hints,
+  RDMAConnection(RDMAOptions *opts,
              struct fi_info *info, struct fid_fabric *fabric,
-             struct fid_domain *domain, struct fid_eq *eq);
+             struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
   virtual ~RDMAConnection();
@@ -142,6 +142,8 @@ private:
   uint64_t rx_cq_cntr;
 
   int timeout;
+
+  RDMAEventLoop *eventLoop;
 
   /** Private methods */
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);

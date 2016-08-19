@@ -93,8 +93,7 @@ int RDMAClient::Connect(void) {
 	}
 
 	// create the connection
-	con = new RDMAConnection(this->options, this->info_hints,
-											 this->info, this->fabric, domain, this->eq);
+	con = new RDMAConnection(this->options, this->info, this->fabric, domain, this->eventLoop);
 
 	// allocate the resources
 	ret = con->AllocateActiveResources();

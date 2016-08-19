@@ -63,7 +63,7 @@ int RDMAServer::Init(void) {
   this->eq_loop.fid = eq_fid;
   this->eq_loop.desc = &eq->fid;
 
-      // allocates a passive end-point
+  // allocates a passive end-point
   ret = fi_passive_ep(this->fabric, this->info_pep, &this->pep, NULL);
   if (ret) {
     HPS_ERR("fi_passive_ep %d", ret);
@@ -142,8 +142,8 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   RDMAConnection *con;
 
   // create the connection
-  con = new RDMAConnection(this->options, this->info_hints,
-                       entry->info, this->fabric, domain, this->eq);
+  con = new RDMAConnection(this->options, entry->info,
+                           this->fabric, domain, this->eventLoop);
   // allocate the queues and counters
   ret = con->AllocateActiveResources();
   if (ret) {
@@ -170,7 +170,7 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-  con->SetState(WAIT_CONFIRM);
+  con->SetState(WAIT_CONNECT_CONFIRM);
   // add the connection to pending and wait for confirmation
   pending_connections.push_back(con);
   return 0;
