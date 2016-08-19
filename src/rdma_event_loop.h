@@ -28,12 +28,12 @@ enum rdma_loop_event {
 // Represents a callback that returns void but takes any number of
 // input arguments.
 template <typename... Args>
-using VCallback = std::function<void(Args...)>;
+using VCallback = std::function<int(Args...)>;
 
-class IRDMAEventCallback {
-public:
-  virtual int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) = 0;
-};
+//class IRDMAEventCallback {
+//public:
+//  virtual int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) = 0;
+//};
 
 struct rdma_loop_info {
   VCallback<enum rdma_loop_event, enum rdma_loop_status> callback;
