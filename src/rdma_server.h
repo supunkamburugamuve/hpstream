@@ -59,6 +59,7 @@ private:
 
   /**
    * We are in the second part of connection establishment
+   * The connection has being fully established
    */
   int Connected(struct fi_eq_cm_entry *entry);
 
