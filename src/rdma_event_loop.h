@@ -12,6 +12,7 @@
 
 #include <rdma/fabric.h>
 #include <list>
+#include <functional>
 
 #include "rdma_event_loop.h"
 #include "hps.h"
@@ -24,18 +25,22 @@ enum rdma_loop_event {
   CQ_TRANSMIT
 };
 
+// Represents a callback that returns void but takes any number of
+// input arguments.
+template <typename... Args>
+using VCallback = std::function<void(Args...)>;
+
 class IRDMAEventCallback {
 public:
   virtual int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) = 0;
 };
 
 struct rdma_loop_info {
-  IRDMAEventCallback *callback;
+  VCallback<enum rdma_loop_event, enum rdma_loop_status> callback;
   int fid;
   fid_t desc;
   enum rdma_loop_event event;
 };
-
 
 class RDMAEventLoop {
 public:

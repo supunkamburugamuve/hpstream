@@ -39,8 +39,8 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info_hints, st
   this->txcq = NULL;
   this->rxcq = NULL;
 
-  this->tx_loop.callback = this;
-  this->rx_loop.callback = this;
+  this->tx_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };
+  this->rx_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };;
   this->tx_loop.event = CQ_TRANSMIT;
   this->rx_loop.event = CQ_READ;
 

@@ -20,7 +20,7 @@
 
 enum State { INIT = 0, WAIT_CONFIRM, CONNECTED, DISCONNECTED };
 
-class RDMAConnection : public IRDMAEventCallback {
+class RDMAConnection {
 public:
 
   RDMAConnection(RDMAOptions *opts, struct fi_info *info_hints,

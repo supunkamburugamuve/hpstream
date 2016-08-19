@@ -15,7 +15,7 @@ RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 
-  this->eq_loop.callback = this;
+  this->eq_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };
   this->eq_loop.event = CONNECTION;
 }
 

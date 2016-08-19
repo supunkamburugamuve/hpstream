@@ -9,7 +9,7 @@
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
 
-class RDMAServer : public IRDMAEventCallback {
+class RDMAServer {
 public:
   RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   void Free();

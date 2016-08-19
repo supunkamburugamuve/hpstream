@@ -7,7 +7,7 @@
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
 
-class RDMAClient : IRDMAEventCallback {
+class RDMAClient {
 public:
   RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   int Connect(void);

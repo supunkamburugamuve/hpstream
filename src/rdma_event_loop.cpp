@@ -59,8 +59,8 @@ void RDMAEventLoop::Loop() {
         struct epoll_event *event = events + j;
         struct rdma_loop_info *callback = (struct rdma_loop_info *) event->data.ptr;
         if (callback != NULL) {
-          IRDMAEventCallback *c = callback->callback;
-          c->OnEvent(callback->event, AVAILABLE);
+          auto cb = callback->callback;
+          cb(callback->event, AVAILABLE);
         } else {
           HPS_ERR("Connection NULL");
         }
@@ -68,7 +68,7 @@ void RDMAEventLoop::Loop() {
     } else if (trywait == -FI_EAGAIN){
       for (std::list<struct rdma_loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
         struct rdma_loop_info *c = *it;
-        c->callback->OnEvent(c->event, TRYAGAIN);
+        c->callback(c->event, TRYAGAIN);
       }
     }
   }
