@@ -97,7 +97,7 @@ void RDMAConnection::Free() {
 int RDMAConnection::Start() {
   char *peer_host;
   int peer_port;
-  int ret = SetupBuffers();
+  int ret = PostBuffers();
   if (ret) {
     HPS_ERR("Failed to set up the buffers %d", ret);
     return ret;
@@ -123,7 +123,7 @@ int RDMAConnection::Start() {
   return 0;
 }
 
-int RDMAConnection::AllocateActiveResources() {
+int RDMAConnection::SetupQueues() {
   int ret;
   ret = AllocateBuffers();
   if (ret) {
@@ -245,7 +245,7 @@ int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   return 0;
 }
 
-int RDMAConnection::SetupBuffers() {
+int RDMAConnection::PostBuffers() {
   this->rx_seq = 0;
   this->rx_cq_cntr = 0;
   this->tx_cq_cntr = 0;

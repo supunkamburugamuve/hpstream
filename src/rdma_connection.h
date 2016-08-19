@@ -89,7 +89,7 @@ public:
   /**
  * Allocate the resources for this connection
  */
-  int AllocateActiveResources();
+  int SetupQueues();
 
   /**
    * Set and initialize the end point
@@ -99,7 +99,7 @@ public:
   /**
    * Setup the read and write buffers
    */
-  int SetupBuffers();
+  int PostBuffers();
 
 private:
   // options for initialization

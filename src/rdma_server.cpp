@@ -145,7 +145,7 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   con = new RDMAConnection(this->options, entry->info,
                            this->fabric, domain, this->eventLoop);
   // allocate the queues and counters
-  ret = con->AllocateActiveResources();
+  ret = con->SetupQueues();
   if (ret) {
     goto err;
   }

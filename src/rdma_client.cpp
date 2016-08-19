@@ -96,7 +96,7 @@ int RDMAClient::Connect(void) {
 	con = new RDMAConnection(this->options, this->info, this->fabric, domain, this->eventLoop);
 
 	// allocate the resources
-	ret = con->AllocateActiveResources();
+	ret = con->SetupQueues();
 	if (ret) {
 		return ret;
 	}
@@ -134,28 +134,16 @@ int RDMAClient::Connect(void) {
 		return ret;
 	}
 
-  ret = con->SetupBuffers();
-  if (ret) {
-    HPS_ERR("Failed to set up the buffers %d", ret);
-    return ret;
-  }
-
   ret = this->eventLoop->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
   }
 
-	ret = this->eventLoop->RegisterRead(con->GetRxLoop());
-  if (ret) {
-    HPS_ERR("Failed to register receive cq to event loop %d", ret);
-    return ret;
-  }
-
-	ret = this->eventLoop->RegisterRead(con->GetTxLoop());
-  if (ret) {
-    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
-    return ret;
+  // lets start the connection
+  if (con->Start()) {
+    HPS_ERR("Failed to start the connection");
+    return 1;
   }
 
 	this->con = con;
