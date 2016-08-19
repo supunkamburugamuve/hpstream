@@ -15,7 +15,7 @@ RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 
-  this->eq_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };
+  this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };
   this->eq_loop.event = CONNECTION;
 }
 
@@ -92,7 +92,7 @@ int RDMAServer::Init(void) {
   return 0;
 }
 
-int RDMAServer::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state) {
+int RDMAServer::OnConnect(enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;

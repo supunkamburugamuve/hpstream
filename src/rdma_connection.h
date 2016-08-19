@@ -70,11 +70,11 @@ public:
   }
 
   State GetState() {
-    return state;
+    return mState;
   }
 
   void SetState(State st) {
-    this->state = st;
+    this->mState = st;
   }
 
   int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
@@ -105,7 +105,7 @@ private:
   // options for initialization
   RDMAOptions *options;
   // status of the connection
-  State state;
+  State mState;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information
@@ -164,6 +164,9 @@ private:
   int TransmitComplete();
   int ReceiveComplete();
 
+  int OnRead(rdma_loop_status state);
+
+  int OnWrite(rdma_loop_status state);
 };
 
 #endif /* HPS_CONNECTION_H_ */

@@ -18,7 +18,7 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
 	this->eq_attr = {};
 	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
 	this->con = NULL;
-	this->eq_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };;
+	this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
 }
 
@@ -31,7 +31,7 @@ RDMAConnection* RDMAClient::GetConnection() {
 	return this->con;
 }
 
-int RDMAClient::OnEvent(enum rdma_loop_event loop_event, enum rdma_loop_status state) {
+int RDMAClient::OnConnect(enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;

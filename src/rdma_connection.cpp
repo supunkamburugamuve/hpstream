@@ -26,20 +26,19 @@
 
 RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
                        struct fid_fabric *fabric, struct fid_domain *domain, RDMAEventLoop *loop) {
-
   this->options = opts;
   this->info = info;
   this->info_hints = info_hints;
   this->fabric = fabric;
   this->domain = domain;
-  this->state = INIT;
+  this->mState = INIT;
   this->eventLoop = loop;
 
   this->txcq = NULL;
   this->rxcq = NULL;
 
-  this->tx_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };
-  this->rx_loop.callback = [this](enum rdma_loop_event event, enum rdma_loop_status state) { return this->OnEvent(event, state); };
+  this->tx_loop.callback = [this](enum rdma_loop_status state) { return this->OnWrite(state); };
+  this->rx_loop.callback = [this](enum rdma_loop_status state) { return this->OnRead(state); };
   this->tx_loop.event = CQ_TRANSMIT;
   this->rx_loop.event = CQ_READ;
 
@@ -48,8 +47,8 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
   this->mr = NULL;
   this->no_mr = {};
 
-  this->rx_fd = -1;
-  this->tx_fd = -1;
+  this->rx_fd = 0;
+  this->tx_fd = 0;
 
   this->buf = NULL;
   this->recv_buf = NULL;
@@ -119,7 +118,7 @@ int RDMAConnection::Start() {
   peer_host = getIPAddress();
   peer_port = getPort();
   HPS_INFO("Connection established %s %d", peer_host, peer_port);
-  state = CONNECTED;
+  mState = CONNECTED;
   return 0;
 }
 
@@ -618,18 +617,24 @@ int RDMAConnection::ReceiveComplete() {
   return 0;
 }
 
-RDMAConnection::~RDMAConnection() {
+RDMAConnection::~RDMAConnection() {}
 
+//int RDMAConnection::OnEvent(enum rdma_loop_event event,
+//                            enum rdma_loop_status state) {
+//  if (event == CQ_READ) {
+//    TransmitComplete();
+//  } else if (event == CQ_TRANSMIT) {
+//    ReceiveComplete();
+//  }
+//  return 0;
+//}
+
+int RDMAConnection::OnWrite(enum rdma_loop_status state) {
+  return TransmitComplete();
 }
 
-int RDMAConnection::OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) {
-  // HPS_INFO("Connection ready %d", fd);
-  if (event == CQ_READ) {
-    TransmitComplete();
-  } else if (event == CQ_TRANSMIT) {
-    ReceiveComplete();
-  }
-  return 0;
+int RDMAConnection::OnRead(enum rdma_loop_status state) {
+  return ReceiveComplete();
 }
 
 int RDMAConnection::Disconnect() {

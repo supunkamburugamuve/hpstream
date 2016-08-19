@@ -25,7 +25,7 @@ public:
   /**
    * Listen for connection events.
    */
-  int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
+  int OnConnect(enum rdma_loop_status state);
 private:
   RDMAOptions *options;
   // hints to be used to obtain fabric information

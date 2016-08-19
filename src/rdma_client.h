@@ -1,5 +1,5 @@
-#ifndef CLIENT_H_
-#define CLIENT_H_
+#ifndef RDMA_CLIENT_H_
+#define RDMA_CLIENT_H_
 
 #include "utils.h"
 #include "options.h"
@@ -13,7 +13,7 @@ public:
   int Connect(void);
   RDMAConnection *GetConnection();
   void Free();
-  int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
+  int OnConnect(enum rdma_loop_status state);
 private:
   // options for initialization
   RDMAOptions *options;

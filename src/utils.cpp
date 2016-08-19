@@ -5,15 +5,10 @@
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
-#include <rdma/fi_endpoint.h>
-#include <rdma/fi_cm.h>
-#include <rdma/fi_tagged.h>
-#include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
 #include <poll.h>
 
 #include "utils.h"
-#include "options.h"
 
 char default_port[8] = "9228";
 
@@ -181,10 +176,6 @@ uint64_t hps_utils_caps_to_mr_access(uint64_t caps) {
   return mr_access;
 }
 
-int hps_utils_check_opts(RDMAOptions *opts, uint64_t flags) {
-  return (opts->options & flags) == flags;
-}
-
 int hps_utils_poll_fd(int fd, int timeout) {
   struct pollfd fds;
   int ret;
@@ -218,43 +209,3 @@ int hps_utils_cq_readerr(struct fid_cq *cq){
   return (int) ret;
 }
 
-void hps_utils_fill_buf(void *buf, int size) {
-  char *msg_buf;
-  int msg_index;
-  static unsigned int iter = 0;
-  int i;
-
-  msg_index = ((iter++)*INTEG_SEED) % integ_alphabet_length;
-  msg_buf = (char *)buf;
-  for (i = 0; i < size; i++) {
-    msg_buf[i] = integ_alphabet[msg_index++];
-    if (msg_index >= integ_alphabet_length)
-      msg_index = 0;
-  }
-}
-
-int hps_utils_check_buf(void *buf, int size) {
-  char *recv_data;
-  char c;
-  static unsigned int iter = 0;
-  int msg_index;
-  int i;
-
-  msg_index = ((iter++)*INTEG_SEED) % integ_alphabet_length;
-  recv_data = (char *)buf;
-
-  for (i = 0; i < size; i++) {
-    c = integ_alphabet[msg_index++];
-    if (msg_index >= integ_alphabet_length)
-      msg_index = 0;
-    if (c != recv_data[i])
-      break;
-  }
-  if (i != size) {
-    printf("Error at iteration=%d size=%d byte=%d\n",
-           iter, size, i);
-    return 1;
-  }
-
-  return 0;
-}
