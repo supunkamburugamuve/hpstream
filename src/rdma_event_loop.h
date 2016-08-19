@@ -36,7 +36,7 @@ using VCallback = std::function<int(Args...)>;
 //};
 
 struct rdma_loop_info {
-  VCallback<int(enum rdma_loop_event, enum rdma_loop_status)> callback;
+  VCallback<enum rdma_loop_event, enum rdma_loop_status> callback;
   int fid;
   fid_t desc;
   enum rdma_loop_event event;
