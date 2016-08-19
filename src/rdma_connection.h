@@ -29,6 +29,9 @@ public:
   void Free();
 
   virtual ~RDMAConnection();
+
+  int Start();
+
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
    */

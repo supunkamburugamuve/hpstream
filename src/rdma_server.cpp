@@ -182,12 +182,6 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
 }
 
 int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
-  ssize_t rd;
-  struct rdma_loop_info *tx_loop;
-  struct rdma_loop_info *rx_loop;
-  int ret;
-  char *peer_host;
-  int peer_port;
   // first lets find this in the pending connections
   RDMAConnection *con = NULL;
   std::list<RDMAConnection *>::iterator it = pending_connections.begin();
@@ -208,32 +202,12 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
     return 0;
   }
 
-  ret = con->SetupBuffers();
-  if (ret) {
-    HPS_ERR("Failed to set up the buffers %d", ret);
-    return ret;
+  // lets start the connection
+  if (con->Start()) {
+    HPS_ERR("Failed to start the connection");
+    return 1;
   }
 
-  // registe with the loop
-  HPS_INFO("RXfd=%d TXFd=%d", con->GetRxFd(), con->GetTxFd());
-  rx_loop = con->GetRxLoop();
-  ret = this->eventLoop->RegisterRead(rx_loop);
-  if (ret) {
-    HPS_ERR("Failed to register receive cq to event loop %d", ret);
-    return ret;
-  }
-
-  tx_loop = con->GetTxLoop();
-  ret = this->eventLoop->RegisterRead(tx_loop);
-  if (ret) {
-    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
-    return ret;
-  }
-
-  peer_host = con->getIPAddress();
-  peer_port = con->getPort();
-  HPS_INFO("Connection established %s %d", peer_host, peer_port);
-  con->SetState(CONNECTED);
   // add the connection to list
   this->connections.push_back(con);
   return 0;

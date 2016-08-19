@@ -94,14 +94,37 @@ void RDMAConnection::Free() {
   }
 }
 
+int RDMAConnection::Start() {
+  char *peer_host;
+  int peer_port;
+  int ret = SetupBuffers();
+  if (ret) {
+    HPS_ERR("Failed to set up the buffers %d", ret);
+    return ret;
+  }
+
+  // registe with the loop
+  ret = this->eventLoop->RegisterRead(&rx_loop);
+  if (ret) {
+    HPS_ERR("Failed to register receive cq to event loop %d", ret);
+    return ret;
+  }
+
+  ret = this->eventLoop->RegisterRead(&tx_loop);
+  if (ret) {
+    HPS_ERR("Failed to register transmit cq to event loop %d", ret);
+    return ret;
+  }
+
+  peer_host = getIPAddress();
+  peer_port = getPort();
+  HPS_INFO("Connection established %s %d", peer_host, peer_port);
+  state = CONNECTED;
+  return 0;
+}
+
 int RDMAConnection::AllocateActiveResources() {
   int ret;
-//  if (info_hints->caps & FI_RMA) {
-//    ret = hps_utils_set_rma_caps(info);
-//    if (ret)
-//      return ret;
-//  }
-
   ret = AllocateBuffers();
   if (ret) {
     return ret;
@@ -658,3 +681,5 @@ uint32_t RDMAConnection::getPort() {
   uint32_t port = ntohs(((struct sockaddr_in*)(&addr))->sin_port);
   return port;
 }
+
+
