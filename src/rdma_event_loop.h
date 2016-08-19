@@ -30,11 +30,6 @@ enum rdma_loop_event {
 template <typename... Args>
 using VCallback = std::function<int(Args...)>;
 
-//class IRDMAEventCallback {
-//public:
-//  virtual int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state) = 0;
-//};
-
 struct rdma_loop_info {
   VCallback<enum rdma_loop_event, enum rdma_loop_status> callback;
   int fid;
