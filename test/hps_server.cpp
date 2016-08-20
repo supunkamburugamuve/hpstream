@@ -60,6 +60,7 @@ int exchange3() {
       con->WriteData((uint8_t *) values, sizeof(values), &write);
       current_write += write;
     }
+    HPS_INFO("Done sending..");
   }
 
   printf("Done rma\n");
