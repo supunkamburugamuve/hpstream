@@ -12,17 +12,6 @@
 
 char default_port[8] = "9228";
 
-int hps_utils_set_rma_caps(struct fi_info *fi) {
-  fi->caps |= FI_REMOTE_READ;
-  if (fi->mode & FI_LOCAL_MR)
-    fi->caps |= FI_READ;
-
-  fi->caps |= FI_REMOTE_WRITE;
-  if (fi->mode & FI_LOCAL_MR)
-    fi->caps |= FI_WRITE;
-  return 0;
-}
-
 int hps_utils_get_cq_fd(RDMAOptions *opts, struct fid_cq *cq, int *fd) {
   int ret = FI_SUCCESS;
   if (cq) {
