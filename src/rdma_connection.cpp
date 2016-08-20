@@ -446,6 +446,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   rbuf->acquireLock();
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
+    rbuf->releaseLock();
     return 0;
   }
   uint32_t tail = rbuf->GetBase();
