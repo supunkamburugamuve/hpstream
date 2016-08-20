@@ -46,11 +46,11 @@ int exchange3() {
       count = 0;
       while (read < 4000 && count < 10) {
 //        HPS_INFO("Receiving..");
-        if (con->DataAvailableForRead()) {
+//        if (con->DataAvailableForRead()) {
           con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
           read += current_read;
           count++;
-        }
+//        }
       }
     }
 
