@@ -41,9 +41,9 @@ int exchange3() {
     write = 0;
     while (current_write < 4000) {
       con->WriteData((uint8_t *) values[i % 10] + current_write, sizeof(values[i]), &write);
-      if (write > 0 && i % 1000 == 0) {
-        HPS_INFO("Write amount %d %d", write, i);
-      }
+//      if (write > 0 && i % 1000 == 0) {
+//        HPS_INFO("Write amount %d %d", write, i);
+//      }
       current_write += write;
     }
   }
@@ -52,7 +52,7 @@ int exchange3() {
   while (read < 4000) {
 //    if (con->DataAvailableForRead()) {
       con->ReadData(((uint8_t *) (values[0]) + read), sizeof(values[0]) - read, &current_read);
-      HPS_INFO("read amount %d", current_read);
+//      HPS_INFO("read amount %d", current_read);
       read += current_read;
 //    }
   }
