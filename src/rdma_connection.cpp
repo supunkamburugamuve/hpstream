@@ -619,16 +619,6 @@ int RDMAConnection::ReceiveComplete() {
 
 RDMAConnection::~RDMAConnection() {}
 
-//int RDMAConnection::OnEvent(enum rdma_loop_event event,
-//                            enum rdma_loop_status state) {
-//  if (event == CQ_READ) {
-//    TransmitComplete();
-//  } else if (event == CQ_TRANSMIT) {
-//    ReceiveComplete();
-//  }
-//  return 0;
-//}
-
 int RDMAConnection::OnWrite(enum rdma_loop_status state) {
   return TransmitComplete();
 }

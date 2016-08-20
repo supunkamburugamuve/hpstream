@@ -41,22 +41,6 @@ public:
 
   bool DataAvailableForRead();
 
-  struct fid_cq * GetTxCQ() {
-    return txcq;
-  }
-
-  struct fid_cq * GetRxCQ() {
-    return rxcq;
-  }
-
-  int GetTxFd() {
-    return tx_fd;
-  }
-
-  int GetRxFd() {
-    return rx_fd;
-  }
-
   struct fid_ep *GetEp() {
     return ep;
   }
@@ -76,8 +60,6 @@ public:
   void SetState(State st) {
     this->mState = st;
   }
-
-  int OnEvent(enum rdma_loop_event event, enum rdma_loop_status state);
 
   // disconnect
   int Disconnect();
