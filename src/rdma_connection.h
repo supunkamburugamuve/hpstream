@@ -45,14 +45,6 @@ public:
     return ep;
   }
 
-  struct rdma_loop_info * GetRxLoop() {
-    return &rx_loop;
-  }
-
-  struct rdma_loop_info * GetTxLoop() {
-    return &tx_loop;
-  }
-
   State GetState() {
     return mState;
   }

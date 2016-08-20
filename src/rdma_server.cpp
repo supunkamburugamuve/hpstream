@@ -111,16 +111,8 @@ int RDMAServer::OnConnect(enum rdma_loop_status state) {
     std::list<RDMAConnection *>::const_iterator iterator;
     RDMAConnection *c = (RDMAConnection *) entry.fid->context;
     if (c != NULL) {
-      // lets remove from the event loop
-      if (eventLoop->UnRegister(c->GetRxLoop())) {
-        HPS_ERR("Failed to un-register read from loop");
-      }
-
-      if (eventLoop->UnRegister(c->GetTxLoop())) {
-        HPS_ERR("Failed to un-register transmit from loop");
-      }
       // now disconnect
-//      c->Disconnect();
+      c->Disconnect();
     }
     return 0;
   } else if (event == FI_CONNREQ) {

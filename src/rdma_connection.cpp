@@ -628,15 +628,23 @@ int RDMAConnection::OnRead(enum rdma_loop_status state) {
 }
 
 int RDMAConnection::Disconnect() {
-  if (this->ep) {
-    int ret = fi_shutdown(ep, 0);
-    if (ret) {
-      HPS_ERR("Failed to shutdown connection");
-    }
-    return ret;
-  } else {
-    HPS_ERR("Not connected");
+  if (eventLoop->UnRegister(&rx_loop)) {
+    HPS_ERR("Failed to un-register read from loop");
   }
+
+  if (eventLoop->UnRegister(&tx_loop)) {
+    HPS_ERR("Failed to un-register transmit from loop");
+  }
+
+//  if (this->ep) {
+//    int ret = fi_shutdown(ep, 0);
+//    if (ret) {
+//      HPS_ERR("Failed to shutdown connection");
+//    }
+//    return ret;
+//  } else {
+//    HPS_ERR("Not connected");
+//  }
   return 1;
 }
 
