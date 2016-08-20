@@ -61,6 +61,7 @@ int exchange3() {
     printf("%d ", values[0][i]);
   }
 
+  eventLoop->Wait();
   printf("\nDone rma\n");
   return ret;
 }
