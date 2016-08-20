@@ -443,12 +443,11 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   // go through the buffers
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
-  rbuf->acquireLock();
-
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
     return 0;
   }
+  rbuf->acquireLock();
   uint32_t tail = rbuf->GetBase();
   uint32_t buffers_filled = rbuf->GetFilledBuffers();
   uint32_t current_read_indx = rbuf->GetCurrentReadIndex();
