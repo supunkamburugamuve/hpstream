@@ -42,7 +42,7 @@ int exchange3() {
     while (current_write < 4000) {
       con->WriteData((uint8_t *) values[i % 10] + current_write, sizeof(values[i]), &write);
       if (write > 0) {
-        HPS_INFO("Write amount %d %d", write, i);
+        //HPS_INFO("Write amount %d %d", write, i);
       }
       current_write += write;
     }
