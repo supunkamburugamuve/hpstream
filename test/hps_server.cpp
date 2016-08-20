@@ -45,9 +45,9 @@ int exchange3() {
       read = 0;
       while (read < 4000) {
         con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
-//        if (i % 100 == 0) {
-//          HPS_INFO("Receiving.. %d %d %d", current_read, i, read);
-//        }
+        if (i % 100 == 0) {
+          HPS_INFO("Receiving.. %d %d %d", current_read, i, read);
+        }
         read += current_read;
       }
     }
