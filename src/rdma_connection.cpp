@@ -640,12 +640,12 @@ int RDMAConnection::Disconnect() {
     HPS_ERR("Failed to un-register transmit from loop");
   }
 
-  int ret = fi_shutdown(ep, 0);
-  if (ret) {
-    HPS_ERR("Failed to shutdown connection");
-  }
+//  int ret = fi_shutdown(ep, 0);
+//  if (ret) {
+//    HPS_ERR("Failed to shutdown connection");
+//  }
   mState = DISCONNECTED;
-  return ret;
+  return 0;
 }
 
 char* RDMAConnection::getIPAddress() {
