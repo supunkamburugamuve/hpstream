@@ -115,9 +115,9 @@ int RDMAConnection::Start() {
     return ret;
   }
 
-  peer_host = getIPAddress();
-  peer_port = getPort();
-  HPS_INFO("Connection established %s %d", peer_host, peer_port);
+//  peer_host = getIPAddress();
+//  peer_port = getPort();
+//  HPS_INFO("Connection established %s %d", peer_host, peer_port);
   mState = CONNECTED;
   return 0;
 }
