@@ -14,7 +14,7 @@ int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
 
   elapsed = (int64_t) (difftime(a->tv_sec, b->tv_sec) * 1000 * 1000 * 1000);
   elapsed += a->tv_nsec - b->tv_nsec;
-  return elapsed / 1000;
+  return elapsed / (1000);
 }
 
 int connect3() {
@@ -64,7 +64,7 @@ int exchange3() {
   }
   clock_gettime(CLOCK_MONOTONIC, &end);
   rate = 1000000.0 * 4000.0 /((1024 * 1024)* (elapsed / (1000 * 1000)));
-  HPS_INFO("Message rate: time=%ld s and throughput=%lf", elapsed, rate);
+  HPS_INFO("Message rate: time=%ld s and throughput=%lf", elapsed / 1000000, rate);
 
   HPS_INFO("Done sending.. switching to receive");
   while (read < 4000) {
