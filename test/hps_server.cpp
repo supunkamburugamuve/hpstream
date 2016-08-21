@@ -39,7 +39,7 @@ int exchange3() {
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
     RDMAConnection *con = *iterator;
 
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 1000000; i++) {
       for (int j = 0; j < 1000; j++) {
         values[j] = 0;
       }
