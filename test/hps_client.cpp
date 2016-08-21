@@ -1,11 +1,21 @@
 #include "hps_utils.h"
+#include <ctime>
 
+struct timespec start, end;
 RDMAConnection *con;
 RDMAOptions options;
 struct fi_info *hints;
 RDMAEventLoop *eventLoop;
 RDMAFabric *fabric;
 RDMAClient *client;
+
+int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
+  int64_t elapsed;
+
+  elapsed = (int64_t) (difftime(a->tv_sec, b->tv_sec) * 1000 * 1000 * 1000);
+  elapsed += a->tv_nsec - b->tv_nsec;
+  return elapsed / 1000;
+}
 
 int connect3() {
   fabric = new RDMAFabric(&options, hints);
@@ -20,6 +30,8 @@ int connect3() {
 
 int exchange3() {
   int ret = 0;
+  int64_t elapsed = 0;
+  double rate = 0;
   int values[10][1000];
   uint32_t read = 0, write = 0;
   read = 0;
@@ -36,6 +48,9 @@ int exchange3() {
     }
   }
 
+  clock_gettime(CLOCK_MONOTONIC, &start);
+  elapsed = get_elapsed(&end, &start);
+
   for (int i = 0; i < 1000000; i++) {
     current_write = 0;
     write = 0;
@@ -47,6 +62,9 @@ int exchange3() {
       current_write += write;
     }
   }
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  rate = 1000000 * 4000 /((1024 * 1024)* (elapsed / (1000 * 1000)));
+  HPS_INFO("Message rate: %lf", rate);
 
   HPS_INFO("Done sending.. switching to receive");
   while (read < 4000) {
