@@ -214,9 +214,9 @@ int RDMAConnection::AllocateBuffers(void) {
 int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   int ret;
   this->ep = ep;
-  if (this->info->ep_attr->type == FI_EP_MSG) {
-    HPS_EP_BIND(ep, eq, 0);
-  }
+//  if (this->info->ep_attr->type == FI_EP_MSG) {
+//    HPS_EP_BIND(ep, eq, 0);
+//  }
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
 
@@ -491,7 +491,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   submittedBuffers = rbuf->GetSubmittedBuffers();
   noOfBuffers = rbuf->GetNoOfBuffers();
   while (submittedBuffers < noOfBuffers) {
-    index = (base + submittedBuffers) % noOfBuffers;
+6    index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
     ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
