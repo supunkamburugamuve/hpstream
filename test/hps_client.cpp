@@ -36,7 +36,7 @@ int exchange3() {
     }
   }
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 100000; i++) {
     current_write = 0;
     write = 0;
     while (current_write < 4000) {
