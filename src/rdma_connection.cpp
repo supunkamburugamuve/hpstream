@@ -491,7 +491,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   submittedBuffers = rbuf->GetSubmittedBuffers();
   noOfBuffers = rbuf->GetNoOfBuffers();
   while (submittedBuffers < noOfBuffers) {
-6    index = (base + submittedBuffers) % noOfBuffers;
+    index = (base + submittedBuffers) % noOfBuffers;
     uint8_t *send_buf = rbuf->GetBuffer(index);
     ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
