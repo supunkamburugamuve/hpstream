@@ -48,6 +48,9 @@ int exchange3() {
         con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
         read += current_read;
       }
+      if (i % 1000 == 0) {
+        HPS_INFO("Completed %d", i);
+      }
     }
 
     HPS_INFO("Done receiving.. switching to sending");
