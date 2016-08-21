@@ -631,13 +631,13 @@ int RDMAConnection::Disconnect() {
     HPS_ERR("Connection not in CONNECTED state, cannot disconnect");
   }
 
-//  if (eventLoop->UnRegister(&rx_loop)) {
-//    HPS_ERR("Failed to un-register read from loop");
-//  }
-//
-//  if (eventLoop->UnRegister(&tx_loop)) {
-//    HPS_ERR("Failed to un-register transmit from loop");
-//  }
+  if (eventLoop->UnRegister(&rx_loop)) {
+    HPS_ERR("Failed to un-register read from loop");
+  }
+
+  if (eventLoop->UnRegister(&tx_loop)) {
+    HPS_ERR("Failed to un-register transmit from loop");
+  }
 
 //  int ret = fi_shutdown(ep, 0);
 //  if (ret) {
