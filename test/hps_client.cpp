@@ -64,7 +64,7 @@ int exchange3() {
   }
   clock_gettime(CLOCK_MONOTONIC, &end);
   rate = 1000000.0 * 4000.0 /((1024 * 1024)* (elapsed / (1000 * 1000)));
-  HPS_INFO("Message rate: %lf", rate);
+  HPS_INFO("Message rate: time=%ld s and throughput=%lf", elapsed, rate);
 
   HPS_INFO("Done sending.. switching to receive");
   while (read < 4000) {
