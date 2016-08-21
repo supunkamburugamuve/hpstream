@@ -200,6 +200,7 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
     return 1;
   }
 
+  HPS_INFO("Client connected");
   // add the connection to list
   this->connections.push_back(con);
   return 0;
