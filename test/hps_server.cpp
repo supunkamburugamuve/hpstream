@@ -34,6 +34,7 @@ int exchange3() {
       HPS_INFO("Size %d", pList->size());
     }
   }
+  HPS_INFO("Size %d", pList->size());
 
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
     RDMAConnection *con = *iterator;
