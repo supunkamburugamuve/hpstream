@@ -29,7 +29,7 @@ int exchange3() {
 
   std::list<RDMAConnection *> *pList = server->GetConnections();
   int count = 0;
-  while (pList->size() != 2) {
+  while (pList->size() != 1) {
     if (count++ == 10000) {
       HPS_INFO("Size %d", pList->size());
     }
