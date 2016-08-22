@@ -513,7 +513,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *length = (uint32_t *) current_buf;
     // set the first 4 bytes as the content length
     *length = current_size;
-    HPS_INFO("buffer index=%" PRIu32 " Memcpy send_buf_size=%" PRIu32 " buf_size=%" PRIu32 " copy_pos=%" PRIu32 " bytes=%" PRIu32 "", head, buf_size, size, sent_size, current_size);
+    // HPS_INFO("buffer index=%" PRIu32 " Memcpy send_buf_size=%" PRIu32 " buf_size=%" PRIu32 " copy_pos=%" PRIu32 " bytes=%" PRIu32 "", head, buf_size, size, sent_size, current_size);
     memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
