@@ -195,7 +195,7 @@ void RDMAEventLoopNoneFD::Loop() {
 int RDMAEventLoopNoneFD::Start() {
   int ret;
   // start the loop thread
-  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+  ret = pthread_create(&loopThreadId, NULL, &loopEventsThreadNonBlock, (void *)this);
   if (ret) {
     HPS_ERR("Failed to create thread %d", ret);
     return ret;
