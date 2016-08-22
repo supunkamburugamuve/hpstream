@@ -42,6 +42,7 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
   }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
+  HPS_INFO("eq read = %ld", rd);
   if (rd == 0) {
     return 0;
   }
