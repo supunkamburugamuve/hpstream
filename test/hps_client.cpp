@@ -74,7 +74,7 @@ int exchange3() {
 
   HPS_INFO("Done sending.. switching to receive");
   while (read < BYTES_) {
-    con->ReadData(((uint8_t *) values[0]) + read, sizeof(values[0]) - read, &current_read);
+    con->ReadData(((uint8_t *) values[0]) + read, BYTES_ - read, &current_read);
     read += current_read;
   }
 
