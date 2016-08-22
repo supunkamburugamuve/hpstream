@@ -107,7 +107,7 @@ int RDMAServer::OnConnect(enum rdma_loop_status state) {
   }
 
   if (rd != sizeof entry) {
-    HPS_ERR("fi_eq_sread listen");
+    HPS_ERR("fi_eq_sread listen %ld and expected %ld", rd, sizeof entry);
     return (int) rd;
   }
 
