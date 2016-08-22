@@ -10,7 +10,7 @@ RDMAFabric *fabric;
 RDMAClient *client;
 
 #define ITERATIONS_ 1000000
-#define SIZE_ 1000
+#define SIZE_ 10000
 #define BYTES_ (SIZE_ * 4)
 
 int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
