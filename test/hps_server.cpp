@@ -52,7 +52,7 @@ int exchange3() {
         }
       }
       if (i % 1000 == 0) {
-        HPS_INFO("Completed %d", i);
+        // HPS_INFO("Completed %d", i);
       }
     }
 

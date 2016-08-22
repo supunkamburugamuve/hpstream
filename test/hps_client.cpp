@@ -66,7 +66,7 @@ int exchange3() {
       current_write += write;
     }
     if (i % 1000 == 0) {
-      HPS_INFO("Completed %d", i);
+      // HPS_INFO("Completed %d", i);
     }
   }
   clock_gettime(CLOCK_MONOTONIC, &end);
