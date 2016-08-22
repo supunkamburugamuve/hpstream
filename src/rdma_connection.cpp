@@ -628,10 +628,12 @@ int RDMAConnection::ReceiveComplete() {
 RDMAConnection::~RDMAConnection() {}
 
 int RDMAConnection::OnWrite(enum rdma_loop_status state) {
+  HPS_INFO("Write complete");
   return TransmitComplete();
 }
 
 int RDMAConnection::OnRead(enum rdma_loop_status state) {
+  HPS_INFO("Receive complete");
   return ReceiveComplete();
 }
 
