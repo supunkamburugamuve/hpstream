@@ -55,14 +55,6 @@ int RDMAServer::Init(void) {
     return ret;
   }
 
-//  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
-//  if (ret) {
-//    HPS_ERR("Failed to get event queue fid %d", ret);
-//    return ret;
-//  }
-  this->eq_loop.fid = eq_fid;
-  this->eq_loop.desc = &eq->fid;
-
   // allocates a passive end-point
   ret = fi_passive_ep(this->fabric, this->info_pep, &this->pep, NULL);
   if (ret) {
