@@ -102,7 +102,7 @@ int RDMAServer::OnConnect(enum rdma_loop_status state) {
   }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
-  if (rd == 0) {
+  if (rd == 0 || rd == -EAGAIN) {
     return 0;
   }
 
