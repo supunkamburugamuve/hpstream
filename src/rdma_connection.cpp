@@ -2,6 +2,8 @@
 #include <cstring>
 #include <cstdio>
 #include <iostream>
+#include <cctype>
+#include <cinttypes>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
@@ -218,22 +220,6 @@ int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   HPS_EP_BIND(ep, eq, 0);
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
-
-//  ret = hps_utils_get_cq_fd(this->options, txcq, &tx_fd);
-//  if (ret) {
-//    HPS_ERR("Failed to get cq fd for transmission");
-//    return ret;
-//  }
-  this->tx_loop.fid = tx_fd;
-  this->tx_loop.desc = &txcq->fid;
-
-//  ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
-//  if (ret) {
-//    HPS_ERR("Failed to get cq fd for receive");
-//    return ret;
-//  }
-  this->rx_loop.fid = rx_fd;
-  this->rx_loop.desc = &rxcq->fid;
 
   ret = fi_enable(ep);
   if (ret) {
@@ -527,6 +513,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *length = (uint32_t *) current_buf;
     // set the first 4 bytes as the content length
     *length = current_size;
+    HPS_INFO("Memcpy send_buf_size=%" PRIu32 " buf_size=%" PRIu32 " copy_pos=%" PRIu32 " bytes=" PRIu32, buf_size, size, sent_size, current_size);
     memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
     sbuf->IncrementFilled(1);
     // send the current buffer
