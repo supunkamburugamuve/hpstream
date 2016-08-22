@@ -61,6 +61,9 @@ int exchange3() {
       }
       current_write += write;
     }
+    if (i % 1000 == 0) {
+      HPS_INFO("Completed %d", i);
+    }
   }
   clock_gettime(CLOCK_MONOTONIC, &end);
   rate = 1000000.0 * 4000.0 /((1024 * 1024)* (elapsed / (1000 * 1000)));
