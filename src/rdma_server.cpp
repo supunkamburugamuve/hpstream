@@ -13,7 +13,7 @@ RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopN
   this->eq_attr = {};
   this->domain = NULL;
   // initialize this attribute, search weather this is correct
-  this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
+  this->eq_attr.wait_obj = FI_WAIT_NONE;
 
   this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };
   this->eq_loop.event = CONNECTION;
@@ -55,11 +55,11 @@ int RDMAServer::Init(void) {
     return ret;
   }
 
-  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
-  if (ret) {
-    HPS_ERR("Failed to get event queue fid %d", ret);
-    return ret;
-  }
+//  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
+//  if (ret) {
+//    HPS_ERR("Failed to get event queue fid %d", ret);
+//    return ret;
+//  }
   this->eq_loop.fid = eq_fid;
   this->eq_loop.desc = &eq->fid;
 
