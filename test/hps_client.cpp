@@ -23,9 +23,9 @@ int connect3() {
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
   client = new RDMAClient(&options, fabric, eventLoop);
   client->Connect();
+  eventLoop->Start();
   while (!client->IsConnected());
   con = client->GetConnection();
-  eventLoop->Start();
   return 1;
 }
 
