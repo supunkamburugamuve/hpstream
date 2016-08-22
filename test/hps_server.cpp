@@ -22,7 +22,7 @@ int connect3() {
 }
 
 int exchange3() {
-  int values[1000];
+  int values[10000];
   uint32_t read = 0, write = 0;
   uint32_t current_read = 0, current_write = 0;
   std::list<RDMAConnection *>::const_iterator iterator;
@@ -40,11 +40,11 @@ int exchange3() {
     RDMAConnection *con = *iterator;
 
     for (int i = 0; i < 1000000; i++) {
-      for (int j = 0; j < 1000; j++) {
+      for (int j = 0; j < 10000; j++) {
         values[j] = 0;
       }
       read = 0;
-      while (read < 4000) {
+      while (read < 40000) {
         con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
         read += current_read;
         if (current_read == 0) {
@@ -59,7 +59,7 @@ int exchange3() {
     HPS_INFO("Done receiving.. switching to sending");
     current_write = 0;
     write = 0;
-    while (current_write < 4000) {
+    while (current_write < 40000) {
       con->WriteData((uint8_t *) values, sizeof(values), &write);
       current_write += write;
     }
