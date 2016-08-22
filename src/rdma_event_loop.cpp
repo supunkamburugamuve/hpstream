@@ -176,7 +176,7 @@ RDMAEventLoopNoneFD::RDMAEventLoopNoneFD(struct fid_fabric *fabric) {
 
 int RDMAEventLoopNoneFD::RegisterRead(struct rdma_loop_info *connection) {
   this->connections.push_back(connection);
-  return true;
+  return 0;
 }
 
 void RDMAEventLoopNoneFD::Loop() {
