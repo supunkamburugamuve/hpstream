@@ -58,12 +58,8 @@ void RDMAEventLoop::Loop() {
       for (int j = 0; j < ret; j++) {
         struct epoll_event *event = events + j;
         struct rdma_loop_info *callback = (struct rdma_loop_info *) event->data.ptr;
-        if (callback != NULL) {
-          auto cb = callback->callback;
-          cb(AVAILABLE);
-        } else {
-          HPS_ERR("Connection NULL");
-        }
+        auto cb = callback->callback;
+        cb(AVAILABLE);
       }
     } else if (trywait == -FI_EAGAIN){
       for (std::list<struct rdma_loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
