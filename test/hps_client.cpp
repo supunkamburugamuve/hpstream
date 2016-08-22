@@ -59,6 +59,9 @@ int exchange3() {
       if (write > 0 && i % 100 == 0) {
         //HPS_INFO("Write amount %d %d", write, i);
       }
+      if (write == 0) {
+        pthread_yield();
+      }
       current_write += write;
     }
     if (i % 1000 == 0) {

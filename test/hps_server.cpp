@@ -47,6 +47,9 @@ int exchange3() {
       while (read < 4000) {
         con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
         read += current_read;
+        if (current_read == 0) {
+          pthread_yield();
+        }
       }
       if (i % 1000 == 0) {
         HPS_INFO("Completed %d", i);
