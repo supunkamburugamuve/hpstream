@@ -16,7 +16,7 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
 	this->fabric = rdmaFabric->GetFabric();
 	this->info = rdmaFabric->GetInfo();
 	this->eq_attr = {};
-	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
+	this->eq_attr.wait_obj = FI_WAIT_FD;
 	this->con = NULL;
 	this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
