@@ -515,10 +515,10 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     *length = current_size;
     HPS_INFO("buffer index=%" PRIu32 " Memcpy send_buf_size=%" PRIu32 " buf_size=%" PRIu32 " copy_pos=%" PRIu32 " bytes=%" PRIu32 "", head, buf_size, size, sent_size, current_size);
     memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
-    sbuf->IncrementFilled(1);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
       sent_size += current_size;
+      sbuf->IncrementFilled(1);
       // increment the head
       sbuf->IncrementSubmitted(1);
     } else {
