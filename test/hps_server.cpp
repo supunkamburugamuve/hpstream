@@ -4,14 +4,14 @@
 RDMAOptions options;
 struct fi_info *hints;
 RDMAServer *server;
-RDMAEventLoop *eventLoop;
+RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 
 int connect3() {
   int ret = 0;
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
-  eventLoop = new RDMAEventLoop(fabric->GetFabric());
+  eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
 
   server = new RDMAServer(&options, fabric, eventLoop);
   server->Init();
