@@ -560,11 +560,11 @@ int RDMAConnection::TransmitComplete() {
   // we can expect up to this
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-    HPS_INFO("transmit complete %ld", cq_ret);
+    // HPS_INFO("transmit complete %ld", cq_ret);
     return 0;
   }
 
-  HPS_INFO("tansmit complete %ld", cq_ret);
+  //HPS_INFO("tansmit complete %ld", cq_ret);
 
   this->send_buf->acquireLock();
   if (cq_ret > 0) {
@@ -597,10 +597,10 @@ int RDMAConnection::ReceiveComplete() {
   // we can expect up to this
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-    HPS_INFO("receive complete %ld", cq_ret);
+    //HPS_INFO("receive complete %ld", cq_ret);
     return 0;
   }
-  HPS_INFO("receive complete %ld", cq_ret);
+  // HPS_INFO("receive complete %ld", cq_ret);
   this->recv_buf->acquireLock();
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
