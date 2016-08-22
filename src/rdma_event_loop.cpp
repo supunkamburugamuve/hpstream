@@ -69,7 +69,8 @@ void RDMAEventLoop::Loop() {
         cb(AVAILABLE);
       }
     } else if (trywait == -FI_EAGAIN){
-      for (std::list<struct rdma_loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+      for (std::list<struct rdma_loop_info *>::iterator it =
+          connections.begin(); it != connections.end(); ++it) {
         struct rdma_loop_info *c = *it;
         c->callback(TRYAGAIN);
       }
@@ -181,8 +182,11 @@ int RDMAEventLoopNoneFD::RegisterRead(struct rdma_loop_info *connection) {
 
 void RDMAEventLoopNoneFD::Loop() {
   while (run) {
-    for (std::list<struct rdma_loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+    HPS_INFO("Loppp 1");
+    for (std::list<struct rdma_loop_info *>::iterator it = connections.begin();
+         it != connections.end(); ++it) {
       struct rdma_loop_info *c = *it;
+      HPS_INFO("Loppp 2");
       c->callback(AVAILABLE);
     }
   }
