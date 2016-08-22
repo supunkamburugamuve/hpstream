@@ -55,13 +55,6 @@ int exchange3() {
           pthread_yield();
         }
       }
-      if (i % 1000 == 0) {
-//        HPS_INFO("Completed %d", i);
-      }
-//      for (int k = 0; k < SIZE_; k++) {
-//        printf("%d ", values[k]);
-//      }
-//      printf("\n");
     }
 
     HPS_INFO("Done receiving.. switching to sending");
