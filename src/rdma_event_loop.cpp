@@ -184,7 +184,6 @@ void RDMAEventLoopNoneFD::Loop() {
   while (run) {
     for (std::list<struct rdma_loop_info *>::iterator it = connections.begin();
          it != connections.end(); ++it) {
-      HPS_INFO("Connection looping");
       struct rdma_loop_info *c = *it;
       c->callback(AVAILABLE);
     }
