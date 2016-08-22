@@ -153,6 +153,10 @@ int RDMAClient::Connected(struct fi_eq_cm_entry *entry) {
   return 0;
 }
 
+bool RDMAClient::IsConnected() {
+  return con != NULL && con->GetState() == CONNECTED;
+}
+
 
 
 

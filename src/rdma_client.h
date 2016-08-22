@@ -14,6 +14,7 @@ public:
   RDMAConnection *GetConnection();
   void Free();
   int OnConnect(enum rdma_loop_status state);
+  bool IsConnected();
 private:
   // options for initialization
   RDMAOptions *options;
