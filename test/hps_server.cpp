@@ -7,6 +7,10 @@ RDMAServer *server;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 
+#define ITERATIONS_ 1000000
+#define SIZE_ 1000
+#define BYTES_ (SIZE_ * 4)
+
 int connect3() {
   int ret = 0;
   fabric = new RDMAFabric(&options, hints);
@@ -39,12 +43,12 @@ int exchange3() {
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
     RDMAConnection *con = *iterator;
 
-    for (int i = 0; i < 1000000; i++) {
-      for (int j = 0; j < 1000; j++) {
+    for (int i = 0; i < ITERATIONS_; i++) {
+      for (int j = 0; j < SIZE_; j++) {
         values[j] = 0;
       }
       read = 0;
-      while (read < 4000) {
+      while (read < BYTES_) {
         con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
         read += current_read;
         if (current_read == 0) {
@@ -59,7 +63,7 @@ int exchange3() {
     HPS_INFO("Done receiving.. switching to sending");
     current_write = 0;
     write = 0;
-    while (current_write < 4000) {
+    while (current_write < BYTES_) {
       con->WriteData((uint8_t *) values, sizeof(values), &write);
       current_write += write;
     }

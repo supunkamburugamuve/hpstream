@@ -9,6 +9,10 @@ RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 RDMAClient *client;
 
+#define ITERATIONS_ 1000000
+#define SIZE_ 1000
+#define BYTES_ (SIZE_ * 4)
+
 int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
   int64_t elapsed;
 
@@ -40,22 +44,18 @@ int exchange3() {
   uint32_t current_read = 0, current_write = 0;
 
   for (int j = 0; j < 10; j++) {
-    for (int i = 0; i < 1000; i++) {
-      if (j % 2 == 0) {
-        values[j][i] = j * 1000 + i;
-      } else {
-        values[j][i] = j * 1000 + i;
-      }
+    for (int i = 0; i < SIZE_; i++) {
+      values[j][i] = j * SIZE_ + i;
     }
   }
 
   clock_gettime(CLOCK_MONOTONIC, &start);
   elapsed = get_elapsed(&end, &start);
 
-  for (int i = 0; i < 1000000; i++) {
+  for (int i = 0; i < ITERATIONS_; i++) {
     current_write = 0;
     write = 0;
-    while (current_write < 4000) {
+    while (current_write < BYTES_) {
       con->WriteData((uint8_t *) values[i % 10] + current_write, sizeof(values[i]), &write);
       if (write > 0 && i % 100 == 0) {
         //HPS_INFO("Write amount %d %d", write, i);
@@ -74,12 +74,12 @@ int exchange3() {
   HPS_INFO("Message rate: time=%ld s and throughput=%lf", elapsed / 1000000, rate);
 
   HPS_INFO("Done sending.. switching to receive");
-  while (read < 4000) {
+  while (read < BYTES_) {
     con->ReadData(((uint8_t *) (values[0]) + read), sizeof(values[0]) - read, &current_read);
     read += current_read;
   }
 
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < SIZE_; i++) {
     printf("%d ", values[0][i]);
   }
 
