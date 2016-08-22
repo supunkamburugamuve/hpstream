@@ -108,7 +108,7 @@ uint64_t RDMABuffer::GetAvailableWriteSpace() {
 }
 
 uint32_t RDMABuffer::NextWriteIndex() {
-  return (base + this->filled_buffs - 1) % this->no_bufs;
+  return (base + this->filled_buffs) % this->no_bufs;
 }
 
 
