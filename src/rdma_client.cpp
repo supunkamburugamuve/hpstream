@@ -36,7 +36,7 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
   uint32_t event;
   ssize_t rd;
   int ret = 0;
-
+  HPS_INFO("On connect");
   if (state == TRYAGAIN) {
     return 0;
   }
