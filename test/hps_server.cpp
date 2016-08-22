@@ -26,7 +26,7 @@ int connect3() {
 }
 
 int exchange3() {
-  int values[1000];
+  int values[SIZE_];
   uint32_t read = 0, write = 0;
   uint32_t current_read = 0, current_write = 0;
   std::list<RDMAConnection *>::const_iterator iterator;

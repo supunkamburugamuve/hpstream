@@ -37,7 +37,7 @@ int exchange3() {
   int ret = 0;
   int64_t elapsed = 0;
   double rate = 0;
-  int values[10][1000];
+  int values[10][SIZE_];
   uint32_t read = 0, write = 0;
   read = 0;
   int count = 0;
