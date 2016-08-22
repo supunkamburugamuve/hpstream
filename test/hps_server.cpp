@@ -7,7 +7,7 @@ RDMAServer *server;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 
-#define ITERATIONS_ 1
+#define ITERATIONS_ 1000000
 #define SIZE_ 10000
 #define BYTES_ (SIZE_ * 4)
 
