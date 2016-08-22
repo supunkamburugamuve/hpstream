@@ -40,7 +40,6 @@ int exchange3() {
   int values[10][SIZE_];
   uint32_t read = 0, write = 0;
   read = 0;
-  int count = 0;
   uint32_t current_read = 0, current_write = 0;
 
   for (int j = 0; j < 10; j++) {
@@ -75,7 +74,7 @@ int exchange3() {
 
   HPS_INFO("Done sending.. switching to receive");
   while (read < BYTES_) {
-    con->ReadData(((uint8_t *) (values[0]) + read), sizeof(values[0]) - read, &current_read);
+    con->ReadData(((uint8_t *) values[0]) + read, sizeof(values[0]) - read, &current_read);
     read += current_read;
   }
 
