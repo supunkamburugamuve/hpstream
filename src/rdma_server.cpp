@@ -2,7 +2,7 @@
 #include <iostream>
 #include "rdma_server.h"
 
-RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
+RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
   this->options = opts;
   this->info_hints = rdmaFabric->GetHints();
   this->eventLoop = loop;
@@ -101,7 +101,11 @@ int RDMAServer::OnConnect(enum rdma_loop_status state) {
     return 0;
   }
   // read the events for incoming messages
-  rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
+  rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
+  if (rd == 0) {
+    return 0;
+  }
+
   if (rd != sizeof entry) {
     HPS_ERR("fi_eq_sread listen");
     return (int) rd;

@@ -25,7 +25,7 @@
 
 
 RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
-                       struct fid_fabric *fabric, struct fid_domain *domain, RDMAEventLoop *loop) {
+                       struct fid_fabric *fabric, struct fid_domain *domain, RDMAEventLoopNoneFD *loop) {
   this->options = opts;
   this->info = info;
   this->info_hints = info_hints;

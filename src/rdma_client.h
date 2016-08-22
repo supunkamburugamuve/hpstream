@@ -9,7 +9,7 @@
 
 class RDMAClient {
 public:
-  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
+  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
   int Connect(void);
   RDMAConnection *GetConnection();
   void Free();
@@ -34,11 +34,13 @@ private:
   // the connection
   RDMAConnection *con;
 
-  RDMAEventLoop *eventLoop;
+  RDMAEventLoopNoneFD *eventLoop;
   // looping thread id
   pthread_t loopThreadId;
 
   int Disconnect();
+
+  int Connected(fi_eq_cm_entry *entry);
 };
 
 #endif /* SCLIENT_H_ */

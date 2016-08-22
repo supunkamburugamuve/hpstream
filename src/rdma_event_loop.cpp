@@ -10,6 +10,13 @@ static void* loopEventsThread(void *param) {
   return NULL;
 }
 
+static void* loopEventsThreadNonBlock(void *param) {
+  RDMAEventLoopNoneFD* server = static_cast<RDMAEventLoopNoneFD *>(param);
+  server->Loop();
+  return NULL;
+}
+
+
 RDMAEventLoop::RDMAEventLoop(struct fid_fabric *fabric) {
   int ret;
   this->fabric = fabric;
@@ -163,6 +170,44 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *con) {
   return 0;
 };
 
+RDMAEventLoopNoneFD::RDMAEventLoopNoneFD(struct fid_fabric *fabric) {
+  this->run = true;
+}
+
+int RDMAEventLoopNoneFD::RegisterRead(struct rdma_loop_info *connection) {
+  this->connections.push_back(connection);
+  return true;
+}
+
+void RDMAEventLoopNoneFD::Loop() {
+  while (run) {
+    for (std::list<struct rdma_loop_info *>::iterator it=connections.begin(); it!=connections.end(); ++it) {
+      struct rdma_loop_info *c = *it;
+      c->callback(AVAILABLE);
+    }
+  }
+}
+
+int RDMAEventLoopNoneFD::Start() {
+  int ret;
+  // start the loop thread
+  ret = pthread_create(&loopThreadId, NULL, &loopEventsThread, (void *)this);
+  if (ret) {
+    HPS_ERR("Failed to create thread %d", ret);
+    return ret;
+  }
+
+  return 0;
+}
+
+int RDMAEventLoopNoneFD::Wait() {
+  pthread_join(loopThreadId, NULL);
+  return 0;
+}
+
+int RDMAEventLoopNoneFD::UnRegister(struct rdma_loop_info *con) {
+  return 0;
+}
 
 
 

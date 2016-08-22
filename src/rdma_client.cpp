@@ -8,7 +8,7 @@
 
 #include "rdma_client.h"
 
-RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
+RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
 	this->info_hints = rdmaFabric->GetHints();
 	this->eventLoop = loop;
 	this->options = opts;
@@ -52,10 +52,11 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
   }
 
   if (event == FI_SHUTDOWN) {
-    HPS_ERR("Recv shut down, Ignoring");
     Disconnect();
     return 0;
-  } {
+  } else if (event == FI_CONNECTED) {
+    Connected(&entry);
+  } else {
     HPS_ERR("Unexpected CM event %d", event);
     ret = -FI_EOTHER;
   }
@@ -124,23 +125,20 @@ int RDMAClient::Connect(void) {
 		return ret;
 	}
 
-	rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
-	if (rd != sizeof entry) {
-		HPS_ERR("fi_eq_sread connect");
-		ret = (int) rd;
-		return ret;
-	}
-
-	if (event != FI_CONNECTED || entry.fid != &ep->fid) {
-		HPS_ERR("Unexpected CM event %d fid %p (ep %p)",
-						event, entry.fid, ep);
-		ret = -FI_EOTHER;
-		return ret;
-	}
-
   ret = this->eventLoop->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
+    return ret;
+  }
+
+  this->con = con;
+	return 0;
+}
+
+int RDMAClient::Connected(struct fi_eq_cm_entry *entry) {
+  int ret;
+  if (entry->fid != &(this->con->GetEp()->fid)) {
+    ret = -FI_EOTHER;
     return ret;
   }
 
@@ -150,9 +148,9 @@ int RDMAClient::Connect(void) {
     return 1;
   }
 
-	this->con = con;
-	printf("Connection established\n");
-	return 0;
+  this->con = con;
+  printf("Connection established\n");
+  return 0;
 }
 
 

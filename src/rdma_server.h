@@ -11,7 +11,7 @@
 
 class RDMAServer {
 public:
-  RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
+  RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
   void Free();
   /**
    * Start the server
@@ -46,7 +46,7 @@ private:
   // the fabric
   struct fid_fabric *fabric;
   // event loop associated with this server
-  RDMAEventLoop *eventLoop;
+  RDMAEventLoopNoneFD *eventLoop;
   // list of connections
   std::list<RDMAConnection *> connections;
   // list of connections halfway through fully establishing
