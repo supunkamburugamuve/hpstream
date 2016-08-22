@@ -562,6 +562,9 @@ int RDMAConnection::TransmitComplete() {
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
     return 0;
   }
+
+  HPS_INFO("tansmit complete %ld", cq_ret);
+
   this->send_buf->acquireLock();
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
@@ -595,6 +598,7 @@ int RDMAConnection::ReceiveComplete() {
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
     return 0;
   }
+  HPS_INFO("receive complete %ld", cq_ret);
   this->recv_buf->acquireLock();
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
