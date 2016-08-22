@@ -68,7 +68,7 @@ int exchange3() {
     current_write = 0;
     write = 0;
     while (current_write < BYTES_) {
-      con->WriteData((uint8_t *) values, sizeof(values), &write);
+      con->WriteData((uint8_t *) values + current_write, sizeof(values) - current_write, &write);
       current_write += write;
     }
     HPS_INFO("Done sending..");

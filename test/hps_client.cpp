@@ -55,7 +55,7 @@ int exchange3() {
     current_write = 0;
     write = 0;
     while (current_write < BYTES_) {
-      con->WriteData((uint8_t *) values[i % 10] + current_write, sizeof(values[i]), &write);
+      con->WriteData((uint8_t *) values[i % 10] + current_write, sizeof(values[i]) - current_write, &write);
       if (write > 0 && i % 100 == 0) {
         //HPS_INFO("Write amount %d %d", write, i);
       }
