@@ -219,19 +219,19 @@ int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
 
-  ret = hps_utils_get_cq_fd(this->options, txcq, &tx_fd);
-  if (ret) {
-    HPS_ERR("Failed to get cq fd for transmission");
-    return ret;
-  }
+//  ret = hps_utils_get_cq_fd(this->options, txcq, &tx_fd);
+//  if (ret) {
+//    HPS_ERR("Failed to get cq fd for transmission");
+//    return ret;
+//  }
   this->tx_loop.fid = tx_fd;
   this->tx_loop.desc = &txcq->fid;
 
-  ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
-  if (ret) {
-    HPS_ERR("Failed to get cq fd for receive");
-    return ret;
-  }
+//  ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
+//  if (ret) {
+//    HPS_ERR("Failed to get cq fd for receive");
+//    return ret;
+//  }
   this->rx_loop.fid = rx_fd;
   this->rx_loop.desc = &rxcq->fid;
 
