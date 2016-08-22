@@ -555,13 +555,14 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
 
 int RDMAConnection::TransmitComplete() {
   struct fi_cq_err_entry comp;
-  int ret;
-  this->send_buf->acquireLock();
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
-  max_completions = max_completions == 0 ? 0 : max_completions;
   ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
+  if (cq_ret == 0) {
+    return 0;
+  }
+  this->send_buf->acquireLock();
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
     if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
@@ -588,11 +589,13 @@ int RDMAConnection::TransmitComplete() {
 int RDMAConnection::ReceiveComplete() {
   struct fi_cq_err_entry comp;
   // lets get the number of completions
-  this->recv_buf->acquireLock();
   size_t max_completions = rx_seq - rx_cq_cntr;
   // we can expect up to this
-  max_completions = max_completions == 0 ? 0 : max_completions;
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
+  if (cq_ret == 0) {
+    return 0;
+  }
+  this->recv_buf->acquireLock();
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
     if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {

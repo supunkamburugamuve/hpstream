@@ -16,7 +16,7 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
 	this->fabric = rdmaFabric->GetFabric();
 	this->info = rdmaFabric->GetInfo();
 	this->eq_attr = {};
-	this->eq_attr.wait_obj = FI_WAIT_UNSPEC;
+	this->eq_attr.wait_obj = FI_WAIT_NONE;
 	this->con = NULL;
 	this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
@@ -41,7 +41,11 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
     return 0;
   }
   // read the events for incoming messages
-  rd = fi_eq_sread(eq, &event, &entry, sizeof entry, -1, 0);
+  rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
+  if (rd == 0) {
+    return 0;
+  }
+
   if (rd != sizeof entry) {
     HPS_ERR("fi_eq_sread listen");
     return (int) rd;
