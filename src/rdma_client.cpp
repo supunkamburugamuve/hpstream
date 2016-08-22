@@ -36,14 +36,16 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
   uint32_t event;
   ssize_t rd;
   int ret = 0;
-  HPS_INFO("On connect");
   if (state == TRYAGAIN) {
     return 0;
   }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
-  HPS_INFO("eq read = %ld", rd);
   if (rd == 0) {
+    return 0;
+  }
+
+  if (rd < 0) {
     return 0;
   }
 
