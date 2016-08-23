@@ -284,47 +284,10 @@ int RDMAConnection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
   return 0;
 }
 
-/*
- * fi_cq_err_entry can be cast to any CQ entry format.
- */
-int RDMAConnection::FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
-                              uint64_t total, int timeout) {
-  struct fi_cq_err_entry comp;
-  struct fid *fids[1];
-  int fd, ret;
-
-  fd = cq == txcq ? tx_fd : rx_fd;
-  fids[0] = &cq->fid;
-  while (total - *cur > 0) {
-    ret = fi_trywait(fabric, fids, 1);
-    if (ret == FI_SUCCESS) {
-      ret = hps_utils_poll_fd(fd, timeout);
-      if (ret && ret != -FI_EAGAIN) {
-        return ret;
-      }
-    }
-    ssize_t cq_ret = fi_cq_read(cq, &comp, 1);
-    if (cq_ret > 0) {
-      (*cur)++;
-    } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
-      return (int) cq_ret;
-    }
-  }
-  return 0;
-}
-
 int RDMAConnection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
                           uint64_t total, int timeout) {
   int ret;
-
-  switch (this->options->comp_method) {
-    case HPS_COMP_WAIT_FD:
-      ret = FDWaitForComp(cq, cur, total, timeout);
-      break;
-    default:
-      ret = SpinForCompletion(cq, cur, total, timeout);
-      break;
-  }
+  ret = SpinForCompletion(cq, cur, total, timeout);
 
   if (ret) {
     if (ret == -FI_EAVAIL) {
@@ -513,7 +476,6 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *length = (uint32_t *) current_buf;
     // set the first 4 bytes as the content length
     *length = current_size;
-    // HPS_INFO("buffer index=%" PRIu32 " Memcpy send_buf_size=%" PRIu32 " buf_size=%" PRIu32 " copy_pos=%" PRIu32 " bytes=%" PRIu32 "", head, buf_size, size, sent_size, current_size);
     memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
