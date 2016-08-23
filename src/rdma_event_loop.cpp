@@ -1,5 +1,4 @@
 #include <rdma/fi_eq.h>
-#include <rdma/fi_errno.h>
 #include <map>
 
 #include "rdma_event_loop.h"

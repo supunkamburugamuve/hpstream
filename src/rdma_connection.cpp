@@ -96,8 +96,6 @@ void RDMAConnection::Free() {
 }
 
 int RDMAConnection::Start() {
-  char *peer_host;
-  int peer_port;
   int ret = PostBuffers();
   if (ret) {
     HPS_ERR("Failed to set up the buffers %d", ret);
@@ -117,9 +115,6 @@ int RDMAConnection::Start() {
     return ret;
   }
 
-//  peer_host = getIPAddress();
-//  peer_port = getPort();
-//  HPS_INFO("Connection established %s %d", peer_host, peer_port);
   mState = CONNECTED;
   return 0;
 }
@@ -275,7 +270,6 @@ int RDMAConnection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
     } else if (timeout >= 0) {
       clock_gettime(CLOCK_MONOTONIC, &b);
       if ((b.tv_sec - a.tv_sec) > timeout) {
-        fprintf(stderr, "%ds timeout expired\n", timeout);
         return -FI_ENODATA;
       }
     }
