@@ -30,7 +30,7 @@ public:
 
   virtual ~RDMAConnection();
 
-  int Start();
+  int start();
 
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send

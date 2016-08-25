@@ -2,8 +2,6 @@
 #include <cstring>
 #include <cstdio>
 #include <iostream>
-#include <cctype>
-#include <cinttypes>
 
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
@@ -95,7 +93,7 @@ void RDMAConnection::Free() {
   }
 }
 
-int RDMAConnection::Start() {
+int RDMAConnection::start() {
   int ret = PostBuffers();
   if (ret) {
     HPS_ERR("Failed to set up the buffers %d", ret);

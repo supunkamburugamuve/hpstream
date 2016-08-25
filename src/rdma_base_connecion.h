@@ -5,6 +5,7 @@
 
 #include "hps.h"
 #include "rdma_event_loop.h"
+#include "rdma_connection.h"
 
 using namespace std;
 /*
@@ -38,7 +39,7 @@ public:
    * Return -1 -> failure.
    *
    */
-  uint32_t start();
+  int32_t start();
 
   /**
    * Close the connection. This will disable the connection from receiving and sending the
@@ -125,6 +126,9 @@ private:
   // A Connection can get closed by the connection class itself(because
   // of an io error). This is the method used to do that.
   void internalClose();
+
+  // underlying rdma connection
+  RDMAConnection *mRdmaConnection;
 
   // Connect status of this connection
   State mState;

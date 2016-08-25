@@ -138,7 +138,7 @@ int RDMAClient::Connected(struct fi_eq_cm_entry *entry) {
   }
 
   // lets start the connection
-  if (con->Start()) {
+  if (con->start()) {
     HPS_ERR("Failed to start the connection");
     return 1;
   }
