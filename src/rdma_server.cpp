@@ -112,7 +112,7 @@ int RDMAServer::OnConnect(enum rdma_loop_status state) {
     RDMAConnection *c = (RDMAConnection *) entry.fid->context;
     if (c != NULL) {
       // now disconnect
-      c->Disconnect();
+      c->closeConnection();
     }
     return 0;
   } else if (event == FI_CONNREQ) {
@@ -207,5 +207,5 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
 }
 
 int RDMAServer::Disconnect(RDMAConnection *con) {
-  return con->Disconnect();
+  return con->closeConnection();
 }

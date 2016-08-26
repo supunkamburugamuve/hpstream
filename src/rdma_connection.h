@@ -54,7 +54,7 @@ public:
   }
 
   // disconnect
-  int Disconnect();
+  int closeConnection();
 
   uint32_t getPort();
 

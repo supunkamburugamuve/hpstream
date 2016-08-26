@@ -6,6 +6,7 @@
 #include "hps.h"
 #include "rdma_event_loop.h"
 #include "rdma_connection.h"
+#include "network_error.h"
 
 using namespace std;
 /*
@@ -55,7 +56,7 @@ public:
 
   string getIPAddress();
 
-  string getPort();
+  int32_t getPort();
 
 protected:
   /**
@@ -67,7 +68,7 @@ protected:
    *  - 0 indicates the data is successfully written.
    *  - negative indicates some error.
    */
-  virtual sp_int32 writeIntoEndPoint(sp_int32 _fd) = 0;
+  virtual int32_t writeIntoEndPoint(sp_int32 _fd) = 0;
 
   /**
    * A way for base class to know if the derived class still has data to be written.
@@ -90,7 +91,7 @@ protected:
    *  - 0 indicates the data is successfully read.
    *  - negative indicates some error.
    */
-  virtual sp_int32 readFromEndPoint(sp_int32 _fd) = 0;
+  virtual int32_t readFromEndPoint(sp_int32 _fd) = 0;
 
   /**
    * Called after ReadFromEndPoint is successful.
@@ -102,14 +103,14 @@ protected:
    * Derived class calls this method when there is data to be sent over the connection.
    * Base class will registerForWrite on the connection fd to be notified when it is writable.
    */
-  sp_int32 registerForWrite();
+  int32_t registerForWrite();
 
   // Get the fd
-  sp_int32 getConnectionFd() const { return mEndpoint->get_fd(); }
+  int32_t getConnectionFd() const { return mEndpoint->get_fd(); }
 
   // Endpoint read registration
-  sp_int32 unregisterEndpointForRead();
-  sp_int32 registerEndpointForRead();
+  int32_t unregisterEndpointForRead();
+  int32_t registerEndpointForRead();
 
   // Connection otions.
   ConnectionOptions* mOptions;
@@ -117,11 +118,11 @@ protected:
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
-  void handleRead(EventLoop::Status);
+  void handleRead();
 
   // Internal callback that is invoked when a write event happens on a
   // connected sate. In this routine we actually send the packets out.
-  void handleWrite(EventLoop::Status);
+  void handleWrite();
 
   // A Connection can get closed by the connection class itself(because
   // of an io error). This is the method used to do that.

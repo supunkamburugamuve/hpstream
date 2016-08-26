@@ -68,7 +68,7 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
 }
 
 int RDMAClient::Disconnect() {
-  return this->con->Disconnect();
+  return this->con->closeConnection();
 }
 
 int RDMAClient::Connect(void) {

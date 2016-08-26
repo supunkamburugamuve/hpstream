@@ -576,7 +576,7 @@ int RDMAConnection::OnRead(enum rdma_loop_status state) {
   return ReceiveComplete();
 }
 
-int RDMAConnection::Disconnect() {
+int RDMAConnection::closeConnection() {
   if (mState != CONNECTED) {
     HPS_ERR("Connection not in CONNECTED state, cannot disconnect");
   }
