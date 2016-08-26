@@ -63,7 +63,7 @@ void BaseConnection::handleWrite() {
 
   if (mState != CONNECTED) return;
 
-  int32_t writeStatus = writeIntoEndPoint(mEndpoint->get_fd());
+  int32_t writeStatus = writeIntoEndPoint();
   if (writeStatus < 0) {
     mWriteState = ERROR;
     mState = TO_BE_DISCONNECTED;
@@ -83,7 +83,7 @@ void BaseConnection::handleWrite() {
 
 void BaseConnection::handleRead() {
   mReadState = READY;
-  int32_t readStatus = readFromEndPoint(mEndpoint->get_fd());
+  int32_t readStatus = readFromEndPoint();
   if (readStatus >= 0) {
     mReadState = NOTREADY;
   } else {

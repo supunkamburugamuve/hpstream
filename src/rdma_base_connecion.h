@@ -67,7 +67,7 @@ protected:
    *  - 0 indicates the data is successfully written.
    *  - negative indicates some error.
    */
-  virtual int32_t writeIntoEndPoint(int32_t _fd) = 0;
+  virtual int32_t writeIntoEndPoint() = 0;
 
   /**
    * A way for base class to know if the derived class still has data to be written.
@@ -90,7 +90,7 @@ protected:
    *  - 0 indicates the data is successfully read.
    *  - negative indicates some error.
    */
-  virtual int32_t readFromEndPoint(int32_t _fd) = 0;
+  virtual int32_t readFromEndPoint() = 0;
 
   /**
    * Called after ReadFromEndPoint is successful.
