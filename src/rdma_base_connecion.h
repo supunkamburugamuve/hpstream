@@ -30,7 +30,6 @@ public:
   // Whether a read/write would block?
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
-  BaseConnection(ConnectionEndPoint* _endpoint, ConnectionOptions* _options, EventLoop* eventLoop);
   virtual ~BaseConnection();
 
   /**
