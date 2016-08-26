@@ -67,7 +67,7 @@ protected:
    *  - 0 indicates the data is successfully written.
    *  - negative indicates some error.
    */
-  virtual int32_t writeIntoEndPoint(sp_int32 _fd) = 0;
+  virtual int32_t writeIntoEndPoint(int32_t _fd) = 0;
 
   /**
    * A way for base class to know if the derived class still has data to be written.
@@ -90,7 +90,7 @@ protected:
    *  - 0 indicates the data is successfully read.
    *  - negative indicates some error.
    */
-  virtual int32_t readFromEndPoint(sp_int32 _fd) = 0;
+  virtual int32_t readFromEndPoint(int32_t _fd) = 0;
 
   /**
    * Called after ReadFromEndPoint is successful.
@@ -143,8 +143,8 @@ private:
   VCallback<NetworkErrorCode> mOnClose;
 
   // Our own callbacks that we register for internal reads/write events.
-  VCallback<EventLoop::Status> mOnRead;
-  VCallback<EventLoop::Status> mOnWrite;
+  VCallback<enum rdma_loop_status> mOnRead;
+  VCallback<enum rdma_loop_status> mOnWrite;
 
   // Connection Endpoint
   ConnectionEndPoint* mEndpoint;

@@ -31,18 +31,18 @@ IncomingPacket::IncomingPacket(char* _data) {
 
 IncomingPacket::~IncomingPacket() { delete[] data_; }
 
-sp_int32 IncomingPacket::UnPackInt(sp_int32* i) {
+int32_t IncomingPacket::UnPackInt(int32_t* i) {
   if (data_ == NULL) return -1;
-  if (position_ + sizeof(sp_int32) > PacketHeader::get_packet_size(header_)) return -1;
-  sp_int32 network_order;
-  memcpy(&network_order, data_ + position_, sizeof(sp_int32));
-  position_ += sizeof(sp_int32);
+  if (position_ + sizeof(int32_t) > PacketHeader::get_packet_size(header_)) return -1;
+  int32_t network_order;
+  memcpy(&network_order, data_ + position_, sizeof(int32_t));
+  position_ += sizeof(int32_t);
   *i = ntohl(network_order);
   return 0;
 }
 
-sp_int32 IncomingPacket::UnPackString(sp_string* i) {
-  sp_int32 size = 0;
+int32_t IncomingPacket::UnPackString(sp_string* i) {
+  int32_t size = 0;
   if (UnPackInt(&size) != 0) return -1;
   if (position_ + size > PacketHeader::get_packet_size(header_)) return -1;
   *i = std::string(data_ + position_, size);
@@ -50,8 +50,8 @@ sp_int32 IncomingPacket::UnPackString(sp_string* i) {
   return 0;
 }
 
-sp_int32 IncomingPacket::UnPackProtocolBuffer(google::protobuf::Message* _proto) {
-  sp_int32 sz;
+int32_t IncomingPacket::UnPackProtocolBuffer(google::protobuf::Message* _proto) {
+  int32_t sz;
   if (UnPackInt(&sz) != 0) return -1;
   if (position_ + sz > PacketHeader::get_packet_size(header_)) return -1;
   if (!_proto->ParseFromArray(data_ + position_, sz)) return -1;
@@ -59,7 +59,7 @@ sp_int32 IncomingPacket::UnPackProtocolBuffer(google::protobuf::Message* _proto)
   return 0;
 }
 
-sp_int32 IncomingPacket::UnPackREQID(REQID* _rid) {
+int32_t IncomingPacket::UnPackREQID(REQID* _rid) {
   if (position_ + REQID_size > PacketHeader::get_packet_size(header_)) return -1;
   _rid->assign(std::string(data_ + position_, REQID_size));
   position_ += REQID_size;
@@ -72,10 +72,10 @@ uint32_t IncomingPacket::GetTotalPacketSize() const {
 
 void IncomingPacket::Reset() { position_ = 0; }
 
-sp_int32 IncomingPacket::Read(sp_int32 _fd) {
+int32_t IncomingPacket::Read(int32_t _fd) {
   if (data_ == NULL) {
     // We are still reading the header
-    sp_int32 read_status =
+    int32_t read_status =
         InternalRead(_fd, header_ + position_, PacketHeader::header_size() - position_);
 
     if (read_status != 0) {
@@ -104,7 +104,7 @@ sp_int32 IncomingPacket::Read(sp_int32 _fd) {
   }
 
   // The header has been completely read. Read the data
-  sp_int32 retval =
+  int32_t retval =
       InternalRead(_fd, data_ + position_, PacketHeader::get_packet_size(header_) - position_);
   if (retval == 0) {
     // Successfuly read the packet.
@@ -114,7 +114,7 @@ sp_int32 IncomingPacket::Read(sp_int32 _fd) {
   return retval;
 }
 
-sp_int32 IncomingPacket::InternalRead(sp_int32 _fd, char* _buffer, uint32_t _size) {
+int32_t IncomingPacket::InternalRead(int32_t _fd, char* _buffer, uint32_t _size) {
   char* current = _buffer;
   uint32_t to_read = _size;
   while (to_read > 0) {
@@ -164,22 +164,22 @@ uint32_t OutgoingPacket::GetBytesFilled() const { return position_; }
 
 uint32_t OutgoingPacket::GetBytesLeft() const { return total_packet_size_ - position_; }
 
-sp_int32 OutgoingPacket::PackInt(const sp_int32& i) {
-  if (sizeof(sp_int32) + position_ > total_packet_size_) {
+int32_t OutgoingPacket::PackInt(const int32_t& i) {
+  if (sizeof(int32_t) + position_ > total_packet_size_) {
     return -1;
   }
-  sp_int32 network_order = htonl(i);
-  memcpy(data_ + position_, &network_order, sizeof(sp_int32));
-  position_ += sizeof(sp_int32);
+  int32_t network_order = htonl(i);
+  memcpy(data_ + position_, &network_order, sizeof(int32_t));
+  position_ += sizeof(int32_t);
   return 0;
 }
 
-uint32_t OutgoingPacket::SizeRequiredToPackProtocolBuffer(sp_int32 _byte_size) {
-  return sizeof(sp_int32) + _byte_size;
+uint32_t OutgoingPacket::SizeRequiredToPackProtocolBuffer(int32_t _byte_size) {
+  return sizeof(int32_t) + _byte_size;
 }
 
-sp_int32 OutgoingPacket::PackProtocolBuffer(const google::protobuf::Message& _proto,
-                                            sp_int32 _byte_size) {
+int32_t OutgoingPacket::PackProtocolBuffer(const google::protobuf::Message& _proto,
+                                            int32_t _byte_size) {
   if (PackInt(_byte_size) != 0) return -1;
   if (_byte_size + position_ > total_packet_size_) {
     return -1;
@@ -189,7 +189,7 @@ sp_int32 OutgoingPacket::PackProtocolBuffer(const google::protobuf::Message& _pr
   return 0;
 }
 
-sp_int32 OutgoingPacket::PackREQID(const REQID& _rid) {
+int32_t OutgoingPacket::PackREQID(const REQID& _rid) {
   if (REQID_size + position_ > total_packet_size_) {
     return -1;
   }
@@ -202,7 +202,7 @@ uint32_t OutgoingPacket::SizeRequiredToPackString(const std::string& _input) {
   return sizeof(uint32_t) + _input.size();
 }
 
-sp_int32 OutgoingPacket::PackString(const sp_string& i) {
+int32_t OutgoingPacket::PackString(const sp_string& i) {
   if (sizeof(uint32_t) + i.size() + position_ > total_packet_size_) {
     return -1;
   }
@@ -217,7 +217,7 @@ void OutgoingPacket::PrepareForWriting() {
   position_ = 0;
 }
 
-sp_int32 OutgoingPacket::Write(sp_int32 _fd) {
+int32_t OutgoingPacket::Write(int32_t _fd) {
   while (position_ < total_packet_size_) {
     ssize_t num_written = write(_fd, data_ + position_, total_packet_size_ - position_);
     if (num_written > 0) {
