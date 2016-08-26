@@ -112,7 +112,7 @@ protected:
   int32_t registerEndpointForRead();
 
   // Connection otions.
-  ConnectionOptions* mOptions;
+  // ConnectionOptions* mOptions;
 
 private:
   // Internal callback that is invoked when a read event happens on a
