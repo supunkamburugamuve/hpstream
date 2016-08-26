@@ -105,7 +105,7 @@ protected:
   int32_t registerForWrite();
 
   // Get the fd
-  int32_t getConnectionFd() const { return mEndpoint->get_fd(); }
+  int32_t getConnectionFd();
 
   // Endpoint read registration
   int32_t unregisterEndpointForRead();
@@ -147,7 +147,7 @@ private:
   VCallback<enum rdma_loop_status> mOnWrite;
 
   // Connection Endpoint
-  ConnectionEndPoint* mEndpoint;
+  // ConnectionEndPoint* mEndpoint;
 
   // The underlying event loop
   EventLoop* mEventLoop;
