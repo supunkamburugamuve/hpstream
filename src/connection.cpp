@@ -48,7 +48,7 @@ int32_t Connection::writeIntoIOVector(int32_t maxWrite, int32_t* toWrite) {
     mIOVector[i].iov_len = PacketHeader::get_packet_size(iter->first->get_header()) +
                            PacketHeader::header_size() - iter->first->position_;
     if (mIOVector[i].iov_len >= bytesLeft) {
-      mIOVector[i].iov_len = bytesLeft;
+      mIOVector[i].iov_len = (size_t) bytesLeft;
     }
     bytesLeft -= mIOVector[i].iov_len;
     *toWrite = *toWrite + mIOVector[i].iov_len;

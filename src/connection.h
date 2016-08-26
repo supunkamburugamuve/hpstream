@@ -79,8 +79,8 @@ private:
 
   // The list of outstanding packets that need to be sent.
   std::list<std::pair<OutgoingPacket*, VCallback<NetworkErrorCode>>> mOutstandingPackets;
-  int64_t mNumOutstandingPackets;  // primarily because list's size is linear
-  int64_t mNumOutstandingBytes;
+  int32_t mNumOutstandingPackets;  // primarily because list's size is linear
+  int32_t mNumOutstandingBytes;
 
   // The list of packets that have been sent but not yet been reported to the higher layer
   std::list<std::pair<OutgoingPacket*, VCallback<NetworkErrorCode>>> mSentPackets;
