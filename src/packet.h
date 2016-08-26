@@ -2,7 +2,8 @@
 
 #include <functional>
 #include <string>
-#include "basics/basics.h"
+#include <cstring>
+#include <google/protobuf/message.h>
 
 namespace google {
   namespace protobuf {
@@ -22,8 +23,8 @@ const uint32_t kSPPacketSize = sizeof(uint32_t);
 class PacketHeader {
 public:
   static void set_packet_size(char* header, uint32_t size);
-  static sp_uint32 get_packet_size(const char* header);
-  static sp_uint32 header_size();
+  static uint32_t get_packet_size(const char* header);
+  static uint32_t header_size();
 };
 
 /*
@@ -73,7 +74,7 @@ public:
   char* get_header() { return header_; }
 
   // Get the total size of the packet
-  int32_t GetTotalPacketSize() const;
+  uint32_t GetTotalPacketSize() const;
 
 private:
   // Only Connection class can use the Read method to have
@@ -86,10 +87,10 @@ private:
   // partially read and there was no more data. Further read
   // calls are necessary to completely read the packet.
   // A negative return value implies an irreovrable error
-  uint32_t Read(int32_t fd);
+  int32_t Read(int32_t fd);
 
   // Helper method for Read to do the low level read calls.
-  uint32_t InternalRead(int32_t fd, char* buffer, sp_uint32 size);
+  int32_t InternalRead(int32_t fd, char* buffer, uint32_t size);
 
   // The maximum packet length allowed. 0 means no limit
   uint32_t max_packet_size_;
@@ -130,7 +131,7 @@ public:
   static uint32_t SizeRequiredToPackString(const std::string& _input);
 
   // pack a string
-  int32_t PackString(const sp_string& i);
+  int32_t PackString(const std::string& i);
 
   // helper function to determine how much space is needed to encode a protobuf
   // The paramter byte_size is the whats reported by the ByteSize
@@ -179,7 +180,7 @@ private:
   char* data_;
 
   // The packet size as specified in the constructor.
-  sp_uint32 total_packet_size_;
+  uint32_t total_packet_size_;
 };
 
 #endif  // PACKET_H_

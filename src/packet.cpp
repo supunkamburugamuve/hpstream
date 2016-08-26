@@ -1,3 +1,4 @@
+#include <netinet/in.h>
 #include "packet.h"
 
 // PacketHeader static methods
@@ -41,7 +42,7 @@ int32_t IncomingPacket::UnPackInt(int32_t* i) {
   return 0;
 }
 
-int32_t IncomingPacket::UnPackString(sp_string* i) {
+int32_t IncomingPacket::UnPackString(std::string* i) {
   int32_t size = 0;
   if (UnPackInt(&size) != 0) return -1;
   if (position_ + size > PacketHeader::get_packet_size(header_)) return -1;
@@ -217,7 +218,7 @@ void OutgoingPacket::PrepareForWriting() {
   position_ = 0;
 }
 
-int32_t OutgoingPacket::Write(int32_t _fd) {
+uint32_t OutgoingPacket::Write(int32_t _fd) {
   while (position_ < total_packet_size_) {
     ssize_t num_written = write(_fd, data_ + position_, total_packet_size_ - position_);
     if (num_written > 0) {

@@ -8,7 +8,6 @@ public:
    * `options` is also created by the caller and the caller owns it. options
    *  should be active throught the lifetime of the Connection object.
    */
-  Connection(ConnectionEndPoint* endpoint, ConnectionOptions* options, EventLoop* eventLoop);
   virtual ~Connection();
 
   /**
@@ -112,5 +111,5 @@ private:
   bool mUnderBackPressure;
   // How many times have we enqueued data and found that we had outstanding bytes >
   // HWM of back pressure threshold
-  sp_uint8 mNumEnqueuesWithBufferFull;
+  uint8_t mNumEnqueuesWithBufferFull;
 };
