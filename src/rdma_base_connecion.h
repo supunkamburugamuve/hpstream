@@ -150,7 +150,7 @@ private:
   // ConnectionEndPoint* mEndpoint;
 
   // The underlying event loop
-  EventLoop* mEventLoop;
+  RDMAEventLoopNoneFD* mEventLoop;
   bool mCanCloseConnection;
 };
 
