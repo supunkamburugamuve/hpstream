@@ -114,6 +114,8 @@ protected:
   // Connection otions.
   // ConnectionOptions* mOptions;
 
+  // underlying rdma connection
+  RDMAConnection *mRdmaConnection;
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
@@ -126,9 +128,6 @@ private:
   // A Connection can get closed by the connection class itself(because
   // of an io error). This is the method used to do that.
   void internalClose();
-
-  // underlying rdma connection
-  RDMAConnection *mRdmaConnection;
 
   // Connect status of this connection
   State mState;

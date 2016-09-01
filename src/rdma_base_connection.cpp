@@ -63,7 +63,7 @@ void BaseConnection::handleWrite() {
 
   if (mState != CONNECTED) return;
 
-  int32_t writeStatus = writeIntoEndPoint();
+  int32_t writeStatus = writeIntoEndP oint();
   if (writeStatus < 0) {
     mWriteState = ERROR;
     mState = TO_BE_DISCONNECTED;

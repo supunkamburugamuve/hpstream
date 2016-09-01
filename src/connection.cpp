@@ -1,5 +1,7 @@
 #include "connection.h"
 
+#define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 64
+
 int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packet, NULL); }
 
 int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCode> cb) {
@@ -35,29 +37,6 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
   mOnConnectionBufferFull = std::move(cbStarter);
   mOnConnectionBufferEmpty = std::move(cbReliever);
   return 0;
-}
-
-int32_t Connection::writeIntoIOVector(int32_t maxWrite, int32_t* toWrite) {
-  int32_t bytesLeft = maxWrite;
-  int32_t simulWrites =
-      mIOVectorSize > mNumOutstandingPackets ? mNumOutstandingPackets : mIOVectorSize;
-  *toWrite = 0;
-  auto iter = mOutstandingPackets.begin();
-  for (int32_t i = 0; i < simulWrites; ++i) {
-    mIOVector[i].iov_base = iter->first->get_header() + iter->first->position_;
-    mIOVector[i].iov_len = PacketHeader::get_packet_size(iter->first->get_header()) +
-                           PacketHeader::header_size() - iter->first->position_;
-    if (mIOVector[i].iov_len >= bytesLeft) {
-      mIOVector[i].iov_len = (size_t) bytesLeft;
-    }
-    bytesLeft -= mIOVector[i].iov_len;
-    *toWrite = *toWrite + mIOVector[i].iov_len;
-    if (bytesLeft <= 0) {
-      return i + 1;
-    }
-    iter++;
-  }
-  return simulWrites;
 }
 
 void Connection::afterWriteIntoIOVector(int32_t simulWrites, ssize_t numWritten) {
@@ -100,14 +79,14 @@ bool Connection::stillHaveDataToWrite() {
   return !mOutstandingPackets.empty();
 }
 
-int32_t Connection::writeIntoEndPoint(int32_t fd) {
+int32_t Connection::writeIntoEndPoint() {
   int32_t bytesWritten = 0;
   while (1) {
     int32_t stillToWrite = mWriteBatchsize - bytesWritten;
     int32_t toWrite = 0;
     int32_t simulWrites = writeIntoIOVector(stillToWrite, &toWrite);
 
-    ssize_t numWritten = ::writev(fd, mIOVector, simulWrites);
+    ssize_t numWritten = writev(fd, mIOVector, simulWrites);
     if (numWritten >= 0) {
       afterWriteIntoIOVector(simulWrites, numWritten);
       bytesWritten += numWritten;

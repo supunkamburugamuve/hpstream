@@ -19,6 +19,9 @@
 #define HPS_INFO(fmt, ...) HPS_LOG("info", fmt, ##__VA_ARGS__)
 //#define HPS_INFO(fmt, ...)
 
+#define CHECK(args) \
+  do {if (args) return}
+
 #define MAX_ERRORS 10
 
 enum hps_comp_method {

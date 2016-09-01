@@ -63,9 +63,7 @@ public:
   static int64_t systemLWMOutstandingBytes;
 
 private:
-  virtual int32_t writeIntoEndPoint(int32_t fd);
-
-  int32_t writeIntoIOVector(int32_t maxWrite, int32_t* toWrite);
+  virtual int32_t writeIntoEndPoint();
 
   void afterWriteIntoIOVector(int32_t simumWrites, ssize_t numWritten);
 
@@ -73,7 +71,7 @@ private:
 
   virtual void handleDataWritten();
 
-  virtual int32_t readFromEndPoint(int32_t _fd);
+  virtual int32_t readFromEndPoint();
 
   virtual void handleDataRead();
 
@@ -99,9 +97,6 @@ private:
   // This call back gets registered from the Server and gets called once the conneciton pipe
   // becomes full (outstanding bytes exceed threshold)
   VCallback<Connection*> mOnConnectionBufferFull;
-
-  int32_t mIOVectorSize;
-  struct iovec* mIOVector;
 
   // How many bytes do we want to write in one batch
   int32_t mWriteBatchsize;
