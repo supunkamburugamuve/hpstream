@@ -5,6 +5,7 @@
 #include <string>
 #include <cstring>
 #include <google/protobuf/message.h>
+#include "connection.h"
 
 namespace google {
   namespace protobuf {

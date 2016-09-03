@@ -77,7 +77,7 @@ int32_t IncomingPacket::Read(Connection *con) {
   if (data_ == NULL) {
     // We are still reading the header
     int32_t read_status =
-        InternalRead(_fd, header_ + position_, PacketHeader::header_size() - position_);
+        InternalRead(con, header_ + position_, PacketHeader::header_size() - position_);
 
     if (read_status != 0) {
       // Header read is either partial or had an error
@@ -119,14 +119,15 @@ int32_t IncomingPacket::InternalRead(Connection *con, char* _buffer, uint32_t _s
   char* current = _buffer;
   uint32_t to_read = _size;
   while (to_read > 0) {
-    ssize_t num_read = con->read(_fd, current, to_read);
+    ssize_t num_read;
+    num_read = con->readData((uint8_t *) current, to_read, (uint32_t *) &num_read);
     if (num_read > 0) {
       current = current + num_read;
       to_read = to_read - num_read;
       position_ = position_ + num_read;
     } else if (num_read == 0) {
       // remote end has done a shutdown.
-      LOG(ERROR) << "Remote end has done a shutdown\n";
+      HPS_ERR("Remote end has done a shutdown");
       return -1;
     } else {
       // read returned negative value.
@@ -142,7 +143,7 @@ int32_t IncomingPacket::InternalRead(Connection *con, char* _buffer, uint32_t _s
       } else {
         // something really bad happened. Bail out
         // try again
-        LOG(ERROR) << "Something really bad happened while reading " << errno << "\n";
+        HPS_ERR("Something really bad happened while reading %d", errno);
         return -1;
       }
     }
