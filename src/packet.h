@@ -88,10 +88,10 @@ private:
   // partially read and there was no more data. Further read
   // calls are necessary to completely read the packet.
   // A negative return value implies an irreovrable error
-  int32_t Read(int32_t fd);
+  int32_t Read(Connection *fd);
 
   // Helper method for Read to do the low level read calls.
-  int32_t InternalRead(int32_t fd, char* buffer, uint32_t size);
+  int32_t InternalRead(Connection *con, char* buffer, uint32_t size);
 
   // The maximum packet length allowed. 0 means no limit
   uint32_t max_packet_size_;

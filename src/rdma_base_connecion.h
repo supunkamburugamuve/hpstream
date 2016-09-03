@@ -53,6 +53,16 @@ public:
    */
   void registerForClose(VCallback<NetworkErrorCode> cb);
 
+  /**
+   * Send the content in the buffer using the underlying connection
+   */
+  int writeData(uint8_t *buf, uint32_t size, uint32_t *write);
+
+  /**
+   * Read the data from the underlying connection
+   */
+  int readData(uint8_t *buf, uint32_t size, uint32_t *read);
+
   string getIPAddress();
 
   int32_t getPort();

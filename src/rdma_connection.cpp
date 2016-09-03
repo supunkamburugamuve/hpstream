@@ -468,7 +468,8 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *length = (uint32_t *) current_buf;
     // set the first 4 bytes as the content length
     *length = current_size;
-    memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
+    memcpy(curre
+    nt_buf + sizeof(uint32_t), buf + sent_size, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
       sent_size += current_size;

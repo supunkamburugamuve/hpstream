@@ -1,6 +1,7 @@
 #include "connection.h"
 
 #define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 64
+#define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1024
 
 int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packet, NULL); }
 
@@ -37,6 +38,29 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
   mOnConnectionBufferFull = std::move(cbStarter);
   mOnConnectionBufferEmpty = std::move(cbReliever);
   return 0;
+}
+
+int32_t Connection::writeIntoIOVector(int32_t maxWrite, int32_t* toWrite) {
+  uint32_t bytesLeft = maxWrite;
+  int32_t simulWrites =
+      mIOVectorSize > mNumOutstandingPackets ? mNumOutstandingPackets : mIOVectorSize;
+  *toWrite = 0;
+  auto iter = mOutstandingPackets.begin();
+  for (sp_int32 i = 0; i < simulWrites; ++i) {
+    mIOVector[i].iov_base = iter->first->get_header() + iter->first->position_;
+    mIOVector[i].iov_len = PacketHeader::get_packet_size(iter->first->get_header()) +
+                           PacketHeader::header_size() - iter->first->position_;
+    if (mIOVector[i].iov_len >= bytesLeft) {
+      mIOVector[i].iov_len = bytesLeft;
+    }
+    bytesLeft -= mIOVector[i].iov_len;
+    *toWrite = *toWrite + mIOVector[i].iov_len;
+    if (bytesLeft <= 0) {
+      return i + 1;
+    }
+    iter++;
+  }
+  return simulWrites;
 }
 
 void Connection::afterWriteIntoIOVector(int32_t simulWrites, ssize_t numWritten) {
@@ -86,7 +110,7 @@ int32_t Connection::writeIntoEndPoint() {
     int32_t toWrite = 0;
     int32_t simulWrites = writeIntoIOVector(stillToWrite, &toWrite);
 
-    ssize_t numWritten = writev(fd, mIOVector, simulWrites);
+    ssize_t numWritten = writeData(fd, mIOVector, simulWrites);
     if (numWritten >= 0) {
       afterWriteIntoIOVector(simulWrites, numWritten);
       bytesWritten += numWritten;
@@ -113,5 +137,39 @@ int32_t Connection::writeIntoEndPoint() {
         return -1;
       }
     }
+  }
+}
+
+int32_t Connection::readFromEndPoint() {
+  int32_t bytesRead = 0;
+  while (1) {
+    int32_t read_status = mIncomingPacket->Read(this);
+    if (read_status == 0) {
+      // Packet was succcessfully read.
+      IncomingPacket* packet = mIncomingPacket;
+      mIncomingPacket = new IncomingPacket(mOptions->max_packet_size_);
+      mReceivedPackets.push_back(packet);
+      bytesRead += packet->GetTotalPacketSize();
+      if (bytesRead >= __SYSTEM_NETWORK_READ_BATCH_SIZE__) {
+        return 0;
+      }
+    } else if (read_status > 0) {
+      // packet was read partially
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+}
+
+void Connection::handleDataRead() {
+  while (!mReceivedPackets.empty()) {
+    IncomingPacket* packet = mReceivedPackets.front();
+    if (mOnNewPacket) {
+      mOnNewPacket(packet);
+    } else {
+      delete packet;
+    }
+    mReceivedPackets.pop_front();
   }
 }

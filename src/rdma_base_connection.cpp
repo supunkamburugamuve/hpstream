@@ -55,7 +55,20 @@ int32_t BaseConnection::getPort() {
   return mRdmaConnection->getPort();
 }
 
-void BaseConnection::registerForClose(VCallback<NetworkErrorCode> cb) { mOnClose = std::move(cb); }
+void BaseConnection::registerForClose(VCallback<NetworkErrorCode> cb) {
+  mOnClose = std::move(cb);
+}
+
+/**
+ *
+ */
+int BaseConnection::readData(uint8_t *buf, uint32_t size, uint32_t *read) {
+  return mRdmaConnection->ReadData(buf, size, read);
+}
+
+int BaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
+  return mRdmaConnection->WriteData(buf, size, write);
+}
 
 // Note that we hold the mutex when we come to this function
 void BaseConnection::handleWrite() {
@@ -63,7 +76,7 @@ void BaseConnection::handleWrite() {
 
   if (mState != CONNECTED) return;
 
-  int32_t writeStatus = writeIntoEndP oint();
+  int32_t writeStatus = writeIntoEndPoint();
   if (writeStatus < 0) {
     mWriteState = ERROR;
     mState = TO_BE_DISCONNECTED;

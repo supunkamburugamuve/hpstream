@@ -73,7 +73,7 @@ uint32_t IncomingPacket::GetTotalPacketSize() const {
 
 void IncomingPacket::Reset() { position_ = 0; }
 
-int32_t IncomingPacket::Read(int32_t _fd) {
+int32_t IncomingPacket::Read(Connection *con) {
   if (data_ == NULL) {
     // We are still reading the header
     int32_t read_status =
@@ -115,11 +115,11 @@ int32_t IncomingPacket::Read(int32_t _fd) {
   return retval;
 }
 
-int32_t IncomingPacket::InternalRead(int32_t _fd, char* _buffer, uint32_t _size) {
+int32_t IncomingPacket::InternalRead(Connection *con, char* _buffer, uint32_t _size) {
   char* current = _buffer;
   uint32_t to_read = _size;
   while (to_read > 0) {
-    ssize_t num_read = read(_fd, current, to_read);
+    ssize_t num_read = con->read(_fd, current, to_read);
     if (num_read > 0) {
       current = current + num_read;
       to_read = to_read - num_read;
