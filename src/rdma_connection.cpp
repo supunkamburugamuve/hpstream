@@ -468,8 +468,9 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *length = (uint32_t *) current_buf;
     // set the first 4 bytes as the content length
     *length = current_size;
-    memcpy(curre
-    nt_buf + sizeof(uint32_t), buf + sent_size, current_size);
+    memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
+    // set the data size in the buffer
+    sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
       sent_size += current_size;
@@ -497,6 +498,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
 
 int RDMAConnection::TransmitComplete() {
   struct fi_cq_err_entry comp;
+  uint32_t completed_bytes = 0;
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
@@ -507,14 +509,17 @@ int RDMAConnection::TransmitComplete() {
   }
 
   //HPS_INFO("tansmit complete %ld", cq_ret);
-
   this->send_buf->acquireLock();
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
-    if (this->send_buf->IncrementTail((uint32_t) cq_ret)) {
-      HPS_ERR("Failed to increment buffer data pointer");
-      this->send_buf->releaseLock();
-      return 1;
+    for (int i = 0; i < cq_ret; i++) {
+      uint32_t base = this->send_buf->GetBase();
+      completed_bytes += this->send_buf->getContentSize(base);
+      if (this->send_buf->IncrementTail((uint32_t) 1)) {
+        HPS_ERR("Failed to increment buffer data pointer");
+        this->send_buf->releaseLock();
+        return 1;
+      }
     }
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
@@ -527,6 +532,10 @@ int RDMAConnection::TransmitComplete() {
       this->send_buf->releaseLock();
       return (int) cq_ret;
     }
+  }
+  if (onWriteComplete != NULL) {
+    // call the calback with the completed bytes
+    onWriteComplete(completed_bytes);
   }
   this->send_buf->releaseLock();
   return 0;

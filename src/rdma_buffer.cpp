@@ -55,6 +55,7 @@ int RDMABuffer::Init() {
   for (i = 0; i < no_bufs; i++) {
     this->buffers[i] = this->buf + buf_size * i;
   }
+  this->content_sizes = (uint32_t *)malloc(sizeof(uint32_t *) * no_bufs);
   this->base = 0;
   return 0;
 }
@@ -93,6 +94,23 @@ int RDMABuffer::IncrementTail(uint32_t count) {
   this->submitted_buffs -= count;
   this->filled_buffs -= count;
   return 0;
+}
+
+int RDMABuffer::setBufferContentSize(int index, uint32_t size) {
+  if (index < 0 || index >= no_bufs) {
+    HPS_ERR("Index out of bound %d", index);
+    return 1;
+  }
+  this->content_sizes[index] = size;
+  return 0;
+}
+
+uint32_t RDMABuffer::getContentSize(int index) {
+  if (index < 0 || index >= no_bufs) {
+    HPS_ERR("Index out of bound %d", index);
+    return 1;
+  }
+  return this->content_sizes[index];
 }
 
 void RDMABuffer::Free() {

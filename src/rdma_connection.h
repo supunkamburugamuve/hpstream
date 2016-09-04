@@ -141,6 +141,8 @@ private:
   int OnRead(rdma_loop_status state);
 
   int OnWrite(rdma_loop_status state);
+
+  VCallback<uint32_t> onWriteComplete;
 };
 
 #endif /* HPS_CONNECTION_H_ */
