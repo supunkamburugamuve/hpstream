@@ -4,7 +4,8 @@
 #define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1024
 
 Connection::Connection() {
-  this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) { return this->afterWriteIntoIOVector(complets); });
+  this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
+    return this->afterWriteIntoIOVector(complets); });
 }
 
 int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packet, NULL); }
@@ -48,20 +49,15 @@ void Connection::afterWriteIntoIOVector(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
   while (numWritten > 0) {
     auto pr = mOutstandingPackets.front();
-    if (numWritten >= (ssize_t)mIOVector[i].iov_len) {
-      // This iov structure was completely written as instructed
-      int32_t bytesLeftForThisPacket = PacketHeader::get_packet_size(pr.first->get_header()) +
-                                         PacketHeader::header_size() - pr.first->position_;
-      bytesLeftForThisPacket -= mIOVector[i].iov_len;
-      if (bytesLeftForThisPacket == 0) {
+    // This iov structure was completely written as instructed
+    int32_t bytesLeftForThisPacket = PacketHeader::get_packet_size(pr.first->get_header()) +
+                                     PacketHeader::header_size() - pr.first->position_;
+    if (numWritten >= bytesLeftForThisPacket) {
         // This whole packet has been consumed
-        mSentPackets.push_back(pr);
-        mOutstandingPackets.pop_front();
-        mNumOutstandingPackets--;
-      } else {
-        pr.first->position_ += mIOVector[i].iov_len;
-      }
-      numWritten -= mIOVector[i].iov_len;
+      mSentPackets.push_back(pr);
+      mOutstandingPackets.pop_front();
+      mNumOutstandingPackets--;
+      numWritten -= bytesLeftForThisPacket;
     } else {
       // This iov structure has been partially sent out
       pr.first->position_ += numWritten;
