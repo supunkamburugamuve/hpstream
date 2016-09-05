@@ -44,29 +44,6 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
   return 0;
 }
 
-int32_t Connection::writeIntoIOVector(int32_t maxWrite, int32_t* toWrite) {
-  uint32_t bytesLeft = maxWrite;
-  int32_t simulWrites =
-      mIOVectorSize > mNumOutstandingPackets ? mNumOutstandingPackets : mIOVectorSize;
-  *toWrite = 0;
-  auto iter = mOutstandingPackets.begin();
-  for (sp_int32 i = 0; i < simulWrites; ++i) {
-    mIOVector[i].iov_base = iter->first->get_header() + iter->first->position_;
-    mIOVector[i].iov_len = PacketHeader::get_packet_size(iter->first->get_header()) +
-                           PacketHeader::header_size() - iter->first->position_;
-    if (mIOVector[i].iov_len >= bytesLeft) {
-      mIOVector[i].iov_len = bytesLeft;
-    }
-    bytesLeft -= mIOVector[i].iov_len;
-    *toWrite = *toWrite + mIOVector[i].iov_len;
-    if (bytesLeft <= 0) {
-      return i + 1;
-    }
-    iter++;
-  }
-  return simulWrites;
-}
-
 void Connection::afterWriteIntoIOVector(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
   while (numWritten > 0) {
@@ -107,39 +84,28 @@ bool Connection::stillHaveDataToWrite() {
 }
 
 int32_t Connection::writeIntoEndPoint() {
-  int32_t bytesWritten = 0;
-  while (1) {
-    int32_t stillToWrite = mWriteBatchsize - bytesWritten;
-    int32_t toWrite = 0;
-    int32_t simulWrites = writeIntoIOVector(stillToWrite, &toWrite);
+  auto iter = mOutstandingPackets.begin();
+  uint32_t size_to_write = 0;
+  char *buf = NULL;
+  uint32_t current_write = 0, total_write = 0;
+  int write_status;
+  do {
+    buf = iter->first->get_header() + iter->first->position_;
+    size_to_write = PacketHeader::get_packet_size(iter->first->get_header()) +
+                    PacketHeader::header_size() - iter->first->position_;
 
-    ssize_t numWritten = writeData(fd, mIOVector, simulWrites);
-    if (numWritten >= 0) {
-      bytesWritten += numWritten;
-      if (bytesWritten >= mWriteBatchsize) {
-        // We only write a at max this bytes at a time.
-        // This is so that others can get a chance
-        return 0;
-      }
-      if (numWritten < toWrite) {
-        // writev would block otherwise
-        return 0;
-      }
-      if (!stillHaveDataToWrite()) {
-        // No more packets to write
-        return 0;
-      }
-    } else {
-      // some error happened in writev
-      if (errno == EAGAIN || errno == EINTR) {
-        // we need to retry the write again
-        HPS_INFO("writev said to try again");
-      } else {
-        HPS_INFO("error happened in writev");
-        return -1;
-      }
+    // try to write the data
+    write_status = writeData((uint8_t *) buf, size_to_write, &current_write);
+    if (write_status) {
+      HPS_ERR("Failed to write the data");
+      return write_status;
     }
-  }
+    iter++;
+    total_write += current_write;
+    // we loop until we write everything we want to write is successful
+    // and total written data is less than batch size
+  } while (current_write == size_to_write && total_write < mWriteBatchsize);
+  return 0;
 }
 
 int32_t Connection::readFromEndPoint() {
