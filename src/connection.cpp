@@ -3,6 +3,10 @@
 #define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 64
 #define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1024
 
+Connection::Connection() {
+  this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) { return this->afterWriteIntoIOVector(complets); });
+}
+
 int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packet, NULL); }
 
 int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCode> cb) {
@@ -63,9 +67,9 @@ int32_t Connection::writeIntoIOVector(int32_t maxWrite, int32_t* toWrite) {
   return simulWrites;
 }
 
-void Connection::afterWriteIntoIOVector(int32_t simulWrites, ssize_t numWritten) {
+void Connection::afterWriteIntoIOVector(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
-  for (int32_t i = 0; i < simulWrites; ++i) {
+  while (numWritten > 0) {
     auto pr = mOutstandingPackets.front();
     if (numWritten >= (ssize_t)mIOVector[i].iov_len) {
       // This iov structure was completely written as instructed
@@ -86,7 +90,6 @@ void Connection::afterWriteIntoIOVector(int32_t simulWrites, ssize_t numWritten)
       pr.first->position_ += numWritten;
       numWritten = 0;
     }
-    if (numWritten <= 0) break;
   }
 
   // Check if we reduced the write buffer to something below the back
@@ -112,7 +115,6 @@ int32_t Connection::writeIntoEndPoint() {
 
     ssize_t numWritten = writeData(fd, mIOVector, simulWrites);
     if (numWritten >= 0) {
-      afterWriteIntoIOVector(simulWrites, numWritten);
       bytesWritten += numWritten;
       if (bytesWritten >= mWriteBatchsize) {
         // We only write a at max this bytes at a time.

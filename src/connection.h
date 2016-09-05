@@ -3,7 +3,10 @@
 
 class Connection : public BaseConnection {
 public:
-  /**
+
+  Connection();
+
+/**
    * `endpoint` is created by the caller, but now the Connection owns it.
    * `options` is also created by the caller and the caller owns it. options
    *  should be active throught the lifetime of the Connection object.
@@ -67,7 +70,7 @@ private:
 
   int32_t writeIntoIOVector(int32_t maxWrite, int32_t* toWrite);
 
-  void afterWriteIntoIOVector(int32_t simumWrites, ssize_t numWritten);
+  void afterWriteIntoIOVector(ssize_t numWritten);
 
   virtual bool stillHaveDataToWrite();
 

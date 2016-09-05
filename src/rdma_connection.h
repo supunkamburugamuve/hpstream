@@ -75,6 +75,8 @@ public:
    */
   int PostBuffers();
 
+  int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
+
 private:
   // options for initialization
   RDMAOptions *options;

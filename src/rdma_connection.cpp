@@ -117,6 +117,11 @@ int RDMAConnection::start() {
   return 0;
 }
 
+int RDMAConnection::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
+  this->onWriteComplete = std::move(onWriteComplete);
+  return 0;
+}
+
 int RDMAConnection::SetupQueues() {
   int ret;
   ret = AllocateBuffers();
