@@ -111,7 +111,7 @@ int32_t Connection::readFromEndPoint() {
     if (read_status == 0) {
       // Packet was succcessfully read.
       IncomingPacket* packet = mIncomingPacket;
-      mIncomingPacket = new IncomingPacket(mOptions->max_packet_size_);
+      mIncomingPacket = new IncomingPacket(mRdmaOptions->max_packet_size_);
       mReceivedPackets.push_back(packet);
       bytesRead += packet->GetTotalPacketSize();
       if (bytesRead >= __SYSTEM_NETWORK_READ_BATCH_SIZE__) {

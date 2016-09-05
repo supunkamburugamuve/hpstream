@@ -13,6 +13,7 @@ public:
   char *dst_addr;
   int options;
   hps_rma_opcodes rma_op;
+  uint32_t max_packet_size_;
 
   // buffer size of a individual buffer, if it is
   // smaller than minimum or greater that maximum supported,

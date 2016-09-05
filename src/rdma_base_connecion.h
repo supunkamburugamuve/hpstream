@@ -126,6 +126,8 @@ protected:
 
   // underlying rdma connection
   RDMAConnection *mRdmaConnection;
+
+  RDMAOptions *mRdmaOptions;
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.

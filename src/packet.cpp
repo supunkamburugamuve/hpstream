@@ -35,7 +35,7 @@ IncomingPacket::~IncomingPacket() { delete[] data_; }
 int32_t IncomingPacket::UnPackInt(int32_t* i) {
   if (data_ == NULL) return -1;
   if (position_ + sizeof(int32_t) > PacketHeader::get_packet_size(header_)) return -1;
-  int32_t network_order;
+  uint32_t network_order;
   memcpy(&network_order, data_ + position_, sizeof(int32_t));
   position_ += sizeof(int32_t);
   *i = ntohl(network_order);
@@ -51,21 +51,21 @@ int32_t IncomingPacket::UnPackString(std::string* i) {
   return 0;
 }
 
-int32_t IncomingPacket::UnPackProtocolBuffer(google::protobuf::Message* _proto) {
-  int32_t sz;
-  if (UnPackInt(&sz) != 0) return -1;
-  if (position_ + sz > PacketHeader::get_packet_size(header_)) return -1;
-  if (!_proto->ParseFromArray(data_ + position_, sz)) return -1;
-  position_ += sz;
-  return 0;
-}
-
-int32_t IncomingPacket::UnPackREQID(REQID* _rid) {
-  if (position_ + REQID_size > PacketHeader::get_packet_size(header_)) return -1;
-  _rid->assign(std::string(data_ + position_, REQID_size));
-  position_ += REQID_size;
-  return 0;
-}
+//int32_t IncomingPacket::UnPackProtocolBuffer(google::protobuf::Message* _proto) {
+//  int32_t sz;
+//  if (UnPackInt(&sz) != 0) return -1;
+//  if (position_ + sz > PacketHeader::get_packet_size(header_)) return -1;
+//  if (!_proto->ParseFromArray(data_ + position_, sz)) return -1;
+//  position_ += sz;
+//  return 0;
+//}
+//
+//int32_t IncomingPacket::UnPackREQID(REQID* _rid) {
+//  if (position_ + REQID_size > PacketHeader::get_packet_size(header_)) return -1;
+//  _rid->assign(std::string(data_ + position_, REQID_size));
+//  position_ += REQID_size;
+//  return 0;
+//}
 
 uint32_t IncomingPacket::GetTotalPacketSize() const {
   return PacketHeader::get_packet_size(header_) + kSPPacketSize;
@@ -87,8 +87,8 @@ int32_t IncomingPacket::Read(Connection *con) {
       // Header just completed - some sanity checking of the header
       if (max_packet_size_ != 0 && PacketHeader::get_packet_size(header_) > max_packet_size_) {
         // Too large packet
-        LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(header_)
-                   << ". We only accept packet sizes <= " << max_packet_size_ << "\n";
+//        LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(header_)
+//                   << ". We only accept packet sizes <= " << max_packet_size_ << "\n";
 
         return -1;
 
@@ -106,7 +106,7 @@ int32_t IncomingPacket::Read(Connection *con) {
 
   // The header has been completely read. Read the data
   int32_t retval =
-      InternalRead(_fd, data_ + position_, PacketHeader::get_packet_size(header_) - position_);
+      InternalRead(con, data_ + position_, PacketHeader::get_packet_size(header_) - position_);
   if (retval == 0) {
     // Successfuly read the packet.
     position_ = 0;
@@ -180,31 +180,31 @@ uint32_t OutgoingPacket::SizeRequiredToPackProtocolBuffer(int32_t _byte_size) {
   return sizeof(int32_t) + _byte_size;
 }
 
-int32_t OutgoingPacket::PackProtocolBuffer(const google::protobuf::Message& _proto,
-                                            int32_t _byte_size) {
-  if (PackInt(_byte_size) != 0) return -1;
-  if (_byte_size + position_ > total_packet_size_) {
-    return -1;
-  }
-  if (!_proto.SerializeToArray(data_ + position_, _byte_size)) return -1;
-  position_ += _byte_size;
-  return 0;
-}
-
-int32_t OutgoingPacket::PackREQID(const REQID& _rid) {
-  if (REQID_size + position_ > total_packet_size_) {
-    return -1;
-  }
-  memcpy(data_ + position_, _rid.c_str(), REQID_size);
-  position_ += REQID_size;
-  return 0;
-}
+//int32_t OutgoingPacket::PackProtocolBuffer(const google::protobuf::Message& _proto,
+//                                            int32_t _byte_size) {
+//  if (PackInt(_byte_size) != 0) return -1;
+//  if (_byte_size + position_ > total_packet_size_) {
+//    return -1;
+//  }
+//  if (!_proto.SerializeToArray(data_ + position_, _byte_size)) return -1;
+//  position_ += _byte_size;
+//  return 0;
+//}
+//
+//int32_t OutgoingPacket::PackREQID(const REQID& _rid) {
+//  if (REQID_size + position_ > total_packet_size_) {
+//    return -1;
+//  }
+//  memcpy(data_ + position_, _rid.c_str(), REQID_size);
+//  position_ += REQID_size;
+//  return 0;
+//}
 
 uint32_t OutgoingPacket::SizeRequiredToPackString(const std::string& _input) {
   return sizeof(uint32_t) + _input.size();
 }
 
-int32_t OutgoingPacket::PackString(const sp_string& i) {
+int32_t OutgoingPacket::PackString(const string& i) {
   if (sizeof(uint32_t) + i.size() + position_ > total_packet_size_) {
     return -1;
   }
@@ -226,13 +226,13 @@ uint32_t OutgoingPacket::Write(int32_t _fd) {
       position_ = position_ + num_written;
     } else {
       if (errno == EAGAIN) {
-        LOG(INFO) << "syscall write returned EAGAIN errno " << errno << "\n";
+//        LOG(INFO) << "syscall write returned EAGAIN errno " << errno << "\n";
         return 1;
       } else if (errno == EINTR) {
-        LOG(INFO) << "syscall write returned EINTR errno " << errno << "\n";
+//        LOG(INFO) << "syscall write returned EINTR errno " << errno << "\n";
         continue;
       } else {
-        LOG(ERROR) << "syscall write returned errno " << errno << "\n";
+//        LOG(ERROR) << "syscall write returned errno " << errno << "\n";
         return -1;
       }
     }
