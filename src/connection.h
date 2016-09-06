@@ -68,13 +68,9 @@ public:
 private:
   virtual int32_t writeIntoEndPoint();
 
-  int32_t writeIntoIOVector(int32_t maxWrite, int32_t* toWrite);
-
-  void afterWriteIntoIOVector(ssize_t numWritten);
+  void writeComplete(ssize_t numWritten);
 
   virtual bool stillHaveDataToWrite();
-
-  virtual void handleDataWritten();
 
   virtual int32_t readFromEndPoint();
 

@@ -7,7 +7,7 @@ RDMAOptions options;
 struct fi_info *hints;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
-RDMAClient *client;
+RDMABaseClient *client;
 
 #define ITERATIONS_ 1000000
 #define SIZE_ 10000
@@ -25,7 +25,7 @@ int connect3() {
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
-  client = new RDMAClient(&options, fabric, eventLoop);
+  client = new RDMABaseClient(&options, fabric, eventLoop);
   client->Connect();
   eventLoop->Start();
   while (!client->IsConnected());

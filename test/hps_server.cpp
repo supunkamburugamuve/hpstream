@@ -3,7 +3,7 @@
 //Connection *con;
 RDMAOptions options;
 struct fi_info *hints;
-RDMAServer *server;
+RDMABaseServer *server;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 
@@ -17,8 +17,8 @@ int connect3() {
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
 
-  server = new RDMAServer(&options, fabric, eventLoop);
-  server->Init();
+  server = new RDMABaseServer(&options, fabric, eventLoop);
+  server->Start();
   //server->Connect();
 //  con = server.GetConnection();
   eventLoop->Start();

@@ -9,14 +9,20 @@
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
 
-class RDMAServer {
+class RDMABaseServer {
 public:
-  RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
-  void Free();
+  RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
+  ~RDMABaseServer();
   /**
    * Start the server
    */
-  int Init(void);
+  int Start(void);
+
+  /**
+   * Stop the server
+   * @return
+   */
+  int Stop(void);
 
   std::list<RDMAConnection *> * GetConnections() {
     return &connections;
@@ -26,6 +32,9 @@ public:
    * Listen for connection events.
    */
   int OnConnect(enum rdma_loop_status state);
+protected:
+  // event loop associated with this server
+  RDMAEventLoopNoneFD *eventLoop_;
 private:
   RDMAOptions *options;
   // hints to be used to obtain fabric information
@@ -45,8 +54,7 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
-  // event loop associated with this server
-  RDMAEventLoopNoneFD *eventLoop;
+
   // list of connections
   std::list<RDMAConnection *> connections;
   // list of connections halfway through fully establishing
@@ -62,15 +70,6 @@ private:
    * The connection has being fully established
    */
   int Connected(struct fi_eq_cm_entry *entry);
-
-  /**
-   * Disconnect the connection
-   * @param con
-   * @return
-   */
-  int Disconnect(RDMAConnection *con);
-
-
 };
 
 

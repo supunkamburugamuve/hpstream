@@ -8,30 +8,30 @@
 
 #include "rdma_client.h"
 
-RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
+RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
 	this->info_hints = rdmaFabric->GetHints();
-	this->eventLoop = loop;
+	this->eventLoop_ = loop;
 	this->options = opts;
 	this->eq = NULL;
 	this->fabric = rdmaFabric->GetFabric();
 	this->info = rdmaFabric->GetInfo();
 	this->eq_attr = {};
 	this->eq_attr.wait_obj = FI_WAIT_NONE;
-	this->con = NULL;
+	this->conn_ = NULL;
 	this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
 }
 
-void RDMAClient::Free() {
+void RDMABaseClient::Free() {
 	HPS_CLOSE_FID(eq);
 	HPS_CLOSE_FID(fabric);
 }
 
-RDMAConnection* RDMAClient::GetConnection() {
-	return this->con;
+RDMAConnection* RDMABaseClient::GetConnection() {
+	return this->conn_;
 }
 
-int RDMAClient::OnConnect(enum rdma_loop_status state) {
+int RDMABaseClient::OnConnect(enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -67,11 +67,11 @@ int RDMAClient::OnConnect(enum rdma_loop_status state) {
   return ret;
 }
 
-int RDMAClient::Disconnect() {
-  return this->con->closeConnection();
+int RDMABaseClient::Disconnect() {
+  return this->conn_->closeConnection();
 }
 
-int RDMAClient::Connect(void) {
+int RDMABaseClient::Connect(void) {
 	struct fi_eq_cm_entry entry;
 	uint32_t event;
 	ssize_t rd;
@@ -93,7 +93,7 @@ int RDMAClient::Connect(void) {
 	}
 
 	// create the connection
-	con = new RDMAConnection(this->options, this->info, this->fabric, domain, this->eventLoop);
+	con = new RDMAConnection(this->options, this->info, this->fabric, domain, this->eventLoop_);
 
 	// allocate the resources
 	ret = con->SetupQueues();
@@ -120,36 +120,36 @@ int RDMAClient::Connect(void) {
 		return ret;
 	}
 
-  ret = this->eventLoop->RegisterRead(&this->eq_loop);
+  ret = this->eventLoop_->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
   }
 
-  this->con = con;
+  this->conn_ = con;
 	return 0;
 }
 
-int RDMAClient::Connected(struct fi_eq_cm_entry *entry) {
+int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
   int ret;
-  if (entry->fid != &(this->con->GetEp()->fid)) {
+  if (entry->fid != &(this->conn_->GetEp()->fid)) {
     ret = -FI_EOTHER;
     return ret;
   }
 
   // lets start the connection
-  if (con->start()) {
+  if (conn_->start()) {
     HPS_ERR("Failed to start the connection");
     return 1;
   }
 
-  this->con = con;
+  this->conn_ = conn_;
   printf("Connection established\n");
   return 0;
 }
 
-bool RDMAClient::IsConnected() {
-  return con != NULL && con->GetState() == CONNECTED;
+bool RDMABaseClient::IsConnected() {
+  return conn_ != NULL && conn_->GetState() == CONNECTED;
 }
 
 

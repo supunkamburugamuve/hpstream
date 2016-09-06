@@ -2,10 +2,10 @@
 #include <iostream>
 #include "rdma_server.h"
 
-RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
+RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
   this->options = opts;
   this->info_hints = rdmaFabric->GetHints();
-  this->eventLoop = loop;
+  this->eventLoop_ = loop;
   this->pep = NULL;
   this->info_pep = rdmaFabric->GetInfo();
   this->eq = NULL;
@@ -19,28 +19,9 @@ RDMAServer::RDMAServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopN
   this->eq_loop.event = CONNECTION;
 }
 
-void RDMAServer::Free() {
-  HPS_CLOSE_FID(pep);
-  HPS_CLOSE_FID(eq);
-  HPS_CLOSE_FID(fabric);
+RDMABaseServer::~RDMABaseServer() {}
 
-  if (this->options) {
-    options->Free();
-  }
-  if (this->info_pep) {
-    fi_freeinfo(this->info_pep);
-    this->info_pep = NULL;
-  }
-  if (this->info_hints) {
-    fi_freeinfo(this->info_hints);
-    this->info_hints = NULL;
-  }
-}
-
-/**
- * Initialize the server
- */
-int RDMAServer::Init(void) {
+int RDMABaseServer::Start(void) {
   int ret;
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
@@ -69,7 +50,7 @@ int RDMAServer::Init(void) {
     return ret;
   }
 
-  ret = this->eventLoop->RegisterRead(&this->eq_loop);
+  ret = this->eventLoop_->RegisterRead(&this->eq_loop);
   if (ret) {
     HPS_ERR("Failed to register event queue fid %d", ret);
     return ret;
@@ -84,11 +65,31 @@ int RDMAServer::Init(void) {
   return 0;
 }
 
-int RDMAServer::OnConnect(enum rdma_loop_status state) {
+int RDMABaseServer::Stop() {
+  HPS_CLOSE_FID(pep);
+  HPS_CLOSE_FID(eq);
+  HPS_CLOSE_FID(fabric);
+
+  if (this->options) {
+    options->Free();
+  }
+  if (this->info_pep) {
+    fi_freeinfo(this->info_pep);
+    this->info_pep = NULL;
+  }
+  if (this->info_hints) {
+    fi_freeinfo(this->info_hints);
+    this->info_hints = NULL;
+  }
+  return 0;
+}
+
+int RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
   int ret = 0;
+
   if (state == TRYAGAIN) {
     return 0;
   }
@@ -128,14 +129,14 @@ int RDMAServer::OnConnect(enum rdma_loop_status state) {
   return ret;
 }
 
-int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
+int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   int ret;
   struct fid_ep *ep;
   RDMAConnection *con;
 
   // create the connection
   con = new RDMAConnection(this->options, entry->info,
-                           this->fabric, domain, this->eventLoop);
+                           this->fabric, domain, this->eventLoop_);
   // allocate the queues and counters
   ret = con->SetupQueues();
   if (ret) {
@@ -173,7 +174,7 @@ int RDMAServer::Connect(struct fi_eq_cm_entry *entry) {
   return ret;
 }
 
-int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
+int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
   // first lets find this in the pending connections
   RDMAConnection *con = NULL;
   std::list<RDMAConnection *>::iterator it = pending_connections.begin();
@@ -204,8 +205,4 @@ int RDMAServer::Connected(struct fi_eq_cm_entry *entry) {
   // add the connection to list
   this->connections.push_back(con);
   return 0;
-}
-
-int RDMAServer::Disconnect(RDMAConnection *con) {
-  return con->closeConnection();
 }

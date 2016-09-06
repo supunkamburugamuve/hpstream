@@ -7,14 +7,20 @@
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
 
-class RDMAClient {
+class RDMABaseClient {
 public:
-  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
+  enum State { DISCONNECTED = 0, CONNECTING, CONNECTED };
+  RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
   int Connect(void);
   RDMAConnection *GetConnection();
   void Free();
   int OnConnect(enum rdma_loop_status state);
   bool IsConnected();
+protected:
+  // the connection
+  RDMAConnection *conn_;
+  RDMAEventLoopNoneFD *eventLoop_;
+  State state_;
 private:
   // options for initialization
   RDMAOptions *options;
@@ -32,12 +38,6 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
-  // the connection
-  RDMAConnection *con;
-
-  RDMAEventLoopNoneFD *eventLoop;
-  // looping thread id
-  pthread_t loopThreadId;
 
   int Disconnect();
 

@@ -5,7 +5,7 @@
 
 Connection::Connection() {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
-    return this->afterWriteIntoIOVector(complets); });
+    return this->writeComplete(complets); });
 }
 
 int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packet, NULL); }
@@ -45,7 +45,7 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
   return 0;
 }
 
-void Connection::afterWriteIntoIOVector(ssize_t numWritten) {
+void Connection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
   while (numWritten > 0) {
     auto pr = mOutstandingPackets.front();

@@ -59,9 +59,6 @@ void BaseConnection::registerForClose(VCallback<NetworkErrorCode> cb) {
   mOnClose = std::move(cb);
 }
 
-/**
- *
- */
 int BaseConnection::readData(uint8_t *buf, uint32_t size, uint32_t *read) {
   return mRdmaConnection->ReadData(buf, size, read);
 }
