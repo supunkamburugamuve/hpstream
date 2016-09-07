@@ -1,5 +1,8 @@
-
 #include "heron_rdma_client.h"
+#include "ridgen.h"
+#include <glog/logging.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/repeated_field.h>
 
 Client::Client(EventLoop* eventLoop, const NetworkOptions& _options)
     : BaseClient(eventLoop, _options) {

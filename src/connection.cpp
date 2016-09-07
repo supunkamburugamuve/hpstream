@@ -1,7 +1,7 @@
 #include "connection.h"
 
-#define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 64
-#define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1024
+#define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 1048576
+#define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1048576
 
 Connection::Connection() {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
