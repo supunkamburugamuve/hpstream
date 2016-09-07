@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <iostream>
+#include <glog/logging.h>
 #include "rdma_server.h"
 
 RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
@@ -165,7 +166,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
 
   con->SetState(WAIT_CONNECT_CONFIRM);
   // add the connection to pending and wait for confirmation
-  pending_connections.push_back(con);
+  pending_connections_.insert(con);
   return 0;
 
   err:
@@ -176,13 +177,13 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
 
 int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
   // first lets find this in the pending connections
-  RDMAConnection *con = NULL;
-  std::list<RDMAConnection *>::iterator it = pending_connections.begin();
-  while (it != pending_connections.end()) {
-    RDMAConnection *temp = *it;
+  BaseConnection *con = NULL;
+  std::set<BaseConnection *>::iterator it = pending_connections_.begin();
+  while (it != pending_connections_.end()) {
+    BaseConnection *temp = *it;
     if (&temp->GetEp()->fid == entry->fid) {
       con = temp;
-      pending_connections.erase(it);
+      pending_connections_.erase(it);
       break;
     } else {
       it++;
@@ -203,6 +204,15 @@ int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
 
   HPS_INFO("Client connected");
   // add the connection to list
-  this->connections.push_back(con);
+  this->active_connections_.insert(con);
   return 0;
+}
+
+void RDMABaseServer::CloseConnection_Base(BaseConnection *_connection) {
+  if (active_connections_.find(_connection) == active_connections_.end()) {
+    LOG(ERROR) << "Got the request close an unknown connection " << _connection << "\n";
+    return;
+  }
+  _connection->closeConnection();
+  return;
 }

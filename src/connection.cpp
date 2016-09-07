@@ -4,10 +4,13 @@
 #define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 1048576
 #define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1048576
 
-Connection::Connection() {
+Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop)
+    : BaseConnection(options, con, loop) {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
     return this->writeComplete(complets); });
 }
+
+Connection::~Connection() { }
 
 int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packet, NULL); }
 

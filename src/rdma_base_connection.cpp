@@ -1,5 +1,10 @@
 #include "rdma_base_connecion.h"
 
+BaseConnection::BaseConnection(RDMAOptions *options, RDMAConnection *con,
+                               RDMAEventLoopNoneFD *loop)
+    : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop){
+}
+
 int32_t BaseConnection::start() {
   if (mState != INIT) {
     HPS_ERR("Connection not in INIT State, hence cannot start");

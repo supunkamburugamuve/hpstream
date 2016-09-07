@@ -4,9 +4,9 @@
 class Connection : public BaseConnection {
 public:
 
-  Connection();
+  Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop);
 
-/**
+  /**
    * `endpoint` is created by the caller, but now the Connection owns it.
    * `options` is also created by the caller and the caller owns it. options
    *  should be active throught the lifetime of the Connection object.

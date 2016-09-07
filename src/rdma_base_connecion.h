@@ -30,6 +30,8 @@ public:
   // Whether a read/write would block?
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
+  BaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop);
+
   virtual ~BaseConnection();
 
   /**
@@ -121,13 +123,13 @@ protected:
   int32_t unregisterEndpointForRead();
   int32_t registerEndpointForRead();
 
-  // Connection otions.
-  // ConnectionOptions* mOptions;
-
   // underlying rdma connection
   RDMAConnection *mRdmaConnection;
 
   RDMAOptions *mRdmaOptions;
+
+  // The underlying event loop
+  RDMAEventLoopNoneFD* mEventLoop;
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
@@ -160,8 +162,7 @@ private:
   // Connection Endpoint
   // ConnectionEndPoint* mEndpoint;
 
-  // The underlying event loop
-  RDMAEventLoopNoneFD* mEventLoop;
+
   bool mCanCloseConnection;
 };
 

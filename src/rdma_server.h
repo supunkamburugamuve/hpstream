@@ -2,12 +2,14 @@
 #define RDMA_SERVER_H_
 
 #include <list>
+#include <set>
 
 #include "options.h"
 #include "utils.h"
 #include "rdma_connection.h"
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
+#include "rdma_base_connecion.h"
 
 class RDMABaseServer {
 public:
@@ -24,17 +26,29 @@ public:
    */
   int Stop_Base(void);
 
-  std::list<RDMAConnection *> * GetConnections() {
-    return &connections;
+  std::set<BaseConnection *> * GetConnections() {
+    return &active_connections_;
   }
 
   /**
    * Listen for connection events.
    */
   int OnConnect(enum rdma_loop_status state);
+
+  // Close a connection. This function doesn't return anything.
+  // When the connection is attempted to be closed(which can happen
+  // at a later time if using thread pool), The HandleConnectionClose
+  // will contain a status of how the closing process went.
+  void CloseConnection_Base(BaseConnection* connection);
 protected:
   // event loop associated with this server
   RDMAEventLoopNoneFD *eventLoop_;
+
+  // set of active connections
+  std::set<BaseConnection *> active_connections_;
+
+  // list of connections halfway through fully establishing
+  std::set<BaseConnection *> pending_connections_;
 private:
   RDMAOptions *options;
   // hints to be used to obtain fabric information
@@ -55,11 +69,6 @@ private:
   // the fabric
   struct fid_fabric *fabric;
 
-  // list of connections
-  std::list<RDMAConnection *> connections;
-  // list of connections halfway through fully establishing
-  std::list<RDMAConnection *> pending_connections;
-
   /**
    * Accept a new connection
   */
@@ -71,6 +80,5 @@ private:
    */
   int Connected(struct fi_eq_cm_entry *entry);
 };
-
 
 #endif /* SSERVER_H_ */

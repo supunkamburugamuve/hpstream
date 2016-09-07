@@ -29,9 +29,9 @@ int exchange3() {
   int values[SIZE_];
   uint32_t read = 0, write = 0;
   uint32_t current_read = 0, current_write = 0;
-  std::list<RDMAConnection *>::const_iterator iterator;
+  std::set<BaseConnection *>::const_iterator iterator;
 
-  std::list<RDMAConnection *> *pList = server->GetConnections();
+  std::set<BaseConnection *> *pList = server->GetConnections();
   int count = 0;
   while (pList->size() != 2) {
     if (count++ == 10000) {
@@ -41,7 +41,7 @@ int exchange3() {
   HPS_INFO("Size %d", pList->size());
 
   for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
-    RDMAConnection *con = *iterator;
+    BaseConnection *con = *iterator;
 
     for (int i = 0; i < ITERATIONS_; i++) {
       for (int j = 0; j < SIZE_; j++) {
@@ -49,7 +49,7 @@ int exchange3() {
       }
       read = 0;
       while (read < BYTES_) {
-        con->ReadData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
+        con->readData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
         read += current_read;
         if (current_read == 0) {
           pthread_yield();
@@ -61,7 +61,7 @@ int exchange3() {
     current_write = 0;
     write = 0;
     while (current_write < BYTES_) {
-      con->WriteData((uint8_t *) values + current_write, sizeof(values) - current_write, &write);
+      con->writeData((uint8_t *) values + current_write, sizeof(values) - current_write, &write);
       current_write += write;
     }
     HPS_INFO("Done sending..");
@@ -75,7 +75,6 @@ int exchange3() {
 
 int main(int argc, char **argv) {
   int op;
-  options.rma_op = HPS_RMA_WRITE;
   options.buf_size = 1024 * 60;
   options.no_buffers = 6;
   hints = fi_allocinfo();
