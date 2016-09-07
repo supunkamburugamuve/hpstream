@@ -12,7 +12,6 @@ public:
   char *src_addr;
   char *dst_addr;
   int options;
-  hps_rma_opcodes rma_op;
   uint32_t max_packet_size_;
 
   // buffer size of a individual buffer, if it is
@@ -21,10 +20,6 @@ public:
   size_t buf_size;
   // no of buffers
   uint32_t no_buffers;
-  /**
-   * Computation method, spin, wait or wait-set
-   */
-  enum hps_comp_method comp_method;
 
   RDMAOptions();
   void Free();

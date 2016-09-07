@@ -21,7 +21,7 @@ RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
 
 RDMABaseServer::~RDMABaseServer() {}
 
-int RDMABaseServer::Start(void) {
+int RDMABaseServer::Start_Base(void) {
   int ret;
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
@@ -65,7 +65,7 @@ int RDMABaseServer::Start(void) {
   return 0;
 }
 
-int RDMABaseServer::Stop() {
+int RDMABaseServer::Stop_Base() {
   HPS_CLOSE_FID(pep);
   HPS_CLOSE_FID(eq);
   HPS_CLOSE_FID(fabric);

@@ -1,6 +1,7 @@
 #include "heron_rdma_server.h"
 #include <string>
 #include <utility>
+#include <glog/logging.h>
 
 Server::Server(RDMAEventLoopNoneFD* eventLoop, const NetworkOptions& _options)
     : RDMABaseServer(eventLoop, _options) {
@@ -9,9 +10,9 @@ Server::Server(RDMAEventLoopNoneFD* eventLoop, const NetworkOptions& _options)
 
 Server::~Server() { delete request_rid_gen_; }
 
-sp_int32 Server::Start() { return Start_Base(); }
+sp_int32 Server::Start_Base() { return Start_Base(); }
 
-sp_int32 Server::Stop() { return Stop_Base(); }
+sp_int32 Server::Stop_Base() { return Stop_Base(); }
 
 void Server::SendResponse(REQID _id, Connection* _connection,
                           const google::protobuf::Message& _response) {

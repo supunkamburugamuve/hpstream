@@ -1,6 +1,8 @@
 #ifndef HERON_RDMA_SERVER_H
 #define HERON_RDMA_SERVER_H
 
+#include <iostream>
+#include <glog/logging.h>
 #include "rdma_event_loop.h"
 #include "rdma_base_connecion.h"
 #include "connection.h"
@@ -38,7 +40,7 @@ public:
   // Start listening on the host port pair for new requests
   // A zero return value means success. A negative value implies
   // that the server could not bind/listen on the port.
-  int32_t Start();
+  int32_t Start_Base();
 
   // Close all active connections and stop listening.
   // A zero return value means success. No more new connections
@@ -47,7 +49,7 @@ public:
   // that were sent using SendResponse but not yet acked by HandleSentResponse
   // being discarded.
   // A negative return value implies some error happened.
-  int32_t Stop();
+  int32_t Stop_Base();
 
   // Send a response back to the client. This is the primary way of
   // communicating with the client.

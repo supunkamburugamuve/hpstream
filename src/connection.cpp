@@ -1,3 +1,4 @@
+#include <glog/logging.h>
 #include "connection.h"
 
 #define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 1048576
@@ -93,7 +94,7 @@ int32_t Connection::writeIntoEndPoint() {
     // try to write the data
     write_status = writeData((uint8_t *) buf, size_to_write, &current_write);
     if (write_status) {
-      HPS_ERR("Failed to write the data");
+      LOG(ERROR) << "Failed to write the data";
       return write_status;
     }
     iter++;

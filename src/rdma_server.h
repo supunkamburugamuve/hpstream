@@ -16,13 +16,13 @@ public:
   /**
    * Start the server
    */
-  int Start(void);
+  int Start_Base(void);
 
   /**
    * Stop the server
    * @return
    */
-  int Stop(void);
+  int Stop_Base(void);
 
   std::list<RDMAConnection *> * GetConnections() {
     return &connections;
