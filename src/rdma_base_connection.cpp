@@ -97,7 +97,7 @@ void BaseConnection::handleWrite(int fd) {
 
   bool prevValue = mCanCloseConnection;
   mCanCloseConnection = false;
-  handleDataWritten();
+//  handleDataWritten();
   mCanCloseConnection = prevValue;
   if (mState != CONNECTED) {
     internalClose();

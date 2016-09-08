@@ -94,7 +94,7 @@ protected:
    * Called after WriteIntoEndPoint is successful.
    * Usually meant for cleaning up packets that have been sent.
    */
-  virtual void handleDataWritten() = 0;
+//  virtual void handleDataWritten() = 0;
 
   /**
    * Called by the base class when the connection fd is readable.
