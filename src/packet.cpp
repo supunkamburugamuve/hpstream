@@ -76,83 +76,83 @@ uint32_t IncomingPacket::GetTotalPacketSize() const {
 
 void IncomingPacket::Reset() { position_ = 0; }
 
-int32_t IncomingPacket::Read(Connection *con) {
-  if (data_ == NULL) {
-    // We are still reading the header
-    int32_t read_status =
-        InternalRead(con, header_ + position_, PacketHeader::header_size() - position_);
-
-    if (read_status != 0) {
-      // Header read is either partial or had an error
-      return read_status;
-
-    } else {
-      // Header just completed - some sanity checking of the header
-      if (max_packet_size_ != 0 && PacketHeader::get_packet_size(header_) > max_packet_size_) {
-        // Too large packet
-        LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(header_)
-                   << ". We only accept packet sizes <= " << max_packet_size_ << "\n";
-
-        return -1;
-
-      } else {
-        // Create the data
-        data_ = new char[PacketHeader::get_packet_size(header_)];
-
-        // bzero(data_, PacketHeader::get_packet_size(header_));
-        // reset the position to refer to the data_
-
-        position_ = 0;
-      }
-    }
-  }
-
-  // The header has been completely read. Read the data
-  int32_t retval =
-      InternalRead(con, data_ + position_, PacketHeader::get_packet_size(header_) - position_);
-  if (retval == 0) {
-    // Successfuly read the packet.
-    position_ = 0;
-  }
-
-  return retval;
-}
-
-int32_t IncomingPacket::InternalRead(Connection *con, char* _buffer, uint32_t _size) {
-  char* current = _buffer;
-  uint32_t to_read = _size;
-  while (to_read > 0) {
-    ssize_t num_read;
-    num_read = con->readData((uint8_t *) current, to_read, (uint32_t *) &num_read);
-    if (num_read > 0) {
-      current = current + num_read;
-      to_read = to_read - num_read;
-      position_ = position_ + num_read;
-    } else if (num_read == 0) {
-      // remote end has done a shutdown.
-      HPS_ERR("Remote end has done a shutdown");
-      return -1;
-    } else {
-      // read returned negative value.
-      if (errno == EAGAIN) {
-        // The read would block.
-        // cout << "read syscall returned the EAGAIN errno " << errno << "\n";
-        return 1;
-      } else if (errno == EINTR) {
-        // cout << "read syscall returned the EINTR errno " << errno << "\n";
-        // the syscall encountered a signal before reading anything.
-        // try again
-        continue;
-      } else {
-        // something really bad happened. Bail out
-        // try again
-        HPS_ERR("Something really bad happened while reading %d", errno);
-        return -1;
-      }
-    }
-  }
-  return 0;
-}
+//int32_t IncomingPacket::Read(Connection *con) {
+//  if (data_ == NULL) {
+//    // We are still reading the header
+//    int32_t read_status =
+//        InternalRead(con, header_ + position_, PacketHeader::header_size() - position_);
+//
+//    if (read_status != 0) {
+//      // Header read is either partial or had an error
+//      return read_status;
+//
+//    } else {
+//      // Header just completed - some sanity checking of the header
+//      if (max_packet_size_ != 0 && PacketHeader::get_packet_size(header_) > max_packet_size_) {
+//        // Too large packet
+//        LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(header_)
+//                   << ". We only accept packet sizes <= " << max_packet_size_ << "\n";
+//
+//        return -1;
+//
+//      } else {
+//        // Create the data
+//        data_ = new char[PacketHeader::get_packet_size(header_)];
+//
+//        // bzero(data_, PacketHeader::get_packet_size(header_));
+//        // reset the position to refer to the data_
+//
+//        position_ = 0;
+//      }
+//    }
+//  }
+//
+//  // The header has been completely read. Read the data
+//  int32_t retval =
+//      InternalRead(con, data_ + position_, PacketHeader::get_packet_size(header_) - position_);
+//  if (retval == 0) {
+//    // Successfuly read the packet.
+//    position_ = 0;
+//  }
+//
+//  return retval;
+//}
+//
+//int32_t IncomingPacket::InternalRead(Connection *con, char* _buffer, uint32_t _size) {
+//  char* current = _buffer;
+//  uint32_t to_read = _size;
+//  while (to_read > 0) {
+//    ssize_t num_read;
+//    num_read = con->readData((uint8_t *) current, to_read, (uint32_t *) &num_read);
+//    if (num_read > 0) {
+//      current = current + num_read;
+//      to_read = to_read - num_read;
+//      position_ = position_ + num_read;
+//    } else if (num_read == 0) {
+//      // remote end has done a shutdown.
+//      HPS_ERR("Remote end has done a shutdown");
+//      return -1;
+//    } else {
+//      // read returned negative value.
+//      if (errno == EAGAIN) {
+//        // The read would block.
+//        // cout << "read syscall returned the EAGAIN errno " << errno << "\n";
+//        return 1;
+//      } else if (errno == EINTR) {
+//        // cout << "read syscall returned the EINTR errno " << errno << "\n";
+//        // the syscall encountered a signal before reading anything.
+//        // try again
+//        continue;
+//      } else {
+//        // something really bad happened. Bail out
+//        // try again
+//        HPS_ERR("Something really bad happened while reading %d", errno);
+//        return -1;
+//      }
+//    }
+//  }
+//  return 0;
+//}
 
 OutgoingPacket::OutgoingPacket(uint32_t _packet_size) {
   total_packet_size_ = _packet_size + PacketHeader::header_size();
