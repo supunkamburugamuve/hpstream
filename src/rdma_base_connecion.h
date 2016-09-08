@@ -135,11 +135,11 @@ protected:
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
-  void handleRead(int fd);
+  int handleRead(int fd);
 
   // Internal callback that is invoked when a write event happens on a
   // connected sate. In this routine we actually send the packets out.
-  void handleWrite(int fd);
+  int handleWrite(int fd);
 
   // A Connection can get closed by the connection class itself(because
   // of an io error). This is the method used to do that.
