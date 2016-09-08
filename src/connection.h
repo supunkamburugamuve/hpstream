@@ -69,13 +69,13 @@ public:
   static int64_t systemLWMOutstandingBytes;
 
 private:
-  virtual int32_t writeIntoEndPoint();
+  virtual int32_t writeIntoEndPoint(int fd);
 
   void writeComplete(ssize_t numWritten);
 
   virtual bool stillHaveDataToWrite();
 
-  virtual int32_t readFromEndPoint();
+  virtual int32_t readFromEndPoint(int fd);
 
   virtual void handleDataRead();
 

@@ -83,7 +83,7 @@ bool Connection::stillHaveDataToWrite() {
   return !mOutstandingPackets.empty();
 }
 
-int32_t Connection::writeIntoEndPoint() {
+int32_t Connection::writeIntoEndPoint(int fd) {
   auto iter = mOutstandingPackets.begin();
   uint32_t size_to_write = 0;
   char *buf = NULL;
@@ -108,10 +108,10 @@ int32_t Connection::writeIntoEndPoint() {
   return 0;
 }
 
-int32_t Connection::readFromEndPoint() {
+int32_t Connection::readFromEndPoint(int fd) {
   int32_t bytesRead = 0;
   while (1) {
-    int32_t read_status = mIncomingPacket->Read(this);
+    int32_t read_status = ReadPacket();
     if (read_status == 0) {
       // Packet was succcessfully read.
       IncomingPacket* packet = mIncomingPacket;
