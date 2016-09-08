@@ -1,3 +1,6 @@
+#ifndef CONNECTION_H_
+#define CONNECTION_H_
+
 #include "rdma_base_connecion.h"
 #include "packet.h"
 
@@ -109,3 +112,5 @@ private:
   // HWM of back pressure threshold
   uint8_t mNumEnqueuesWithBufferFull;
 };
+
+#endif
