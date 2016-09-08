@@ -135,11 +135,11 @@ protected:
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
-  void handleRead();
+  void handleRead(int fd);
 
   // Internal callback that is invoked when a write event happens on a
   // connected sate. In this routine we actually send the packets out.
-  void handleWrite();
+  void handleWrite(int fd);
 
   // A Connection can get closed by the connection class itself(because
   // of an io error). This is the method used to do that.
@@ -158,8 +158,8 @@ private:
   VCallback<NetworkErrorCode> mOnClose;
 
   // Our own callbacks that we register for internal reads/write events.
-  VCallback mOnRead;
-  VCallback mOnWrite;
+  VCallback<int> mOnRead;
+  VCallback<int> mOnWrite;
 
   // Connection Endpoint
   // ConnectionEndPoint* mEndpoint;

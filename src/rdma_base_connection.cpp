@@ -12,8 +12,8 @@ int32_t BaseConnection::start() {
     return -1;
   }
 
-  mOnWrite = [this](void) { return this->handleWrite(); };
-  mOnRead = [this](void) { return this->handleRead(); };
+  mOnWrite = [this](int fd) { return this->handleWrite(fd); };
+  mOnRead = [this](int fd) { return this->handleRead(fd); };
 
   mRdmaConnection->registerRead(mOnRead);
   mRdmaConnection->registerWrite(mOnWrite);
@@ -81,7 +81,7 @@ int BaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
 }
 
 // Note that we hold the mutex when we come to this function
-void BaseConnection::handleWrite() {
+void BaseConnection::handleWrite(int fd) {
   mWriteState = NOTREGISTERED;
 
   if (mState != CONNECTED) return;
@@ -104,7 +104,7 @@ void BaseConnection::handleWrite() {
   }
 }
 
-void BaseConnection::handleRead() {
+void BaseConnection::handleRead(int fd) {
   mReadState = READY;
   int32_t readStatus = readFromEndPoint();
   if (readStatus >= 0) {

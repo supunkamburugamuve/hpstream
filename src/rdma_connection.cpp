@@ -119,12 +119,12 @@ int RDMAConnection::start() {
   return 0;
 }
 
-int RDMAConnection::registerWrite(VCallback<void> onWrite) {
+int RDMAConnection::registerWrite(VCallback<int> onWrite) {
   this->onWriteReady = std::move(onWrite);
   return 0;
 }
 
-int RDMAConnection::registerRead(VCallback<void> onRead) {
+int RDMAConnection::registerRead(VCallback<int> onRead) {
   this->onWriteReady = std::move(onRead);
   return 0;
 }
@@ -555,7 +555,7 @@ int RDMAConnection::TransmitComplete() {
   }
   this->send_buf->releaseLock();
   // we are ready for a write
-  onWriteReady();
+  onWriteReady(0);
   return 0;
 }
 
@@ -592,7 +592,7 @@ int RDMAConnection::ReceiveComplete() {
   }
   this->recv_buf->releaseLock();
   // we are ready for a read
-  onReadReady();
+  onReadReady(0);
   return 0;
 }
 
