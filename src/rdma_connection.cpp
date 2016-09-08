@@ -119,12 +119,12 @@ int RDMAConnection::start() {
   return 0;
 }
 
-int RDMAConnection::registerWrite(VCallback onWrite) {
+int RDMAConnection::registerWrite(VCallback<void> onWrite) {
   this->onWriteReady = std::move(onWrite);
   return 0;
 }
 
-int RDMAConnection::registerRead(VCallback onRead) {
+int RDMAConnection::registerRead(VCallback<void> onRead) {
   this->onWriteReady = std::move(onRead);
   return 0;
 }

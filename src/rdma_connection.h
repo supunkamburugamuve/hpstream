@@ -77,8 +77,8 @@ public:
 
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 
-  int registerRead(VCallback onWrite);
-  int registerWrite(VCallback onWrite);
+  int registerRead(VCallback<void> onWrite);
+  int registerWrite(VCallback<void> onWrite);
 private:
   // options for initialization
   RDMAOptions *options;
