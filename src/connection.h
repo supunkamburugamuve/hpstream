@@ -71,7 +71,7 @@ public:
 private:
   virtual int32_t writeIntoEndPoint(int fd);
 
-  void writeComplete(ssize_t numWritten);
+  int writeComplete(ssize_t numWritten);
 
   virtual bool stillHaveDataToWrite();
 

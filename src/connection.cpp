@@ -49,7 +49,7 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
   return 0;
 }
 
-void Connection::writeComplete(ssize_t numWritten) {
+int Connection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
   while (numWritten > 0) {
     auto pr = mOutstandingPackets.front();
@@ -77,6 +77,7 @@ void Connection::writeComplete(ssize_t numWritten) {
       mOnConnectionBufferEmpty(this);
     }
   }
+  return 0;
 }
 
 bool Connection::stillHaveDataToWrite() {
