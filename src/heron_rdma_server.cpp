@@ -49,21 +49,21 @@ void Server::SendRequest(Connection* _conn, google::protobuf::Message* _request,
 }
 
 // The interfaces of BaseServer being implemented
-BaseConnection* Server::CreateConnection(ConnectionEndPoint* _endpoint, ConnectionOptions* _options,
-                                         EventLoop* eventLoop) {
+BaseConnection* Server::CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+                                         RDMAEventLoopNoneFD* ss) {
   // Create the connection object and register our callbacks on various events.
-  Connection* conn = new Connection(_endpoint, _options, eventLoop);
+  Connection* conn = new Connection(options, endpoint, ss);
   auto npcb = [conn, this](IncomingPacket* packet) { this->OnNewPacket(conn, packet); };
   conn->registerForNewPacket(npcb);
 
   // Backpressure reliever - will point to the inheritor of this class in case the virtual function
   // is implemented in the inheritor
-  auto backpressure_reliever_ = [this](Connection* conn) {
-    this->StopBackPressureConnectionCb(conn);
+  auto backpressure_reliever_ = [this](Connection* cn) {
+    this->StopBackPressureConnectionCb(cn);
   };
 
-  auto backpressure_starter_ = [this](Connection* conn) {
-    this->StartBackPressureConnectionCb(conn);
+  auto backpressure_starter_ = [this](Connection* cn) {
+    this->StartBackPressureConnectionCb(cn);
   };
 
   conn->registerForBackPressure(std::move(backpressure_starter_),
@@ -184,13 +184,13 @@ void Server::InternalSendRequest(Connection* _conn, google::protobuf::Message* _
     return;
   }
   if (_msecs > 0) {
-    auto cb = [rid, this](EventLoop::Status status) { this->OnPacketTimer(rid, status); };
+    auto cb = [rid, this](RDMAEventLoopNoneFD::Status status) { this->OnPacketTimer(rid, status); };
     CHECK_GT(eventLoop_->registerTimer(std::move(cb), false, _msecs), 0);
   }
   return;
 }
 
-void Server::OnPacketTimer(REQID _id, EventLoop::Status) {
+void Server::OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status) {
   if (context_map_.find(_id) == context_map_.end()) {
     // most likely this was due to the requests being retired before the timer.
     return;

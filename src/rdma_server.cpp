@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glog/logging.h>
 #include "rdma_server.h"
+#include "connection.h"
 
 RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
   this->options = opts;
@@ -165,10 +166,11 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   }
 
   con->SetState(WAIT_CONNECT_CONFIRM);
-  // add the connection to pending and wait for confirmation
-  pending_connections_.insert(con);
-  return 0;
 
+  BaseConnection *baseConnection = new Connection(options, con, this->eventLoop_);
+  // add the connection to pending and wait for confirmation
+  pending_connections_.insert(baseConnection);
+  return 0;
   err:
   HPS_INFO("Error label");
   fi_reject(pep, entry->info->handle, NULL, 0);
@@ -181,24 +183,24 @@ int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
   std::set<BaseConnection *>::iterator it = pending_connections_.begin();
   while (it != pending_connections_.end()) {
     BaseConnection *temp = *it;
-    if (&temp->GetEp()->fid == entry->fid) {
+    RDMAConnection *rdmaConnection = temp->getEndpointConnection();
+    if (&rdmaConnection->GetEp()->fid == entry->fid) {
       con = temp;
       pending_connections_.erase(it);
       break;
-    } else {
-      it++;
     }
+    it++;
   }
 
   // we didn't find this connection in pending
   if (con == NULL) {
-    HPS_ERR("Connected event received for non-pending connection, ignoring");
+    LOG(ERROR) << "Connected event received for non-pending connection, ignoring";
     return 0;
   }
 
   // lets start the connection
   if (con->start()) {
-    HPS_ERR("Failed to start the connection");
+    LOG(ERROR) << "Failed to start the connection";
     return 1;
   }
 

@@ -60,5 +60,10 @@ int RDMAEventLoopNoneFD::UnRegister(struct rdma_loop_info *con) {
   return 0;
 }
 
+sp_int64 RDMAEventLoopNoneFD::registerTimer(VCallback<RDMAEventLoopNoneFD::Status> cb,
+                                            bool persistent, sp_int64 mSecs) {
+  return 0;
+}
+
 
 

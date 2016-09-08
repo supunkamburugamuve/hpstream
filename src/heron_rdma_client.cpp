@@ -43,19 +43,19 @@ sp_int64 Client::AddTimer(VCallback<> cb, sp_int64 _msecs) {
 
 sp_int32 Client::RemoveTimer(sp_int64 timer_id) { return RemoveTimer_Base(timer_id); }
 
-BaseConnection* Client::CreateConnection(ConnectionEndPoint* _endpoint, ConnectionOptions* _options,
-                                         EventLoop* eventLoop) {
-  Connection* conn = new Connection(_endpoint, _options, eventLoop);
+BaseConnection* Client::CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+                                         RDMAEventLoopNoneFD* ss) {
+  Connection* conn = new Connection(options, endpoint, ss);
 
   conn->registerForNewPacket([this](IncomingPacket* pkt) { this->OnNewPacket(pkt); });
   // Backpressure reliever - will point to the inheritor of this class in case the virtual function
   // is implemented in the inheritor
-  auto backpressure_reliever_ = [this](Connection* conn) {
-    this->StopBackPressureConnectionCb(conn);
+  auto backpressure_reliever_ = [this](Connection* cn) {
+    this->StopBackPressureConnectionCb(cn);
   };
 
-  auto backpressure_starter_ = [this](Connection* conn) {
-    this->StartBackPressureConnectionCb(conn);
+  auto backpressure_starter_ = [this](Connection* cn) {
+    this->StartBackPressureConnectionCb(cn);
   };
 
   conn->registerForBackPressure(std::move(backpressure_starter_),

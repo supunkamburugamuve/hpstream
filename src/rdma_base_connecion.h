@@ -69,6 +69,8 @@ public:
 
   int32_t getPort();
 
+  RDMAConnection *getEndpointConnection() { return mRdmaConnection;};
+
 protected:
   /**
    * Writes data out on this connection

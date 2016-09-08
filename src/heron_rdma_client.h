@@ -169,8 +169,8 @@ protected:
 
 private:
   //! Imlement methods of BaseClient
-  virtual BaseConnection* CreateConnection(ConnectionEndPoint* endpoint, ConnectionOptions* options,
-                                           RDMAEventLoopNoneFD* eventLoop);
+  virtual BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+                                           RDMAEventLoopNoneFD* ss);
   virtual void HandleConnect_Base(NetworkErrorCode status);
   virtual void HandleClose_Base(NetworkErrorCode status);
 

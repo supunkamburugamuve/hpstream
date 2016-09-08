@@ -102,7 +102,7 @@ public:
   virtual void StopBackPressureConnectionCb(Connection* _connection);
 
   // Return the underlying EventLoop.
-  EventLoop* getEventLoop() { return eventLoop_; }
+  RDMAEventLoopNoneFD* getEventLoop() { return eventLoop_; }
 
 protected:
   // Called when a new connection is accepted.
@@ -121,8 +121,8 @@ public:
   // The interfaces implemented of the BaseServer
 
   // Create the connection
-  BaseConnection* CreateConnection(ConnectionEndPoint* endpoint, ConnectionOptions* options,
-                                   EventLoop* ss);
+  BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+                                   RDMAEventLoopNoneFD* ss);
 
   // Called when connection is accepted
   virtual void HandleNewConnection_Base(BaseConnection* newConnection);
@@ -178,7 +178,7 @@ private:
 
   void InternalSendRequest(Connection* _conn, google::protobuf::Message* _request, sp_int64 _msecs,
                            google::protobuf::Message* _response_placeholder, void* _ctx);
-  void OnPacketTimer(REQID _id, EventLoop::Status status);
+  void OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status status);
 
   typedef std::function<void(Connection*, IncomingPacket*)> handler;
   std::unordered_map<std::string, handler> requestHandlers;
