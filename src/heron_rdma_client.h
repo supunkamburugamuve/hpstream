@@ -8,10 +8,12 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <glog/logging.h>
 
 #include "rdma_base_connecion.h"
 #include "connection.h"
 #include "rdma_client.h"
+#include "ridgen.h"
 
 /*
  * Client class definition
@@ -36,7 +38,7 @@ public:
   // Note that constructor doesn't do much beyond initializing some members.
   // Users must explicitly invoke the Start method to be able to send requests
   // and receive responses.
-  Client(RDMAEventLoopNoneFD* eventLoop, const NetworkOptions& options);
+  Client(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
   virtual ~Client();
 
   // This starts the connect opereation.
@@ -77,9 +79,9 @@ public:
   void SendMessage(google::protobuf::Message* _message);
 
   // Add a timer to be invoked after msecs microseconds. Returns the timer id.
-  int64_t AddTimer(VCallback<> cb, int64_t msecs);
+  sp_int64 AddTimer(VCallback<> cb, int64_t msecs);
   // Removes a timer with timer_id
-  int64_t RemoveTimer(int64_t timer_id);
+  sp_int32 RemoveTimer(int64_t timer_id);
 
   // For server type request handling
   void SendResponse(REQID _id, const google::protobuf::Message& response);
@@ -185,7 +187,7 @@ private:
 
   // Internal method to be called by the EventLoop class
   // when a packet timer expires
-  void OnPacketTimer(REQID _id, EventLoop::Status status);
+  void OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status status);
 
   template <typename T, typename M>
   void dispatchResponse(T* _t, void (T::*method)(void* _ctx, M*, NetworkErrorCode),

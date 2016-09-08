@@ -5,6 +5,7 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_cm.h>
 #include <rdma/fi_errno.h>
+#include <glog/logging.h>
 
 #include "rdma_client.h"
 
@@ -72,9 +73,6 @@ int RDMABaseClient::Disconnect() {
 }
 
 int RDMABaseClient::Connect(void) {
-	struct fi_eq_cm_entry entry;
-	uint32_t event;
-	ssize_t rd;
 	int ret;
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;
@@ -82,13 +80,13 @@ int RDMABaseClient::Connect(void) {
 
 	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
 	if (ret) {
-		HPS_ERR("fi_eq_open %d", ret);
+		LOG(ERROR) << "fi_eq_open %d" << ret;
 		return ret;
 	}
 
 	ret = fi_domain(this->fabric, this->info, &domain, NULL);
 	if (ret) {
-		HPS_ERR("fi_domain %d", ret);
+		LOG(ERROR) << "fi_domain " << ret;
 		return ret;
 	}
 
@@ -104,7 +102,7 @@ int RDMABaseClient::Connect(void) {
 	// create the end point for this connection
 	ret = fi_endpoint(domain, this->info, &ep, NULL);
 	if (ret) {
-		HPS_ERR("fi_endpoint %d", ret);
+		LOG(ERROR) << "fi_endpoint" << ret;
 		return ret;
 	}
 
@@ -116,13 +114,13 @@ int RDMABaseClient::Connect(void) {
 
 	ret = fi_connect(ep, this->info->dest_addr, NULL, 0);
 	if (ret) {
-		HPS_ERR("fi_connect %d", ret);
+		LOG(ERROR) << "fi_connect %d" << ret;
 		return ret;
 	}
 
   ret = this->eventLoop_->RegisterRead(&this->eq_loop);
   if (ret) {
-    HPS_ERR("Failed to register event queue fid %d", ret);
+		LOG(ERROR) << "Failed to register event queue fid" << ret;
     return ret;
   }
 
@@ -137,9 +135,8 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
     return ret;
   }
 
-  // lets start the connection
   if (conn_->start()) {
-    HPS_ERR("Failed to start the connection");
+    LOG(ERROR) << "Failed to start the connection";
     return 1;
   }
 

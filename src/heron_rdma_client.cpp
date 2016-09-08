@@ -4,8 +4,8 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>
 
-Client::Client(EventLoop* eventLoop, const NetworkOptions& _options)
-    : BaseClient(eventLoop, _options) {
+Client::Client(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop)
+    : RDMABaseClient(opts, rdmaFabric, loop) {
   Init();
 }
 

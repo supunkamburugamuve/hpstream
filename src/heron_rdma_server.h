@@ -32,7 +32,7 @@ public:
   // Constructor
   // The Constructor simply inits the member variable.
   // Users must call Start method to start sending/receiving packets.
-  Server(RDMAEventLoopNoneFD* eventLoop, const NetworkOptions& options);
+  Server(RDMAFabric *fabric, RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options);
 
   // Destructor.
   virtual ~Server();
@@ -40,7 +40,7 @@ public:
   // Start listening on the host port pair for new requests
   // A zero return value means success. A negative value implies
   // that the server could not bind/listen on the port.
-  int32_t Start_Base();
+  int32_t Start();
 
   // Close all active connections and stop listening.
   // A zero return value means success. No more new connections
@@ -49,7 +49,7 @@ public:
   // that were sent using SendResponse but not yet acked by HandleSentResponse
   // being discarded.
   // A negative return value implies some error happened.
-  int32_t Stop_Base();
+  int32_t Stop();
 
   // Send a response back to the client. This is the primary way of
   // communicating with the client.

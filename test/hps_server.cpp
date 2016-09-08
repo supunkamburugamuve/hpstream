@@ -19,8 +19,6 @@ int connect3() {
 
   server = new RDMABaseServer(&options, fabric, eventLoop);
   server->Start_Base();
-  //server->Connect();
-//  con = server.GetConnection();
   eventLoop->Start();
   return ret;
 }

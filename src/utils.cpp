@@ -135,7 +135,6 @@ int hps_utils_get_info(RDMAOptions *options, struct fi_info *hints, struct fi_in
 
   // now lets retrieve the available network services
   // according to hints
-  HPS_INFO("node=%s service=%s flags=%d\n", node, service, (int)flags);
   int ret = fi_getinfo(HPS_FIVERSION, node, service, flags, hints, info);
   if (ret) {
     HPS_ERR("Fi_info failed %d", ret);
