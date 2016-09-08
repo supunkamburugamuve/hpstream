@@ -36,7 +36,7 @@ void Server::SendMessage(Connection* _connection, const google::protobuf::Messag
 
 void Server::CloseConnection(Connection* _connection) { CloseConnection_Base(_connection); }
 
-void Server::AddTimer(VCallback<> cb, sp_int64 _msecs) { AddTimer_Base(std::move(cb), _msecs); }
+void Server::AddTimer(VCallback<> cb, sp_int64 _msecs) {  }
 
 void Server::SendRequest(Connection* _conn, google::protobuf::Message* _request, void* _ctx,
                          google::protobuf::Message* _response_placeholder) {

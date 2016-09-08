@@ -158,8 +158,8 @@ private:
   VCallback<NetworkErrorCode> mOnClose;
 
   // Our own callbacks that we register for internal reads/write events.
-  VCallback<enum rdma_loop_status> mOnRead;
-  VCallback<enum rdma_loop_status> mOnWrite;
+  VCallback mOnRead;
+  VCallback mOnWrite;
 
   // Connection Endpoint
   // ConnectionEndPoint* mEndpoint;

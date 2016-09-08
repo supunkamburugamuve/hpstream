@@ -69,6 +69,8 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
   this->timeout = -1;
 }
 
+
+
 void RDMAConnection::Free() {
   if (mr != &no_mr) {
     HPS_CLOSE_FID(mr);
@@ -117,6 +119,16 @@ int RDMAConnection::start() {
   return 0;
 }
 
+int RDMAConnection::registerWrite(VCallback onWrite) {
+  this->onWriteReady = std::move(onWrite);
+  return 0;
+}
+
+int RDMAConnection::registerRead(VCallback onRead) {
+  this->onWriteReady = std::move(onRead);
+  return 0;
+}
+
 int RDMAConnection::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
   this->onWriteComplete = std::move(onWriteComplete);
   return 0;
@@ -131,7 +143,6 @@ int RDMAConnection::SetupQueues() {
 
   // we use the context, not the counter
   cq_attr.format = FI_CQ_FORMAT_CONTEXT;
-
   // create a file descriptor wait cq set
   cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
@@ -543,6 +554,8 @@ int RDMAConnection::TransmitComplete() {
     onWriteComplete(completed_bytes);
   }
   this->send_buf->releaseLock();
+  // we are ready for a write
+  onWriteReady();
   return 0;
 }
 
@@ -578,6 +591,8 @@ int RDMAConnection::ReceiveComplete() {
     }
   }
   this->recv_buf->releaseLock();
+  // we are ready for a read
+  onReadReady();
   return 0;
 }
 

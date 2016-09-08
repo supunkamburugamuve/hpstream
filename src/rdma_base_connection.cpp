@@ -11,6 +11,13 @@ int32_t BaseConnection::start() {
     LOG(ERROR) << "Connection not in INIT State, hence cannot start";
     return -1;
   }
+
+  mOnWrite = [this](void) { return this->handleWrite(); };
+  mOnRead = [this](void) { return this->handleRead(); };
+
+  mRdmaConnection->registerRead(mOnRead);
+  mRdmaConnection->registerWrite(mOnWrite);
+
   if (mRdmaConnection->start()) {
     LOG(ERROR) << "Could not start the rdma connection";
     return -1;

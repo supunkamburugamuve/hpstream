@@ -77,6 +77,8 @@ public:
 
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 
+  int registerRead(VCallback onWrite);
+  int registerWrite(VCallback onWrite);
 private:
   // options for initialization
   RDMAOptions *options;
@@ -143,6 +145,9 @@ private:
   int OnWrite(rdma_loop_status state);
 
   VCallback<uint32_t> onWriteComplete;
+  VCallback<void> onWriteReady;
+  VCallback<void> onReadReady;
+
 };
 
 #endif /* HPS_CONNECTION_H_ */

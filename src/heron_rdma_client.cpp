@@ -38,10 +38,10 @@ void Client::SendResponse(REQID _id, const google::protobuf::Message& _response)
 void Client::SendMessage(google::protobuf::Message* _message) { InternalSendMessage(_message); }
 
 sp_int64 Client::AddTimer(VCallback<> cb, sp_int64 _msecs) {
-  return AddTimer_Base(std::move(cb), _msecs);
+  return 0;
 }
 
-sp_int32 Client::RemoveTimer(sp_int64 timer_id) { return RemoveTimer_Base(timer_id); }
+sp_int32 Client::RemoveTimer(sp_int64 timer_id) { return 0}
 
 BaseConnection* Client::CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
                                          RDMAEventLoopNoneFD* ss) {
