@@ -135,6 +135,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   int ret;
   struct fid_ep *ep;
   RDMAConnection *con;
+  BaseConnection *baseConnection;
 
   // create the connection
   con = new RDMAConnection(this->options, entry->info,
@@ -167,7 +168,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
 
   con->SetState(WAIT_CONNECT_CONFIRM);
 
-  BaseConnection *baseConnection = new Connection(options, con, this->eventLoop_);
+  baseConnection = new Connection(options, con, this->eventLoop_);
   // add the connection to pending and wait for confirmation
   pending_connections_.insert(baseConnection);
   return 0;
