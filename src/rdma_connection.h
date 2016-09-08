@@ -132,8 +132,6 @@ private:
   int GetRXComp(uint64_t total);
   int GetCQComp(struct fid_cq *cq, uint64_t *cur,
                 uint64_t total, int timeout);
-  int FDWaitForComp(struct fid_cq *cq, uint64_t *cur,
-                    uint64_t total, int timeout);
   int SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
                         uint64_t total, int timeout);
   int AllocateBuffers(void);
