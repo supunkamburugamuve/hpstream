@@ -11,7 +11,8 @@ class RDMABaseClient {
 public:
   enum State { DISCONNECTED = 0, CONNECTING, CONNECTED };
   RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
-  int Connect(void);
+  int Start_base(void);
+  int Stop_base();
   RDMAConnection *GetConnection();
   void Free();
   int OnConnect(enum rdma_loop_status state);
@@ -39,7 +40,6 @@ private:
   // the fabric
   struct fid_fabric *fabric;
 
-  int Disconnect();
 
   int Connected(fi_eq_cm_entry *entry);
 };

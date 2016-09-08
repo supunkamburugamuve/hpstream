@@ -56,7 +56,7 @@ int RDMABaseClient::OnConnect(enum rdma_loop_status state) {
   }
 
   if (event == FI_SHUTDOWN) {
-    Disconnect();
+		Stop_base();
     return 0;
   } else if (event == FI_CONNECTED) {
     Connected(&entry);
@@ -68,11 +68,11 @@ int RDMABaseClient::OnConnect(enum rdma_loop_status state) {
   return ret;
 }
 
-int RDMABaseClient::Disconnect() {
+int RDMABaseClient::Stop_base() {
   return this->conn_->closeConnection();
 }
 
-int RDMABaseClient::Connect(void) {
+int RDMABaseClient::Start_base(void) {
 	int ret;
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;

@@ -26,7 +26,7 @@ int connect3() {
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
   client = new RDMABaseClient(&options, fabric, eventLoop);
-  client->Connect();
+  client->Start_base();
   eventLoop->Start();
   while (!client->IsConnected());
   con = client->GetConnection();

@@ -11,9 +11,9 @@ Client::Client(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *l
 
 Client::~Client() { delete message_rid_gen_; }
 
-void Client::Start() { Start_Base(); }
+void Client::Start() { Start_base(); }
 
-void Client::Stop() { Stop_Base(); }
+void Client::Stop() { Stop_base(); }
 
 void Client::SendRequest(google::protobuf::Message* _request, void* _ctx) {
   SendRequest(_request, _ctx, -1);
