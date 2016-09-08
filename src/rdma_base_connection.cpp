@@ -1,3 +1,4 @@
+#include <glog/logging.h>
 #include "rdma_base_connecion.h"
 
 BaseConnection::BaseConnection(RDMAOptions *options, RDMAConnection *con,
@@ -7,11 +8,11 @@ BaseConnection::BaseConnection(RDMAOptions *options, RDMAConnection *con,
 
 int32_t BaseConnection::start() {
   if (mState != INIT) {
-    HPS_ERR("Connection not in INIT State, hence cannot start");
+    LOG(ERROR) << "Connection not in INIT State, hence cannot start";
     return -1;
   }
   if (mRdmaConnection->start()) {
-    HPS_ERR("Could not start the rdma connection");
+    LOG(ERROR) << "Could not start the rdma connection";
     return -1;
   }
   mState = CONNECTED;
@@ -21,7 +22,7 @@ int32_t BaseConnection::start() {
 void BaseConnection::closeConnection() {
   if (mState != CONNECTED) {
     // Nothing to do here
-    HPS_ERR("Connection already closed, hence doing nothing");
+    LOG(ERROR) << "Connection already closed, hence doing nothing";
     return;
   }
   mState = TO_BE_DISCONNECTED;
@@ -44,7 +45,7 @@ void BaseConnection::internalClose() {
 std::string BaseConnection::getIPAddress() {
   std::string addr_result = "";
   if (mState != CONNECTED) {
-    HPS_ERR("Not in connected state, cannot get port");
+    LOG(ERROR) << "Not in connected state, cannot get port";
     return addr_result;
   }
   char *address = mRdmaConnection->getIPAddress();
@@ -54,7 +55,7 @@ std::string BaseConnection::getIPAddress() {
 
 int32_t BaseConnection::getPort() {
   if (mState != CONNECTED) {
-    HPS_ERR("Not in connected state, cannot get port");
+    LOG(ERROR) << "Not in connected state, cannot get port";
     return -1;
   }
   return mRdmaConnection->getPort();

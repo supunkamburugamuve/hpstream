@@ -104,7 +104,7 @@ void Client::InternalSendRequest(google::protobuf::Message* _request, void* _ctx
     return;
   }
   if (_msecs > 0) {
-    auto cb = [rid, this](EventLoop::Status s) { this->OnPacketTimer(rid, s); };
+    auto cb = [rid, this](RDMAEventLoopNoneFD::Status s) { this->OnPacketTimer(rid, s); };
     CHECK_GT(eventLoop_->registerTimer(std::move(cb), false, _msecs), 0);
   }
   return;
@@ -183,7 +183,7 @@ void Client::OnNewPacket(IncomingPacket* _ipkt) {
   delete _ipkt;
 }
 
-void Client::OnPacketTimer(REQID _id, EventLoop::Status) {
+void Client::OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status) {
   if (context_map_.find(_id) == context_map_.end()) {
     // most likely this was due to the requests being retired before the timer.
     return;
