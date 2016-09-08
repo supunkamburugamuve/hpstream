@@ -5,7 +5,6 @@
 #include <string>
 #include <cstring>
 #include <google/protobuf/message.h>
-#include "connection.h"
 #include "ridgen.h"
 
 using namespace google::protobuf;

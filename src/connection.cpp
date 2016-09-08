@@ -130,6 +130,88 @@ int32_t Connection::readFromEndPoint() {
   }
 }
 
+int32_t Connection::ReadPacket() {
+  if (mIncomingPacket->data_ == NULL) {
+    // We are still reading the header
+    int32_t read_status =
+        InternalPacketRead(mIncomingPacket->header_ + mIncomingPacket->position_,
+                           PacketHeader::header_size() - mIncomingPacket->position_, &mIncomingPacket->position_);
+
+    if (read_status != 0) {
+      // Header read is either partial or had an error
+      return read_status;
+
+    } else {
+      // Header just completed - some sanity checking of the header
+      if (mIncomingPacket->max_packet_size_ != 0 &&
+          PacketHeader::get_packet_size(mIncomingPacket->header_) > mIncomingPacket->max_packet_size_) {
+        // Too large packet
+        LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(mIncomingPacket->header_)
+                   << ". We only accept packet sizes <= " << mIncomingPacket->max_packet_size_ << "\n";
+
+        return -1;
+
+      } else {
+        // Create the data
+        mIncomingPacket->data_ = new char[PacketHeader::get_packet_size(mIncomingPacket->header_)];
+
+        // bzero(data_, PacketHeader::get_packet_size(header_));
+        // reset the position to refer to the data_
+
+        mIncomingPacket->position_ = 0;
+      }
+    }
+  }
+
+  // The header has been completely read. Read the data
+  int32_t retval =
+      InternalPacketRead(mIncomingPacket->data_ + mIncomingPacket->position_,
+                         PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_,
+                         &mIncomingPacket->position_);
+  if (retval == 0) {
+    // Successfuly read the packet.
+    mIncomingPacket->position_ = 0;
+  }
+
+  return retval;
+}
+
+int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *position_) {
+  char* current = _buffer;
+  uint32_t to_read = _size;
+  while (to_read > 0) {
+    ssize_t num_read;
+    num_read = readData((uint8_t *) current, to_read, (uint32_t *) &num_read);
+    if (num_read > 0) {
+      current = current + num_read;
+      to_read = to_read - num_read;
+      *position_ = *position_ + num_read;
+    } else if (num_read == 0) {
+      // remote end has done a shutdown.
+      HPS_ERR("Remote end has done a shutdown");
+      return -1;
+    } else {
+      // read returned negative value.
+      if (errno == EAGAIN) {
+        // The read would block.
+        // cout << "read syscall returned the EAGAIN errno " << errno << "\n";
+        return 1;
+      } else if (errno == EINTR) {
+        // cout << "read syscall returned the EINTR errno " << errno << "\n";
+        // the syscall encountered a signal before reading anything.
+        // try again
+        continue;
+      } else {
+        // something really bad happened. Bail out
+        // try again
+        HPS_ERR("Something really bad happened while reading %d", errno);
+        return -1;
+      }
+    }
+  }
+  return 0;
+}
+
 void Connection::handleDataRead() {
   while (!mReceivedPackets.empty()) {
     IncomingPacket* packet = mReceivedPackets.front();
