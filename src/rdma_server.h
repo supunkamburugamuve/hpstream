@@ -33,7 +33,7 @@ public:
   /**
    * Listen for connection events.
    */
-  int OnConnect(enum rdma_loop_status state);
+  void OnConnect(enum rdma_loop_status state);
 
   // Close a connection. This function doesn't return anything.
   // When the connection is attempted to be closed(which can happen

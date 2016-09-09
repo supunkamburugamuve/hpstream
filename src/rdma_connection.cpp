@@ -598,12 +598,12 @@ int RDMAConnection::ReceiveComplete() {
 
 RDMAConnection::~RDMAConnection() {}
 
-int RDMAConnection::OnWrite(enum rdma_loop_status state) {
-  return TransmitComplete();
+void RDMAConnection::OnWrite(enum rdma_loop_status state) {
+  TransmitComplete();
 }
 
-int RDMAConnection::OnRead(enum rdma_loop_status state) {
-  return ReceiveComplete();
+void RDMAConnection::OnRead(enum rdma_loop_status state) {
+  ReceiveComplete();
 }
 
 int RDMAConnection::closeConnection() {

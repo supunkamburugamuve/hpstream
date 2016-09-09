@@ -41,7 +41,7 @@ sp_int64 Client::AddTimer(VCallback<> cb, sp_int64 _msecs) {
   return 0;
 }
 
-sp_int32 Client::RemoveTimer(sp_int64 timer_id) { return 0}
+sp_int32 Client::RemoveTimer(sp_int64 timer_id) { return 0;}
 
 BaseConnection* Client::CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
                                          RDMAEventLoopNoneFD* ss) {

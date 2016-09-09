@@ -86,28 +86,27 @@ int RDMABaseServer::Stop_Base() {
   return 0;
 }
 
-int RDMABaseServer::OnConnect(enum rdma_loop_status state) {
+void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
-  int ret = 0;
 
   if (state == TRYAGAIN) {
-    return 0;
+    return;
   }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
   if (rd == 0 || rd == -EAGAIN) {
-    return 0;
+    return;
   }
 
   if (rd < 0) {
-    return 0;
+    return;
   }
 
   if (rd != sizeof entry) {
     HPS_ERR("fi_eq_sread listen %ld and expected %ld", rd, sizeof entry);
-    return (int) rd;
+    return;
   }
 
   if (event == FI_SHUTDOWN) {
@@ -117,7 +116,7 @@ int RDMABaseServer::OnConnect(enum rdma_loop_status state) {
       // now disconnect
       c->closeConnection();
     }
-    return 0;
+    return;
   } else if (event == FI_CONNREQ) {
     // this is the correct fi_info associated with active end-point
     Connect(&entry);
@@ -125,10 +124,7 @@ int RDMABaseServer::OnConnect(enum rdma_loop_status state) {
     Connected(&entry);
   } else {
     HPS_ERR("Unexpected CM event %d", event);
-    ret = -FI_EOTHER;
   }
-
-  return ret;
 }
 
 int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {

@@ -140,9 +140,9 @@ private:
   int TransmitComplete();
   int ReceiveComplete();
 
-  int OnRead(rdma_loop_status state);
+  void OnRead(rdma_loop_status state);
 
-  int OnWrite(rdma_loop_status state);
+  void OnWrite(rdma_loop_status state);
 
   VCallback<uint32_t> onWriteComplete;
   VCallback<int> onWriteReady;

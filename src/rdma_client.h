@@ -16,7 +16,7 @@ public:
   int Stop_base();
   RDMAConnection *GetConnection();
   void Free();
-  int OnConnect(enum rdma_loop_status state);
+  void OnConnect(enum rdma_loop_status state);
   bool IsConnected();
 protected:
   BaseConnection *conn_;

@@ -33,40 +33,34 @@ RDMAConnection* RDMABaseClient::GetConnection() {
 	return this->connection_;
 }
 
-int RDMABaseClient::OnConnect(enum rdma_loop_status state) {
+void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
-  int ret = 0;
   if (state == TRYAGAIN) {
-    return 0;
+    return;
   }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
   if (rd == 0) {
-    return 0;
+    return;
   }
 
   if (rd < 0) {
-    return 0;
+    return;
   }
 
   if (rd != sizeof entry) {
     HPS_ERR("fi_eq_sread listen");
-    return (int) rd;
   }
 
   if (event == FI_SHUTDOWN) {
 		Stop_base();
-    return 0;
   } else if (event == FI_CONNECTED) {
     Connected(&entry);
   } else {
     HPS_ERR("Unexpected CM event %d", event);
-    ret = -FI_EOTHER;
   }
-
-  return ret;
 }
 
 int RDMABaseClient::Stop_base() {
