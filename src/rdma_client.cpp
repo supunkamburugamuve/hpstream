@@ -8,6 +8,7 @@
 #include <glog/logging.h>
 
 #include "rdma_client.h"
+#include "connection.h"
 
 RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
 	this->info_hints = rdmaFabric->GetHints();
@@ -29,7 +30,7 @@ void RDMABaseClient::Free() {
 }
 
 RDMAConnection* RDMABaseClient::GetConnection() {
-	return this->conn_;
+	return this->connection_;
 }
 
 int RDMABaseClient::OnConnect(enum rdma_loop_status state) {
@@ -69,7 +70,7 @@ int RDMABaseClient::OnConnect(enum rdma_loop_status state) {
 }
 
 int RDMABaseClient::Stop_base() {
-  return this->conn_->closeConnection();
+  return this->connection_->closeConnection();
 }
 
 int RDMABaseClient::Start_base(void) {
@@ -124,13 +125,14 @@ int RDMABaseClient::Start_base(void) {
     return ret;
   }
 
-  this->conn_ = con;
+	this->conn_ = new Connection(options, con, eventLoop_);
+  this->connection_ = con;
 	return 0;
 }
 
 int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
   int ret;
-  if (entry->fid != &(this->conn_->GetEp()->fid)) {
+  if (entry->fid != &(this->connection_->GetEp()->fid)) {
     ret = -FI_EOTHER;
     return ret;
   }
@@ -146,7 +148,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 }
 
 bool RDMABaseClient::IsConnected() {
-  return conn_ != NULL && conn_->GetState() == CONNECTED;
+  return conn_ != NULL && connection_->GetState() == CONNECTED;
 }
 
 

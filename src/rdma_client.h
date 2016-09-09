@@ -18,8 +18,9 @@ public:
   int OnConnect(enum rdma_loop_status state);
   bool IsConnected();
 protected:
+  BaseConnection *conn_;
   // the connection
-  RDMAConnection *conn_;
+  RDMAConnection *connection_;
   RDMAEventLoopNoneFD *eventLoop_;
   State state_;
 private:
