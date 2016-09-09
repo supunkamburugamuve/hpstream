@@ -41,8 +41,8 @@ class REQID {
   //! Underlying representation of request ID
   std::string id_;
 
-  friend bool operator==(const REQID& lhs, const REQID& rhs);
-  friend bool operator!=(const REQID& lhs, const REQID& rhs);
+  friend bool operator==(const REQID& lhs, const REQID& rhs) const;
+  friend bool operator!=(const REQID& lhs, const REQID& rhs) const;
   friend std::ostream& operator<<(std::ostream& _os, const REQID& _reqid);
 
   friend class REQID_Generator;
@@ -51,11 +51,11 @@ class REQID {
 typedef std::vector<REQID> REQID_Vector;
 typedef REQID_Vector::iterator REQID_Vector_Iterator;
 
-inline bool operator==(const REQID& lhs, const REQID& rhs) {
+inline bool operator==(const REQID& lhs, const REQID& rhs) const {
   return lhs.id_ == rhs.id_;
 }
 
-inline bool operator!=(const REQID& lhs, const REQID& rhs) {
+inline bool operator!=(const REQID& lhs, const REQID& rhs) const {
   return lhs.id_ != rhs.id_;
 }
 
