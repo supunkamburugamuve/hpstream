@@ -41,8 +41,8 @@ class REQID {
   //! Underlying representation of request ID
   std::string id_;
 
-  friend bool operator==(const REQID& lhs, const REQID& rhs) const;
-  friend bool operator!=(const REQID& lhs, const REQID& rhs) const;
+  friend bool operator==(const REQID& lhs, const REQID& rhs);
+  friend bool operator!=(const REQID& lhs, const REQID& rhs);
   friend std::ostream& operator<<(std::ostream& _os, const REQID& _reqid);
 
   friend class REQID_Generator;
@@ -51,11 +51,11 @@ class REQID {
 typedef std::vector<REQID> REQID_Vector;
 typedef REQID_Vector::iterator REQID_Vector_Iterator;
 
-inline bool operator==(const REQID& lhs, const REQID& rhs) const {
+inline bool operator==(const REQID& lhs, const REQID& rhs) {
   return lhs.id_ == rhs.id_;
 }
 
-inline bool operator!=(const REQID& lhs, const REQID& rhs) const {
+inline bool operator!=(const REQID& lhs, const REQID& rhs) {
   return lhs.id_ != rhs.id_;
 }
 
@@ -63,6 +63,10 @@ inline std::ostream& operator<<(std::ostream& _os, const REQID& _reqid) {
   _os << _reqid.id_;
   return _os;
 }
+
+class REQID_Hash {
+  size_t operator()(const REQID& x) const { return std::hash<std::string>()(x.str()); }
+};
 
 class REQID_Generator {
  public:

@@ -253,7 +253,7 @@ private:
   }
 
   //! Map from reqid to the response/context pair of the request
-  std::unordered_map<REQID, std::pair<string, void*> > context_map_;
+  std::unordered_map<REQID, std::pair<string, void*>, REQID_Hash> context_map_;
 
   typedef std::function<void(IncomingPacket*)> handler;
   std::unordered_map<std::string, handler> requestHandlers;
