@@ -152,11 +152,6 @@ namespace heron {
       std::vector<sp_string> expected_instances_;
       StMgr *stmgr_;
 
-      // Metrics
-      heron::common::MultiCountMetric *stmgr_server_metrics_;
-      heron::common::TimeSpentMetric *back_pressure_metric_aggr_;
-      heron::common::TimeSpentMetric *back_pressure_metric_initiated_;
-
       bool spouts_under_back_pressure_;
     };
 

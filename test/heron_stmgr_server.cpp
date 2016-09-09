@@ -66,8 +66,7 @@ namespace heron {
           topology_id_(_topology_id),
           stmgr_id_(_stmgr_id),
           expected_instances_(_expected_instances),
-          stmgr_(_stmgr),
-          metrics_manager_client_(_metrics_manager_client) {
+          stmgr_(_stmgr) {
       // stmgr related handlers
       InstallRequestHandler(&StMgrServer::HandleStMgrHelloRequest);
       InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);
@@ -78,14 +77,6 @@ namespace heron {
       InstallRequestHandler(&StMgrServer::HandleRegisterInstanceRequest);
       InstallMessageHandler(&StMgrServer::HandleTupleSetMessage);
 
-      stmgr_server_metrics_ = new heron::common::MultiCountMetric();
-      back_pressure_metric_aggr_ = new heron::common::TimeSpentMetric();
-      back_pressure_metric_initiated_ = new heron::common::TimeSpentMetric();
-      metrics_manager_client_->register_metric("__server", stmgr_server_metrics_);
-      metrics_manager_client_->register_metric(METRIC_TIME_SPENT_BACK_PRESSURE_AGGR,
-                                               back_pressure_metric_aggr_);
-      metrics_manager_client_->register_metric(METRIC_TIME_SPENT_BACK_PRESSURE_INIT,
-                                               back_pressure_metric_initiated_);
       spouts_under_back_pressure_ = false;
     }
 
@@ -102,16 +93,9 @@ namespace heron {
           Connection* iConn = data->conn_;
           if (!iConn) break;
           sp_string metric_name = MakeBackPressureCompIdMetricName(instance_id);
-          metrics_manager_client_->unregister_metric(metric_name);
           delete immIter->second;
         }
       }
-      metrics_manager_client_->unregister_metric("__server");
-      metrics_manager_client_->unregister_metric(METRIC_TIME_SPENT_BACK_PRESSURE_AGGR);
-      metrics_manager_client_->unregister_metric(METRIC_TIME_SPENT_BACK_PRESSURE_INIT);
-      delete stmgr_server_metrics_;
-      delete back_pressure_metric_aggr_;
-      delete back_pressure_metric_initiated_;
 
       // cleanup the instance info
       for (TaskIdInstanceDataMap::iterator iter = instance_info_.begin(); iter != instance_info_.end();
@@ -224,15 +208,8 @@ namespace heron {
       if (iter == rstmgrs_.end()) {
         LOG(INFO) << "Recieved Tuple messages from unknown streammanager connection" << std::endl;
       } else {
-        stmgr_server_metrics_->scope(METRIC_BYTES_FROM_STMGRS)->incr_by(_message->ByteSize());
         if (_message->set().has_data()) {
-          stmgr_server_metrics_->scope(METRIC_DATA_TUPLES_FROM_STMGRS)
-              ->incr_by(_message->set().data().tuples_size());
         } else if (_message->set().has_control()) {
-          stmgr_server_metrics_->scope(METRIC_ACK_TUPLES_FROM_STMGRS)
-              ->incr_by(_message->set().control().acks_size());
-          stmgr_server_metrics_->scope(METRIC_FAIL_TUPLES_FROM_STMGRS)
-              ->incr_by(_message->set().control().fails_size());
         }
         stmgr_->HandleStreamManagerData(iter->second, _message);
       }
@@ -287,8 +264,6 @@ namespace heron {
           // Create a metric for this instance
           if (instance_metric_map_.find(instance_id) == instance_metric_map_.end()) {
             heron::common::TimeSpentMetric* instance_metric = new heron::common::TimeSpentMetric();
-            metrics_manager_client_->register_metric(MakeBackPressureCompIdMetricName(instance_id),
-                                                     instance_metric);
             instance_metric_map_[instance_id] = instance_metric;
           }
         }
@@ -318,15 +293,8 @@ namespace heron {
         delete _message;
         return;
       }
-      stmgr_server_metrics_->scope(METRIC_BYTES_FROM_INSTANCES)->incr_by(_message->ByteSize());
       if (_message->set().has_data()) {
-        stmgr_server_metrics_->scope(METRIC_DATA_TUPLES_FROM_INSTANCES)
-            ->incr_by(_message->set().data().tuples_size());
       } else if (_message->set().has_control()) {
-        stmgr_server_metrics_->scope(METRIC_ACK_TUPLES_FROM_INSTANCES)
-            ->incr_by(_message->set().control().acks_size());
-        stmgr_server_metrics_->scope(METRIC_FAIL_TUPLES_FROM_INSTANCES)
-            ->incr_by(_message->set().control().fails_size());
       }
       stmgr_->HandleInstanceData(iter->second, instance_info_[iter->second]->local_spout_, _message);
       delete _message;
@@ -341,26 +309,12 @@ namespace heron {
         drop = true;
       }
       if (drop) {
-        stmgr_server_metrics_->scope(METRIC_BYTES_TO_INSTANCES_LOST)->incr_by(_message.ByteSize());
         if (_message.set().has_data()) {
-          stmgr_server_metrics_->scope(METRIC_DATA_TUPLES_TO_INSTANCES_LOST)
-              ->incr_by(_message.set().data().tuples_size());
         } else if (_message.set().has_control()) {
-          stmgr_server_metrics_->scope(METRIC_ACK_TUPLES_TO_INSTANCES_LOST)
-              ->incr_by(_message.set().control().acks_size());
-          stmgr_server_metrics_->scope(METRIC_FAIL_TUPLES_TO_INSTANCES_LOST)
-              ->incr_by(_message.set().control().fails_size());
         }
       } else {
-        stmgr_server_metrics_->scope(METRIC_BYTES_TO_INSTANCES)->incr_by(_message.ByteSize());
         if (_message.set().has_data()) {
-          stmgr_server_metrics_->scope(METRIC_DATA_TUPLES_TO_INSTANCES)
-              ->incr_by(_message.set().data().tuples_size());
         } else if (_message.set().has_control()) {
-          stmgr_server_metrics_->scope(METRIC_ACK_TUPLES_TO_INSTANCES)
-              ->incr_by(_message.set().control().acks_size());
-          stmgr_server_metrics_->scope(METRIC_FAIL_TUPLES_TO_INSTANCES)
-              ->incr_by(_message.set().control().fails_size());
         }
         SendMessage(iter->second->conn_, _message);
       }
@@ -409,7 +363,6 @@ namespace heron {
 
       if (remote_ends_who_caused_back_pressure_.empty()) {
         SendStartBackPressureToOtherStMgrs();
-        back_pressure_metric_initiated_->Start();
       }
 
       // Indicate which instance component had back pressure
@@ -433,12 +386,8 @@ namespace heron {
       remote_ends_who_caused_back_pressure_.erase(instance_name);
 
       // Indicate which instance component stopped back pressure
-      heron::common::TimeSpentMetric* instance_metric = instance_metric_map_[instance_name];
-      instance_metric->Stop();
-
       if (remote_ends_who_caused_back_pressure_.empty()) {
         SendStopBackPressureToOtherStMgrs();
-        back_pressure_metric_initiated_->Stop();
       }
       LOG(INFO) << "We don't observe back pressure now on sending data to instance " << instance_name;
       AttemptStopBackPressureFromSpouts();
@@ -447,7 +396,6 @@ namespace heron {
     void StMgrServer::StartBackPressureClientCb(const sp_string& _other_stmgr_id) {
       if (remote_ends_who_caused_back_pressure_.empty()) {
         SendStartBackPressureToOtherStMgrs();
-        back_pressure_metric_initiated_->Start();
       }
       remote_ends_who_caused_back_pressure_.insert(_other_stmgr_id);
       LOG(INFO) << "We observe back pressure on sending data to remote stream manager "
@@ -462,7 +410,6 @@ namespace heron {
 
       if (remote_ends_who_caused_back_pressure_.empty()) {
         SendStopBackPressureToOtherStMgrs();
-        back_pressure_metric_initiated_->Stop();
       }
       LOG(INFO) << "We don't observe back pressure now on sending data to remote "
           "stream manager "

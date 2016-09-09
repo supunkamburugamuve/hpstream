@@ -7,7 +7,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -ggdb -std=gnu++11")
 
 project(hpstream)
 
-set(GLOG_PATH /home/supun/dev/projects/stream/glog/build)
+set(GLOG_PATH /home/supun/dev/projects/stream/glog-0.3.4/build)
 set(FABRIC_PATH /home/supun/dev/projects/stream/fabric-build)
 set(PROTOC_PATH /home/supun/dev/projects/stream/fabric-build)
 
@@ -29,3 +29,9 @@ target_link_libraries(hps_server fabric rt pthread ibverbs libhpstream.so protob
 
 add_executable(hps_client test/hps_utils.cpp test/hps_client.cpp)
 target_link_libraries(hps_client hpstream fabric rt pthread ibverbs libhpstream.so protobuf glog)
+
+add_executable(stmgr_server test/hps_utils.cpp test/heron_stmgr_server.cpp)
+target_link_libraries(stmgr_server fabric rt pthread ibverbs libhpstream.so protobuf glog)
+
+add_executable(stmgr_client test/hps_utils.cpp test/heron_client.cpp)
+target_link_libraries(stmgr_client hpstream fabric rt pthread ibverbs libhpstream.so protobuf glog)
