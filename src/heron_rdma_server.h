@@ -185,7 +185,7 @@ private:
   std::unordered_map<std::string, handler> messageHandlers;
 
   // For acting like a client
-  std::unordered_map<REQID, std::pair<google::protobuf::Message*, void*> > context_map_;
+  std::unordered_map<REQID, std::pair<google::protobuf::Message*, void*>, REQID_Hash > context_map_;
   REQID_Generator* request_rid_gen_;
 };
 
