@@ -1,7 +1,7 @@
 #include "hps_utils.h"
 #include <ctime>
 
-struct timespec start, end;
+struct timespec start, end_t;
 RDMAConnection *con;
 RDMAOptions options;
 struct fi_info *hints;
@@ -49,7 +49,7 @@ int exchange3() {
   }
 
   clock_gettime(CLOCK_MONOTONIC, &start);
-  elapsed = get_elapsed(&end, &start);
+  elapsed = get_elapsed(&end_t, &start);
 
   for (int i = 0; i < ITERATIONS_; i++) {
     current_write = 0;
@@ -68,7 +68,7 @@ int exchange3() {
       // HPS_INFO("Completed %d", i);
     }
   }
-  clock_gettime(CLOCK_MONOTONIC, &end);
+  clock_gettime(CLOCK_MONOTONIC, &end_t);
   rate = 1000000.0 * 4000.0 /((1024 * 1024)* (elapsed / (1000 * 1000)));
   HPS_INFO("Message rate: time=%ld s and throughput=%lf", elapsed / 1000000, rate);
 
