@@ -65,6 +65,7 @@ inline std::ostream& operator<<(std::ostream& _os, const REQID& _reqid) {
 }
 
 class REQID_Hash {
+public:
   size_t operator()(const REQID& x) const { return std::hash<std::string>()(x.str()); }
 };
 
