@@ -41,9 +41,9 @@ class REQID {
   //! Underlying representation of request ID
   std::string id_;
 
-  friend const bool operator==(const REQID& lhs, const REQID& rhs);
-  friend const bool operator!=(const REQID& lhs, const REQID& rhs);
-  friend const std::ostream& operator<<(std::ostream& _os, const REQID& _reqid);
+  friend bool operator==(const REQID& lhs, const REQID& rhs);
+  friend bool operator!=(const REQID& lhs, const REQID& rhs);
+  friend std::ostream& operator<<(std::ostream& _os, const REQID& _reqid);
 
   friend class REQID_Generator;
 };
@@ -51,15 +51,15 @@ class REQID {
 typedef std::vector<REQID> REQID_Vector;
 typedef REQID_Vector::iterator REQID_Vector_Iterator;
 
-inline const bool operator==(const REQID& lhs, const REQID& rhs) {
+inline bool operator==(const REQID& lhs, const REQID& rhs) {
   return lhs.id_ == rhs.id_;
 }
 
-inline const bool operator!=(const REQID& lhs, const REQID& rhs) {
+inline bool operator!=(const REQID& lhs, const REQID& rhs) {
   return lhs.id_ != rhs.id_;
 }
 
-inline const std::ostream& operator<<(std::ostream& _os, const REQID& _reqid) {
+inline std::ostream& operator<<(std::ostream& _os, const REQID& _reqid) {
   _os << _reqid.id_;
   return _os;
 }
