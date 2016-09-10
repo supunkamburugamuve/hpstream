@@ -11,42 +11,6 @@
 
 namespace heron {
   namespace stmgr {
-
-// Num data tuples received from other stream managers
-    const sp_string METRIC_DATA_TUPLES_FROM_STMGRS = "__tuples_from_stmgrs";
-// Num ack tuples received from other stream managers
-    const sp_string METRIC_ACK_TUPLES_FROM_STMGRS = "__ack_tuples_from_stmgrs";
-// Num fail tuples received from other stream managers
-    const sp_string METRIC_FAIL_TUPLES_FROM_STMGRS = "__fail_tuples_from_stmgrs";
-// Bytes received from other stream managers
-    const sp_string METRIC_BYTES_FROM_STMGRS = "__bytes_from_stmgrs";
-// Num data tuples sent to instances associated with this stream manager
-    const sp_string METRIC_DATA_TUPLES_TO_INSTANCES = "__tuples_to_workers";
-// Num ack tuples sent to instances associated with this stream manager
-    const sp_string METRIC_ACK_TUPLES_TO_INSTANCES = "__ack_tuples_to_workers";
-// Num fail tuples sent to instances associated with this stream manager
-    const sp_string METRIC_FAIL_TUPLES_TO_INSTANCES = "__fail_tuples_to_workers";
-// Bytes sent to instances
-    const sp_string METRIC_BYTES_TO_INSTANCES = "__bytes_to_workers";
-// Num data tuples from instances associated with this stream manager
-    const sp_string METRIC_DATA_TUPLES_FROM_INSTANCES = "__tuples_from_workers";
-// Num ack tuples from instances associated with this stream manager
-    const sp_string METRIC_ACK_TUPLES_FROM_INSTANCES = "__ack_tuples_from_workers";
-// Num fail tuples from instances associated with this stream manager
-    const sp_string METRIC_FAIL_TUPLES_FROM_INSTANCES = "__fail_tuples_from_workers";
-// Bytes received from instances
-    const sp_string METRIC_BYTES_FROM_INSTANCES = "__bytes_from_workers";
-// Num data tuples lost since instances is not connected
-    const sp_string METRIC_DATA_TUPLES_TO_INSTANCES_LOST = "__tuples_to_workers_lost";
-// Num ack tuples lost since instances is not connected
-    const sp_string METRIC_ACK_TUPLES_TO_INSTANCES_LOST = "__ack_tuples_to_workers_lost";
-// Num fail tuples lost since instances is not connected
-    const sp_string METRIC_FAIL_TUPLES_TO_INSTANCES_LOST = "__fail_tuples_to_workers_lost";
-// Num bytes lost since instances is not connected
-    const sp_string METRIC_BYTES_TO_INSTANCES_LOST = "__bytes_to_workers_lost";
-// Time spent in back pressure aggregated - back pressure initiated by us +
-// others
-    const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_AGGR = "__server/__time_spent_back_pressure_aggr";
 // Time spent in back pressure because of local instances connection;
 // we initiated this backpressure
     const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_INIT =
@@ -56,7 +20,7 @@ namespace heron {
 // to the string below
     const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
-    StMgrServer::StMgrServer(EventLoop* eventLoop, const NetworkOptions& _options,
+    StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions *_options,
                              const sp_string& _topology_name, const sp_string& _topology_id,
                              const sp_string& _stmgr_id,
                              const std::vector<sp_string>& _expected_instances, StMgr* _stmgr,
@@ -465,13 +429,11 @@ namespace heron {
     void StMgrServer::SendStartBackPressureToOtherStMgrs() {
       LOG(INFO) << "Sending start back pressure notification to all other "
                 << "stream managers";
-      stmgr_->SendStartBackPressureToOtherStMgrs();
-    }
+      }
 
     void StMgrServer::SendStopBackPressureToOtherStMgrs() {
       LOG(INFO) << "Sending stop back pressure notification to all other "
                 << "stream managers";
-      stmgr_->SendStopBackPressureToOtherStMgrs();
     }
 
     void StMgrServer::StartBackPressureOnSpouts() {
@@ -486,7 +448,6 @@ namespace heron {
           if (!iiter->second->conn_) continue;
           if (!iiter->second->conn_->isUnderBackPressure()) iiter->second->conn_->putBackPressure();
         }
-        back_pressure_metric_aggr_->Start();
       }
     }
 
@@ -503,7 +464,6 @@ namespace heron {
           if (!iiter->second->conn_) continue;
           if (iiter->second->conn_->isUnderBackPressure()) iiter->second->conn_->removeBackPressure();
         }
-        back_pressure_metric_aggr_->Stop();
       }
     }
 

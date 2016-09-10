@@ -15,7 +15,9 @@ public:
   int Start_base(void);
   int Stop_base();
   RDMAConnection *GetConnection();
-  void Free();
+  // Instantiate a new connection
+  virtual BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+                                           RDMAEventLoopNoneFD* ss) = 0;
   void OnConnect(enum rdma_loop_status state);
   bool IsConnected();
 protected:

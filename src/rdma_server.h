@@ -41,6 +41,9 @@ public:
   // will contain a status of how the closing process went.
   void CloseConnection_Base(BaseConnection* connection);
 protected:
+  // Instantiate a new Connection
+  virtual BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+                                   RDMAEventLoopNoneFD* ss) = 0;
   // event loop associated with this server
   RDMAEventLoopNoneFD *eventLoop_;
 

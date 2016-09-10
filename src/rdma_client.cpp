@@ -24,11 +24,6 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
   this->eq_loop.event = CONNECTION;
 }
 
-void RDMABaseClient::Free() {
-	HPS_CLOSE_FID(eq);
-	HPS_CLOSE_FID(fabric);
-}
-
 RDMAConnection* RDMABaseClient::GetConnection() {
 	return this->connection_;
 }
@@ -64,7 +59,10 @@ void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
 }
 
 int RDMABaseClient::Stop_base() {
-  return this->connection_->closeConnection();
+  this->connection_->closeConnection();
+	HPS_CLOSE_FID(eq);
+	HPS_CLOSE_FID(fabric);
+	return 0;
 }
 
 int RDMABaseClient::Start_base(void) {
@@ -119,7 +117,7 @@ int RDMABaseClient::Start_base(void) {
     return ret;
   }
 
-	this->conn_ = new Connection(options, con, eventLoop_);
+	this->conn_ = CreateConnection(con, options, this->eventLoop_);
   this->connection_ = con;
 	return 0;
 }

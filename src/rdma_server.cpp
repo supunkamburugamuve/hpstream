@@ -164,7 +164,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
 
   con->SetState(WAIT_CONNECT_CONFIRM);
 
-  baseConnection = new Connection(options, con, this->eventLoop_);
+  baseConnection = CreateConnection(con, options, this->eventLoop_);
   // add the connection to pending and wait for confirmation
   pending_connections_.insert(baseConnection);
   return 0;
