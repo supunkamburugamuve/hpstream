@@ -6,10 +6,10 @@
 
 const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
-StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions *_options,
+StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric,
                          const sp_string& _topology_name, const sp_string& _topology_id,
                          const sp_string& _stmgr_id)
-    : Server(eventLoop, _options),
+    : Server(fabric, eventLoop, _options),
       topology_name_(_topology_name),
       topology_id_(_topology_id),
       stmgr_id_(_stmgr_id) {
