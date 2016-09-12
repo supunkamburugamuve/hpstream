@@ -9,23 +9,11 @@
 
 #include "heron_client.h"
 
-StMgrClient::StMgrClient(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions* _options, const sp_string& _topology_name,
-                         const sp_string& _topology_id, const sp_string& _our_id, const sp_string& _other_id)
-    : Client(eventLoop, _options),
-      topology_name_(_topology_name),
-      topology_id_(_topology_id),
-      our_stmgr_id_(_our_id),
-      other_stmgr_id_(_other_id),
+StMgrClient::StMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _options, RDMAFabric *fabric)
+    : Client(_options, fabric, eventLoop),
       quit_(false),
-      client_manager_(_client_manager),
-      metrics_manager_client_(_metrics_manager_client),
       ndropped_messages_(0) {
-  reconnect_other_streammgrs_interval_sec_ =
-      config::HeronInternalsConfigReader::Instance()->GetHeronStreammgrClientReconnectIntervalSec();
-
-  InstallResponseHandler(new proto::stmgr::StrMgrHelloRequest(), &StMgrClient::HandleHelloResponse);
   InstallMessageHandler(&StMgrClient::HandleTupleStreamMessage);
-
 }
 
 StMgrClient::~StMgrClient() {
@@ -38,41 +26,9 @@ void StMgrClient::Quit() {
 }
 
 void StMgrClient::HandleConnect(NetworkErrorCode _status) {
-  if (_status == OK) {
-    LOG(INFO) << "Connected to stmgr " << other_stmgr_id_ << " running at "
-    << get_clientoptions().get_host() << ":" << get_clientoptions().get_port()
-    << std::endl;
-    if (quit_) {
-      Stop();
-    } else {
-      SendHelloRequest();
-    }
-  } else {
-    LOG(WARNING) << "Could not connect to stmgr " << other_stmgr_id_ << " running at "
-    << get_clientoptions().get_host() << ":" << get_clientoptions().get_port()
-    << " due to: " << _status << std::endl;
-    if (quit_) {
-      LOG(ERROR) << "Quitting";
-      delete this;
-      return;
-    } else {
-      LOG(INFO) << "Retrying again..." << std::endl;
-      AddTimer([this]() { this->OnReConnectTimer(); },
-               reconnect_other_streammgrs_interval_sec_ * 1000 * 1000);
-    }
-  }
 }
 
 void StMgrClient::HandleClose(NetworkErrorCode _code) {
-  if (_code == OK) {
-    LOG(INFO) << "We closed our server connection with stmgr " << other_stmgr_id_ << " running at "
-    << get_clientoptions().get_host() << ":" << get_clientoptions().get_port()
-    << std::endl;
-  } else {
-    LOG(INFO) << "Stmgr " << other_stmgr_id_ << " running at " << get_clientoptions().get_host()
-    << ":" << get_clientoptions().get_port() << " closed connection with code " << _code
-    << std::endl;
-  }
   if (quit_) {
     delete this;
   } else {
@@ -84,35 +40,11 @@ void StMgrClient::HandleClose(NetworkErrorCode _code) {
 
 void StMgrClient::HandleHelloResponse(void*, proto::stmgr::TupleMessage* _response,
                                       NetworkErrorCode _status) {
-  if (_status != OK) {
-    LOG(ERROR) << "NonOK network code " << _status << " for register response from stmgr "
-    << other_stmgr_id_ << " running at " << get_clientoptions().get_host() << ":"
-    << get_clientoptions().get_port();
-    delete _response;
-    Stop();
-    return;
-  }
-  proto::system::StatusCode status = _response->status().status();
-  if (status != proto::system::OK) {
-    LOG(ERROR) << "NonOK register response " << status << " from stmgr " << other_stmgr_id_
-    << " running at " << get_clientoptions().get_host() << ":"
-    << get_clientoptions().get_port();
-    Stop();
-  }
-  delete _response;
-  if (client_manager_->DidAnnounceBackPressure()) {
-    SendStartBackPressureMessage();
-  }
 }
 
 void StMgrClient::OnReConnectTimer() { Start(); }
 
 void StMgrClient::SendHelloRequest() {
-  proto::stmgr::StrMgrHelloRequest* request = new proto::stmgr::StrMgrHelloRequest();
-  request->set_topology_name(topology_name_);
-  request->set_topology_id(topology_id_);
-  request->set_stmgr(our_stmgr_id_);
-  SendRequest(request, NULL);
   return;
 }
 

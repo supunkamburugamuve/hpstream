@@ -7,7 +7,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -ggdb -std=gnu++11")
 
 project(hpstream)
 
-set(GLOG_PATH /home/supun/dev/projects/stream/glog-0.3.4/build)
+set(GLOG_PATH /home/supun/dev/projects/stream/glog/build)
 set(FABRIC_PATH /home/supun/dev/projects/stream/fabric-build)
 set(PROTOC_PATH /home/supun/dev/projects/stream/fabric-build)
 
@@ -19,19 +19,14 @@ set(SOURCE_FILES src/rdma_buffer.cpp src/rdma_connection.cpp src/rdma_client.cpp
         src/connection.cpp src/packet.cpp src/heron_rdma_client.cpp src/heron_rdma_server.cpp src/ridgen.h src/ridgen.cpp)
 
 link_directories(${FABRIC_PATH}/lib /home/supun/dev/projects/stream/hpstream ${GLOG_PATH}/lib ${PROTOC_PATH}/lib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${FABRIC_PATH}/include ${CMAKE_CURRENT_SOURCE_DIR}/src ${GLOG_PATH}/include ${PROTOC_PATH}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${FABRIC_PATH}/include ${CMAKE_CURRENT_SOURCE_DIR}/src ${GLOG_PATH}/include ${PROTOC_PATH}/include prot)
 
 add_library(hpstream SHARED ${SOURCE_FILES})
 target_link_libraries(hpstream fabric rt pthread ibverbs protobuf glog)
 
-add_executable(hps_server test/hps_utils.cpp test/hps_server.cpp)
+add_executable(hps_server test/hps_utils.cpp test/hps_server.cpp test/heron_stmgr_server.cpp prot/message.pb.cc)
 target_link_libraries(hps_server fabric rt pthread ibverbs libhpstream.so protobuf glog)
 
-add_executable(hps_client test/hps_utils.cpp test/hps_client.cpp)
+add_executable(hps_client test/hps_utils.cpp test/hps_client.cpp test/heron_client.cpp prot/message.pb.cc)
 target_link_libraries(hps_client hpstream fabric rt pthread ibverbs libhpstream.so protobuf glog)
 
-add_executable(stmgr_server test/hps_utils.cpp test/heron_stmgr_server.cpp)
-target_link_libraries(stmgr_server fabric rt pthread ibverbs libhpstream.so protobuf glog)
-
-add_executable(stmgr_client test/hps_utils.cpp test/heron_client.cpp)
-target_link_libraries(stmgr_client hpstream fabric rt pthread ibverbs libhpstream.so protobuf glog)

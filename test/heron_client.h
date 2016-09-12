@@ -7,8 +7,7 @@ class StMgrClientMgr;
 
 class StMgrClient : public Client {
 public:
-  StMgrClient(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions* _options, const sp_string& _topology_name,
-              const sp_string& _topology_id, const sp_string& _our_id, const sp_string& _other_id);
+  StMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _options, RDMAFabric *fabric);
   virtual ~StMgrClient();
 
   void Quit();
@@ -30,9 +29,6 @@ private:
   // Relieve back pressure
   virtual void StopBackPressureConnectionCb(Connection* _connection);
 
-  sp_string topology_name_;
-  sp_string topology_id_;
-  sp_string our_stmgr_id_;
   sp_string other_stmgr_id_;
   bool quit_;
 

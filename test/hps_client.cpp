@@ -1,4 +1,5 @@
 #include "hps_utils.h"
+#include "heron_client.h"
 #include <ctime>
 
 struct timespec start, end_t;
@@ -25,7 +26,7 @@ int connect3() {
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
-  client = new RDMABaseClient(&options, fabric, eventLoop);
+  client = new StMgrClient(eventLoop, &options, fabric);
   client->Start_base();
   eventLoop->Start();
   while (!client->IsConnected());
