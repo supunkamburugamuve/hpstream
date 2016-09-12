@@ -143,25 +143,3 @@ void OutgoingPacket::PrepareForWriting() {
   CHECK(position_ == total_packet_size_);
   position_ = 0;
 }
-
-uint32_t OutgoingPacket::Write(int32_t _fd) {
-  while (position_ < total_packet_size_) {
-    ssize_t num_written = write(_fd, data_ + position_, total_packet_size_ - position_);
-    if (num_written > 0) {
-      position_ = position_ + num_written;
-    } else {
-      if (errno == EAGAIN) {
-        LOG(INFO) << "syscall write returned EAGAIN errno " << errno << "\n";
-        return 1;
-      } else if (errno == EINTR) {
-        LOG(INFO) << "syscall write returned EINTR errno " << errno << "\n";
-        continue;
-      } else {
-        LOG(ERROR) << "syscall write returned errno " << errno << "\n";
-        return -1;
-      }
-    }
-  }
-
-  return 0;
-}

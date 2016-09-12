@@ -169,14 +169,6 @@ private:
   // Once the data has been packed, the packet needs to be prepared before sending.
   void PrepareForWriting();
 
-  // This call writes the packet into the file descriptor fd.
-  // A return value of zero implies that the packet has been
-  // completely sent out. A positive return value implies that
-  // the packet was sent out partially. Further calls of Send
-  // are required to send out the packet completely. A negative
-  // value implies an irrecoverable error.
-  uint32_t Write(int32_t fd);
-
   // The current position of packing/sending.
   uint32_t position_;
 
