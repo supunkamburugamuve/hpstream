@@ -9,11 +9,8 @@
 
 #include "heron_client.h"
 
-StMgrClient::StMgrClient(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions* _options,
-                         const sp_string& _topology_name, const sp_string& _topology_id,
-                         const sp_string& _our_id, const sp_string& _other_id,
-                         StMgrClientMgr* _client_manager,
-                         heron::common::MetricsMgrSt* _metrics_manager_client)
+StMgrClient::StMgrClient(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions* _options, const sp_string& _topology_name,
+                         const sp_string& _topology_id, const sp_string& _our_id, const sp_string& _other_id)
     : Client(eventLoop, _options),
       topology_name_(_topology_name),
       topology_id_(_topology_id),
