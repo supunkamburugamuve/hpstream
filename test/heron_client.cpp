@@ -82,7 +82,7 @@ void StMgrClient::HandleClose(NetworkErrorCode _code) {
   }
 }
 
-void StMgrClient::HandleHelloResponse(void*, proto::stmgr::StrMgrHelloResponse* _response,
+void StMgrClient::HandleHelloResponse(void*, proto::stmgr::TupleMessage* _response,
                                       NetworkErrorCode _status) {
   if (_status != OK) {
     LOG(ERROR) << "NonOK network code " << _status << " for register response from stmgr "
@@ -113,11 +113,10 @@ void StMgrClient::SendHelloRequest() {
   request->set_topology_id(topology_id_);
   request->set_stmgr(our_stmgr_id_);
   SendRequest(request, NULL);
-  stmgr_client_metrics_->scope(METRIC_HELLO_MESSAGES_TO_STMGRS)->incr_by(1);
   return;
 }
 
-void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleStreamMessage* _msg) {
+void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg) {
   if (IsConnected()) {
     SendMessage(_msg);
   } else {
@@ -129,7 +128,7 @@ void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleStreamMessage* _msg)
   }
 }
 
-void StMgrClient::HandleTupleStreamMessage(proto::stmgr::TupleStreamMessage* _message) {
+void StMgrClient::HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message) {
   delete _message;
   LOG(FATAL) << "We should not receive tuple messages in the client" << std::endl;
 }

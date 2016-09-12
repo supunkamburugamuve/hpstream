@@ -4,28 +4,16 @@
 #include <vector>
 #include <heron_rdma_server.h>
 
-// Time spent in back pressure because of local instances connection;
-// we initiated this backpressure
-const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_INIT =
-    "__server/__time_spent_back_pressure_initiated";
-// Time spent in back pressure because of a component id. The comp id will be
-// appended
-// to the string below
 const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
 StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions *_options,
                          const sp_string& _topology_name, const sp_string& _topology_id,
-                         const sp_string& _stmgr_id,
-                         const std::vector<sp_string>& _expected_instances, StMgr* _stmgr,
-                         heron::common::MetricsMgrSt* _metrics_manager_client)
+                         const sp_string& _stmgr_id)
     : Server(eventLoop, _options),
       topology_name_(_topology_name),
       topology_id_(_topology_id),
-      stmgr_id_(_stmgr_id),
-      expected_instances_(_expected_instances),
-      stmgr_(_stmgr) {
+      stmgr_id_(_stmgr_id) {
   // stmgr related handlers
-  InstallRequestHandler(&StMgrServer::HandleStMgrHelloRequest);
   InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);
 
   spouts_under_back_pressure_ = false;
@@ -52,22 +40,9 @@ void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
             << _conn->getPort();
 }
 
-void StMgrServer::HandleStMgrHelloRequest(REQID _id, Connection* _conn,
-                                          proto::stmgr::StrMgrHelloRequest* _request) {
-  LOG(INFO) << "Got a hello message from stmgr " << _request->stmgr() << " on connection " << _conn;
-  delete _request;
-}
-
 void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
-                                           proto::stmgr::TupleStreamMessage* _message) {
-  ConnectionStreamManagerMap::iterator iter = rstmgrs_.find(_conn);
-  if (iter == rstmgrs_.end()) {
-    LOG(INFO) << "Recieved Tuple messages from unknown streammanager connection" << std::endl;
-  } else {
-    if (_message->set().has_data()) {
-    } else if (_message->set().has_control()) {
-    }
-  }
+                                           proto::stmgr::TupleMessage* _message) {
+  printf("Message received: %s\n", _message->name());
   delete _message;
 }
 

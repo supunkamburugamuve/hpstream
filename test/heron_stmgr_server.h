@@ -7,6 +7,7 @@
 #include <sptypes.h>
 #include <connection.h>
 #include <heron_rdma_server.h>
+#include <message.pb.h>
 #include "network_error.h"
 
 namespace heron {
@@ -24,10 +25,9 @@ class StMgr;
 
 class StMgrServer : public Server {
 public:
-StMgrServer(RDMAEventLoopNoneFD *eventLoop, const RDMAOptions &options, const sp_string &_topology_name,
-            const sp_string &_topology_id, const sp_string &_stmgr_id,
-            const std::vector<sp_string> &_expected_instances, StMgr *_stmgr,
-            heron::common::MetricsMgrSt *_metrics_manager_client);
+StMgrServer(RDMAEventLoopNoneFD* eventLoop, const RDMAOptions *_options,
+            const sp_string& _topology_name, const sp_string& _topology_id,
+            const sp_string& _stmgr_id);
 
 virtual ~StMgrServer();
 
@@ -35,10 +35,6 @@ bool HaveAllInstancesConnectedToUs() const {
   return active_instances_.size() == expected_instances_.size();
 }
 
-// Gets all the Instance information
-void GetInstanceInfo(std::vector<proto::system::Instance *> &_return);
-
-bool DidAnnounceBackPressure() { return !remote_ends_who_caused_back_pressure_.empty(); }
 
 protected:
 virtual void HandleNewConnection(Connection *newConnection);
@@ -48,13 +44,7 @@ virtual void HandleConnectionClose(Connection *connection, NetworkErrorCode stat
 private:
 sp_string MakeBackPressureCompIdMetricName(const sp_string &instanceid);
 
-// Various handlers for different requests
-
-// First from other stream managers
-void HandleStMgrHelloRequest(REQID _id, Connection *_conn,
-                             proto::stmgr::StrMgrHelloRequest *_request);
-
-void HandleTupleStreamMessage(Connection *_conn, proto::stmgr::TupleStreamMessage *_message);
+void HandleTupleStreamMessage(Connection *_conn, proto::stmgr::TupleMessage *_message);
 
 // Backpressure message from and to other stream managers
 void SendStartBackPressureToOtherStMgrs();
@@ -67,10 +57,6 @@ void StartBackPressureConnectionCb(Connection *_connection);
 
 // Relieve back pressure
 void StopBackPressureConnectionCb(Connection *_connection);
-
-
-// Compute the LocalSpouts from Physical Plan
-void ComputeLocalSpouts(const proto::system::PhysicalPlan &_pplan);
 
 // map from stmgr_id to their connection
 typedef std::map<sp_string, Connection *> StreamManagerConnectionMap;

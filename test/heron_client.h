@@ -1,6 +1,8 @@
 #ifndef SRC_CPP_SVCS_STMGR_SRC_MANAGER_STMGR_CLIENT_H_
 #define SRC_CPP_SVCS_STMGR_SRC_MANAGER_STMGR_CLIENT_H_
 
+#include <message.pb.h>
+
 class StMgrClientMgr;
 
 class StMgrClient : public Client {
@@ -11,15 +13,15 @@ public:
 
   void Quit();
 
-  void SendTupleStreamMessage(proto::stmgr::TupleStreamMessage* _msg);
+  void SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg);
 
 protected:
   virtual void HandleConnect(NetworkErrorCode status);
   virtual void HandleClose(NetworkErrorCode status);
 
 private:
-  void HandleHelloResponse(void*, proto::stmgr::StrMgrHelloResponse* _response, NetworkErrorCode);
-  void HandleTupleStreamMessage(proto::stmgr::TupleStreamMessage* _message);
+  void HandleHelloResponse(void*, proto::stmgr::TupleMessage* _response, NetworkErrorCode);
+  void HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message);
 
   void OnReConnectTimer();
   void SendHelloRequest();
