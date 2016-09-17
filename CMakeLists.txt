@@ -22,7 +22,7 @@ link_directories(${FABRIC_PATH}/lib /home/supun/dev/projects/stream/hpstream ${G
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${FABRIC_PATH}/include ${CMAKE_CURRENT_SOURCE_DIR}/src ${GLOG_PATH}/include ${PROTOC_PATH}/include prot)
 
 add_library(hpstream SHARED ${SOURCE_FILES})
-target_link_libraries(hpstream fabric rt pthread ibverbs protobuf glog)
+target_link_libraries(hpstream fabric rt pthread ibverbs protobuf glog uuid)
 
 add_executable(hps_server test/hps_utils.cpp test/hps_server.cpp test/heron_stmgr_server.cpp prot/message.pb.cc)
 target_link_libraries(hps_server fabric rt pthread ibverbs libhpstream.so protobuf glog)

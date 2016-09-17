@@ -2,6 +2,7 @@
 #define SRC_CPP_SVCS_STMGR_SRC_MANAGER_STMGR_CLIENT_H_
 
 #include <message.pb.h>
+#include <heron_rdma_client.h>
 
 class StMgrClientMgr;
 

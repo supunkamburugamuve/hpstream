@@ -1,4 +1,5 @@
 #include "hps_utils.h"
+#include "heron_stmgr_server.h"
 
 //Connection *con;
 RDMAOptions options;
@@ -17,7 +18,7 @@ int connect3() {
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
 
-  server = new RDMABaseServer(&options, fabric, eventLoop);
+  server = new StMgrServer(eventLoop, &options, fabric);
   server->Start_Base();
   eventLoop->Start();
   return ret;

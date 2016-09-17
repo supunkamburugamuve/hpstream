@@ -4,6 +4,11 @@
 #define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 1048576
 #define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1048576
 
+// This is the high water mark on the num of bytes that can be left outstanding on a connection
+sp_int64 Connection::systemHWMOutstandingBytes = 1024 * 1024 * 100;  // 100M
+// This is the low water mark on the num of bytes that can be left outstanding on a connection
+sp_int64 Connection::systemLWMOutstandingBytes = 1024 * 1024 * 50;  // 50M
+
 Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop)
     : BaseConnection(options, con, loop) {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
@@ -16,7 +21,7 @@ int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packe
 
 int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCode> cb) {
   packet->PrepareForWriting();
-  if (registerForWrite() != 0) return -1;
+  //if (registerForWrite() != 0) return -1;
   mOutstandingPackets.push_back(std::make_pair(packet, std::move(cb)));
   mNumOutstandingPackets++;
   mNumOutstandingBytes += packet->GetTotalPacketSize();

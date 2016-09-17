@@ -6,13 +6,8 @@
 
 const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
-StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric,
-                         const sp_string& _topology_name, const sp_string& _topology_id,
-                         const sp_string& _stmgr_id)
-    : Server(fabric, eventLoop, _options),
-      topology_name_(_topology_name),
-      topology_id_(_topology_id),
-      stmgr_id_(_stmgr_id) {
+StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric)
+    : Server(fabric, eventLoop, _options) {
   // stmgr related handlers
   InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);
 
@@ -42,7 +37,6 @@ void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
 
 void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
-  printf("Message received: %s\n", _message->name());
   delete _message;
 }
 

@@ -119,11 +119,11 @@ protected:
   int32_t registerForWrite();
 
   // Get the fd
-  int32_t getConnectionFd();
+  //int32_t getConnectionFd();
 
   // Endpoint read registration
-  int32_t unregisterEndpointForRead();
-  int32_t registerEndpointForRead();
+  //int32_t unregisterEndpointForRead();
+ // int32_t registerEndpointForRead();
 
   // underlying rdma connection
   RDMAConnection *mRdmaConnection;

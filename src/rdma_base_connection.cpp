@@ -6,6 +6,8 @@ BaseConnection::BaseConnection(RDMAOptions *options, RDMAConnection *con,
     : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop){
 }
 
+BaseConnection::~BaseConnection() { CHECK(mState == INIT || mState == DISCONNECTED); }
+
 int32_t BaseConnection::start() {
   if (mState != INIT) {
     LOG(ERROR) << "Connection not in INIT State, hence cannot start";
