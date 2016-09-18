@@ -1,7 +1,6 @@
 #include "hps_utils.h"
 #include "heron_stmgr_server.h"
 
-//Connection *con;
 RDMAOptions options;
 struct fi_info *hints;
 RDMABaseServer *server;

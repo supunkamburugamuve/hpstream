@@ -10,11 +10,10 @@
 
 class RDMABaseClient {
 public:
-  enum State { DISCONNECTED = 0, CONNECTING, CONNECTED };
+  enum State {INIT = 0, DISCONNECTED, CONNECTING, CONNECTED };
   RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
   int Start_base(void);
   int Stop_base();
-  RDMAConnection *GetConnection();
   // Instantiate a new connection
   virtual BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
                                            RDMAEventLoopNoneFD* ss) = 0;

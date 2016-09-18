@@ -22,13 +22,19 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
 	this->conn_ = NULL;
 	this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
-}
+	this->state_ = INIT;
 
-RDMAConnection* RDMABaseClient::GetConnection() {
-	return this->connection_;
+	int ret = this->eventLoop_->RegisterRead(&this->eq_loop);
+	if (ret) {
+		LOG(ERROR) << "Failed to register event queue fid" << ret;
+	}
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
+	if (state == INIT) {
+		return;
+	}
+
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
@@ -59,9 +65,15 @@ void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
 }
 
 int RDMABaseClient::Stop_base() {
+	if (this->state_ != CONNECTED || this->state_ != CONNECTING) {
+		LOG(ERROR) << "Trying to stop an un-connected client";
+		return 0;
+	}
+
   this->connection_->closeConnection();
 	HPS_CLOSE_FID(eq);
 	HPS_CLOSE_FID(fabric);
+	this->state_ = DISCONNECTED;
 	return 0;
 }
 
@@ -70,6 +82,11 @@ int RDMABaseClient::Start_base(void) {
 	struct fid_ep *ep = NULL;
 	struct fid_domain *domain = NULL;
 	RDMAConnection *con = NULL;
+
+	if (state_ != INIT) {
+		LOG(ERROR) << "Failed to start connection not in INIT state";
+		return -1;
+	}
 
 	ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
 	if (ret) {
@@ -111,18 +128,18 @@ int RDMABaseClient::Start_base(void) {
 		return ret;
 	}
 
-  ret = this->eventLoop_->RegisterRead(&this->eq_loop);
-  if (ret) {
-		LOG(ERROR) << "Failed to register event queue fid" << ret;
-    return ret;
-  }
-
+	this->state_ = CONNECTING;
 	this->conn_ = CreateConnection(con, options, this->eventLoop_);
   this->connection_ = con;
 	return 0;
 }
 
 int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
+	if (state_ != CONNECTING) {
+		LOG(ERROR) << "Failed to connect a client not in connecting state";
+		return -1;
+	}
+
   int ret;
   if (entry->fid != &(this->connection_->GetEp()->fid)) {
     ret = -FI_EOTHER;
@@ -135,6 +152,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
   }
 
   this->conn_ = conn_;
+	this->state_ = CONNECTED;
   printf("Connection established\n");
   return 0;
 }
