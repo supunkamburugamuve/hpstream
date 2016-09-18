@@ -3,7 +3,7 @@
 
 RDMAOptions options;
 struct fi_info *hints;
-RDMABaseServer *server;
+StMgrServer *server;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 
@@ -18,7 +18,7 @@ int connect() {
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
 
   server = new StMgrServer(eventLoop, &options, fabric);
-  server->Start_Base();
+  server->Start();
   eventLoop->Start();
   return ret;
 }
