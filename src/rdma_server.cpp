@@ -25,6 +25,7 @@ RDMABaseServer::~RDMABaseServer() {}
 
 int RDMABaseServer::Start_Base(void) {
   int ret;
+  LOG(INFO) << "Starting the server";
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
     HPS_ERR("fi_domain %d", ret);
