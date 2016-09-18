@@ -1,6 +1,7 @@
 #include "hps_utils.h"
 #include "heron_client.h"
 #include <ctime>
+#include <unistd.h>
 
 struct timespec start, end_t;
 RDMAConnection *con;
@@ -38,6 +39,7 @@ int exchange3() {
   proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
   message->set_name(name);
   client->SendTupleStreamMessage(message);
+  sleep(30);
   return 0;
 }
 

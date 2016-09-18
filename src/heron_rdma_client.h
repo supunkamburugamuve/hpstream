@@ -87,7 +87,7 @@ public:
   void SendResponse(REQID _id, const google::protobuf::Message& response);
 
   // Tells if we are connected
-  inline bool IsConnected() const { return state_ == CONNECTED; }
+  //inline bool IsConnected() const { return state_ == CONNECTED; }
 
   // Register a handler for a particular response type
   template <typename S, typename T, typename M>

@@ -97,6 +97,7 @@ void RDMAConnection::Free() {
 }
 
 int RDMAConnection::start() {
+  LOG(INFO) << "Starting rdma connection";
   int ret = PostBuffers();
   if (ret) {
     HPS_ERR("Failed to set up the buffers %d", ret);
@@ -555,6 +556,8 @@ int RDMAConnection::TransmitComplete() {
     onWriteComplete(completed_bytes);
   }
   this->send_buf->releaseLock();
+  
+  LOG(INFO) << "Transmit complete";
   // we are ready for a write
   onWriteReady(0);
   return 0;
@@ -590,6 +593,7 @@ int RDMAConnection::ReceiveComplete() {
     }
   }
   this->recv_buf->releaseLock();
+  LOG(INFO) << "Receive complete";
   // we are ready for a read
   onReadReady(0);
   return 0;
