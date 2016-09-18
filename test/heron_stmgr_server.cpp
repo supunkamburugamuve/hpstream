@@ -10,7 +10,7 @@ StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, 
     : Server(fabric, eventLoop, _options) {
   // stmgr related handlers
   InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);
-
+  LOG(INFO) << "Init server";
   spouts_under_back_pressure_ = false;
 }
 
