@@ -86,7 +86,10 @@ int BaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
 int BaseConnection::handleWrite(int fd) {
   mWriteState = NOTREGISTERED;
 
-  if (mState != CONNECTED) return 0;
+  if (mState != CONNECTED) {
+    LOG(INFO) << "Not connected";
+    return 0;
+  }
 
   int32_t writeStatus = writeIntoEndPoint(fd);
   if (writeStatus < 0) {

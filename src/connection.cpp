@@ -98,6 +98,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
   char *buf = NULL;
   uint32_t current_write = 0, total_write = 0;
   int write_status;
+  LOG(INFO) << "Write to endpoint";
   do {
     buf = iter->first->get_header() + iter->first->position_;
     size_to_write = PacketHeader::get_packet_size(iter->first->get_header()) +
@@ -119,6 +120,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
 
 int32_t Connection::readFromEndPoint(int fd) {
   int32_t bytesRead = 0;
+  LOG(INFO) << "Read from endpoint";
   while (1) {
     int32_t read_status = ReadPacket();
     if (read_status == 0) {

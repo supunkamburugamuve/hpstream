@@ -35,7 +35,10 @@ void Client::SendResponse(REQID _id, const google::protobuf::Message& _response)
   return;
 }
 
-void Client::SendMessage(google::protobuf::Message* _message) { InternalSendMessage(_message); }
+void Client::SendMessage(google::protobuf::Message* _message) { 
+  LOG(INFO) << "Send request";
+  InternalSendMessage(_message); 
+}
 
 sp_int64 Client::AddTimer(VCallback<> cb, sp_int64 _msecs) {
   return 0;
@@ -71,6 +74,7 @@ void Client::Init() { message_rid_gen_ = new REQID_Generator(); }
 
 void Client::InternalSendRequest(google::protobuf::Message* _request, void* _ctx, sp_int64 _msecs) {
   CHECK(requestResponseMap_.find(_request->GetTypeName()) != requestResponseMap_.end());
+  LOG(INFO) << "Internal send request";
   const sp_string& _expected_response_type = requestResponseMap_[_request->GetTypeName()];
   if (state_ != CONNECTED) {
     delete _request;
@@ -111,6 +115,7 @@ void Client::InternalSendRequest(google::protobuf::Message* _request, void* _ctx
 }
 
 void Client::InternalSendMessage(google::protobuf::Message* _message) {
+  LOG(INFO) << "Internal send message";
   if (state_ != CONNECTED) {
     LOG(ERROR) << "Client is not connected. Dropping message" << std::endl;
     delete _message;
@@ -133,6 +138,7 @@ void Client::InternalSendMessage(google::protobuf::Message* _message) {
   delete _message;
 
   Connection* conn = static_cast<Connection*>(conn_);
+  LOG(INFO) << "Send message";
   if (conn->sendPacket(opkt, NULL) != 0) {
     LOG(ERROR) << "Some problem sending message thru the connection. Dropping message" << std::endl;
     delete opkt;

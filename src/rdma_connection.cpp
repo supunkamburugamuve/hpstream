@@ -127,7 +127,7 @@ int RDMAConnection::registerWrite(VCallback<int> onWrite) {
 }
 
 int RDMAConnection::registerRead(VCallback<int> onRead) {
-  this->onWriteReady = std::move(onRead);
+  this->onReadReady = std::move(onRead);
   return 0;
 }
 
@@ -516,11 +516,18 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
 
 int RDMAConnection::TransmitComplete() {
   struct fi_cq_err_entry comp;
+  ssize_t cq_ret;
   uint32_t completed_bytes = 0;
+  RDMABuffer *sbuf = this->send_buf;
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
-  ssize_t cq_ret = fi_cq_read(txcq, &comp, max_completions);
+  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  if (free_space > 0) {
+    onWriteReady(0);
+  }
+
+  cq_ret = fi_cq_read(txcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
     // HPS_INFO("transmit complete %ld", cq_ret);
     return 0;
@@ -559,16 +566,22 @@ int RDMAConnection::TransmitComplete() {
   
   LOG(INFO) << "Transmit complete";
   // we are ready for a write
-  onWriteReady(0);
+  // onWriteReady(0);
   return 0;
 }
 
 int RDMAConnection::ReceiveComplete() {
+  ssize_t cq_ret;
   struct fi_cq_err_entry comp;
+  RDMABuffer *sbuf = this->send_buf;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
+  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  if (free_space > 0) {
+    onWriteReady(0);
+  }
   // we can expect up to this
-  ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
+  cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
     return 0;
   }
@@ -595,7 +608,7 @@ int RDMAConnection::ReceiveComplete() {
   this->recv_buf->releaseLock();
   LOG(INFO) << "Receive complete";
   // we are ready for a read
-  onReadReady(0);
+  //onReadReady(0);
   return 0;
 }
 
