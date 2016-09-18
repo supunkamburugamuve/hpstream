@@ -96,7 +96,7 @@ int RDMABuffer::IncrementTail(uint32_t count) {
   return 0;
 }
 
-int RDMABuffer::setBufferContentSize(int index, uint32_t size) {
+int RDMABuffer::setBufferContentSize(uint32_t index, uint32_t size) {
   if (index < 0 || index >= no_bufs) {
     HPS_ERR("Index out of bound %d", index);
     return 1;
@@ -105,7 +105,7 @@ int RDMABuffer::setBufferContentSize(int index, uint32_t size) {
   return 0;
 }
 
-uint32_t RDMABuffer::getContentSize(int index) {
+uint32_t RDMABuffer::getContentSize(uint32_t index) {
   if (index < 0 || index >= no_bufs) {
     HPS_ERR("Index out of bound %d", index);
     return 1;

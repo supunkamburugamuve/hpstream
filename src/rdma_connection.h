@@ -18,7 +18,7 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
-enum State { INIT = 0, WAIT_CONNECT_CONFIRM, CONNECTED, DISCONNECTED, TO_BE_DISCONNECTED };
+enum ConnectionState { INIT = 0, WAIT_CONNECT_CONFIRM, CONNECTED, DISCONNECTED, TO_BE_DISCONNECTED };
 
 class RDMAConnection {
 public:
@@ -45,11 +45,11 @@ public:
     return ep;
   }
 
-  State GetState() {
-    return mState;
+  bool isConnected() {
+    return mState == CONNECTED;
   }
 
-  void SetState(State st) {
+  void SetState(ConnectionState st) {
     this->mState = st;
   }
 
@@ -83,7 +83,7 @@ private:
   // options for initialization
   RDMAOptions *options;
   // status of the connection
-  State mState;
+  ConnectionState mState;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information

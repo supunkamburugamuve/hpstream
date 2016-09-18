@@ -33,8 +33,8 @@ public:
   uint32_t GetNoOfBuffers();
   uint32_t GetBase();
   uint32_t GetCurrentReadIndex();
-  int setBufferContentSize(int index, uint32_t size);
-  uint32_t getContentSize(int index);
+  int setBufferContentSize(uint32_t index, uint32_t size);
+  uint32_t getContentSize(uint32_t index);
   // wait until a buffer becomes available for write
   int acquireLock();
   int releaseLock();

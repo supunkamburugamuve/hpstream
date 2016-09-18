@@ -107,7 +107,7 @@ private:
   VCallback<Connection*> mOnConnectionBufferFull;
 
   // How many bytes do we want to write in one batch
-  int32_t mWriteBatchsize;
+  uint32_t mWriteBatchsize;
   // Have we caused back pressure?
   bool mCausedBackPressure;
   // Are our reads being throttled?

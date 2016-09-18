@@ -31,13 +31,14 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
-	if (state == INIT) {
+	if (state_ != CONNECTED || state_ != CONNECTING) {
 		return;
 	}
 
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
+
   if (state == TRYAGAIN) {
     return;
   }
@@ -158,7 +159,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 }
 
 bool RDMABaseClient::IsConnected() {
-  return conn_ != NULL && connection_->GetState() == CONNECTED;
+  return conn_ != NULL && connection_->isConnected();
 }
 
 

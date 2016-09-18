@@ -10,7 +10,7 @@
 
 class RDMABaseClient {
 public:
-  enum State {INIT = 0, DISCONNECTED, CONNECTING, CONNECTED };
+  enum ClientState {INIT = 0, DISCONNECTED, CONNECTING, CONNECTED };
   RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
   int Start_base(void);
   int Stop_base();
@@ -24,7 +24,7 @@ protected:
   // the connection
   RDMAConnection *connection_;
   RDMAEventLoopNoneFD *eventLoop_;
-  State state_;
+  ClientState state_;
 private:
   // options for initialization
   RDMAOptions *options;

@@ -2,7 +2,9 @@
 #include "connection.h"
 
 #define __SYSTEM_MIN_NUM_ENQUEUES_WITH_BUFFER_FULL__ 1048576
-#define __SYSTEM_NETWORK_READ_BATCH_SIZE__ 1048576
+
+const sp_int32 __SYSTEM_NETWORK_READ_BATCH_SIZE__ = 1048576;           // 1M
+const sp_int32 __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__ = 1048576;  // 1M
 
 // This is the high water mark on the num of bytes that can be left outstanding on a connection
 sp_int64 Connection::systemHWMOutstandingBytes = 1024 * 1024 * 100;  // 100M
@@ -13,6 +15,7 @@ Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopN
     : BaseConnection(options, con, loop) {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
     return this->writeComplete(complets); });
+  this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
 }
 
 Connection::~Connection() { }

@@ -8,6 +8,7 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
 #include <arpa/inet.h>
+#include <glog/logging.h>
 
 #include "rdma_connection.h"
 
@@ -232,7 +233,7 @@ int RDMAConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
 
   ret = fi_enable(ep);
   if (ret) {
-    HPS_ERR("fi_enable %d", ret);
+    LOG(ERROR) << "Failed to enable endpoint " << ret;
     return ret;
   }
   return 0;
@@ -250,7 +251,7 @@ int RDMAConnection::PostBuffers() {
     uint8_t *buf = rBuf->GetBuffer(i);
     ret = PostRX(rBuf->GetBufferSize(), buf, &rx_ctx);
     if (ret) {
-      HPS_ERR("PostRX %d", ret);
+      LOG(ERROR) << "Error posting receive buffer" << ret;
       return (int) ret;
     }
     rBuf->IncrementSubmitted(1);
@@ -341,7 +342,7 @@ ssize_t RDMAConnection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx
       break;
 
     if (ret != -FI_EAGAIN) {
-      HPS_ERR("%s %d", "receive", ret);
+      LOG(ERROR) << "Error posting send " << ret;
       return ret;
     }
 
@@ -349,7 +350,7 @@ ssize_t RDMAConnection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx
     timeout = 0;
     rc = GetTXComp(tx_cq_cntr + 1);
     if (rc && rc != -FI_EAGAIN) {
-      HPS_ERR("Failed to get %s completion\n", "receive");
+      LOG(ERROR) << "Failed to get completion for write";
       return rc;
     }
     timeout = timeout_save;
@@ -368,7 +369,7 @@ ssize_t RDMAConnection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx
       break;
 
     if (ret != -FI_EAGAIN) {
-      HPS_ERR("%s %d", "receive", ret);
+      LOG(ERROR) << "Error posting receive " << ret;
       return ret;
     }
 
@@ -376,7 +377,7 @@ ssize_t RDMAConnection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx
     timeout = 0;
     rc = GetRXComp(rx_cq_cntr + 1);
     if (rc && rc != -FI_EAGAIN) {
-      HPS_ERR("Failed to get %s completion\n", "receive");
+      LOG(ERROR) << "Failed to get completion for receive";
       return rc;
     }
     timeout = timeout_save;
@@ -540,11 +541,11 @@ int RDMAConnection::TransmitComplete() {
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
-      HPS_INFO("Error receive %ld", cq_ret);
+      LOG(ERROR) << "Error receive " << cq_ret;
       cq_ret = hps_utils_cq_readerr(txcq);
       this->tx_cq_cntr++;
     } else {
-      HPS_ERR("ft_get_cq_comp %d", cq_ret);
+      LOG(ERROR) << "Write completion queue error " << cq_ret;
       this->send_buf->releaseLock();
       return (int) cq_ret;
     }
@@ -566,10 +567,8 @@ int RDMAConnection::ReceiveComplete() {
   // we can expect up to this
   ssize_t cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-    //HPS_INFO("receive complete %ld", cq_ret);
     return 0;
   }
-  // HPS_INFO("receive complete %ld", cq_ret);
   this->recv_buf->acquireLock();
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
@@ -581,11 +580,11 @@ int RDMAConnection::ReceiveComplete() {
   } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
     // okay we have an error
     if (cq_ret == -FI_EAVAIL) {
-      HPS_INFO("Error receive %ld", cq_ret);
+      LOG(INFO) << "Error in receive completion" << cq_ret;
       cq_ret = hps_utils_cq_readerr(rxcq);
       this->rx_cq_cntr++;
     } else {
-      HPS_ERR("ft_get_cq_comp %d", cq_ret);
+      LOG(ERROR) << "Receive completion queue error" << cq_ret;
       this->recv_buf->releaseLock();
       return (int) cq_ret;
     }
