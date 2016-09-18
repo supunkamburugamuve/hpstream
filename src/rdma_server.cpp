@@ -69,6 +69,7 @@ int RDMABaseServer::Start_Base(void) {
 }
 
 int RDMABaseServer::Stop_Base() {
+  LOG(INFO) << "Stopping the server";
   HPS_CLOSE_FID(pep);
   HPS_CLOSE_FID(eq);
   HPS_CLOSE_FID(fabric);
