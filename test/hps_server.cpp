@@ -20,6 +20,7 @@ int connect() {
   server = new StMgrServer(eventLoop, &options, fabric);
   server->Start();
   eventLoop->Start();
+  eventLoop->Wait();
   return ret;
 }
 

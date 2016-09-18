@@ -31,7 +31,8 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
-	if (state_ != CONNECTED || state_ != CONNECTING) {
+  //LOG(INFO) << "Connect event 1";
+	if (state_ != CONNECTED && state_ != CONNECTING) {
 		return;
 	}
 
@@ -58,7 +59,9 @@ void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
 
   if (event == FI_SHUTDOWN) {
 		Stop_base();
+    LOG(INFO) << "Received shutdown event";
   } else if (event == FI_CONNECTED) {
+    LOG(INFO) << "Received connected event";
     Connected(&entry);
   } else {
     HPS_ERR("Unexpected CM event %d", event);
@@ -132,6 +135,7 @@ int RDMABaseClient::Start_base(void) {
 	this->state_ = CONNECTING;
 	this->conn_ = CreateConnection(con, options, this->eventLoop_);
   this->connection_ = con;
+        LOG(INFO) << "Wating for connection completion";
 	return 0;
 }
 

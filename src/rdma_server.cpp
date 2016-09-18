@@ -112,6 +112,7 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   }
 
   if (event == FI_SHUTDOWN) {
+    LOG(INFO) << "Received shutdown event";
     std::list<RDMAConnection *>::const_iterator iterator;
     RDMAConnection *c = (RDMAConnection *) entry.fid->context;
     if (c != NULL) {
@@ -120,9 +121,11 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
     }
     return;
   } else if (event == FI_CONNREQ) {
+    LOG(INFO) << "Receive connect event";
     // this is the correct fi_info associated with active end-point
     Connect(&entry);
   } else if (event == FI_CONNECTED) {
+    LOG(INFO) << "Receved connection completion event";
     Connected(&entry);
   } else {
     HPS_ERR("Unexpected CM event %d", event);
