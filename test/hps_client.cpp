@@ -8,7 +8,7 @@ RDMAOptions options;
 struct fi_info *hints;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
-RDMABaseClient *client;
+StMgrClient *client;
 
 #define ITERATIONS_ 1000000
 #define SIZE_ 10000
@@ -30,61 +30,15 @@ int connect3() {
   client->Start_base();
   eventLoop->Start();
   while (!client->IsConnected());
-  con = client->GetConnection();
   return 1;
 }
 
 int exchange3() {
-  int ret = 0;
-  int64_t elapsed = 0;
-  double rate = 0;
-  int values[10][SIZE_];
-  uint32_t read = 0, write = 0;
-  read = 0;
-  uint32_t current_read = 0, current_write = 0;
-
-  for (int j = 0; j < 10; j++) {
-    for (int i = 0; i < SIZE_; i++) {
-      values[j][i] = j * SIZE_ + i;
-    }
-  }
-
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  elapsed = get_elapsed(&end_t, &start);
-
-  for (int i = 0; i < ITERATIONS_; i++) {
-    current_write = 0;
-    write = 0;
-    while (current_write < BYTES_) {
-      con->WriteData((uint8_t *) values[i % 10] + current_write, sizeof(values[i]) - current_write, &write);
-      if (write > 0 && i % 100 == 0) {
-        //HPS_INFO("Write amount %d %d", write, i);
-      }
-      if (write == 0) {
-        pthread_yield();
-      }
-      current_write += write;
-    }
-    if (i % 1000 == 0) {
-      // HPS_INFO("Completed %d", i);
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end_t);
-  rate = 1000000.0 * 4000.0 /((1024 * 1024)* (elapsed / (1000 * 1000)));
-  HPS_INFO("Message rate: time=%ld s and throughput=%lf", elapsed / 1000000, rate);
-
-  HPS_INFO("Done sending.. switching to receive");
-  while (read < BYTES_) {
-    con->ReadData(((uint8_t *) values[0]) + read, BYTES_ - read, &current_read);
-    read += current_read;
-  }
-
-  for (int i = 0; i < SIZE_; i++) {
-    printf("%d ", values[0][i]);
-  }
-
-  printf("\nDone rma\n");
-  return ret;
+  char *name = new char[100];
+  proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
+  message->set_name(name);
+  client->SendTupleStreamMessage(message);
+  return 0;
 }
 
 int main(int argc, char **argv) {

@@ -12,7 +12,7 @@ RDMAFabric *fabric;
 #define SIZE_ 10000
 #define BYTES_ (SIZE_ * 4)
 
-int connect3() {
+int connect() {
   int ret = 0;
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
@@ -22,54 +22,6 @@ int connect3() {
   server->Start_Base();
   eventLoop->Start();
   return ret;
-}
-
-int exchange3() {
-  int values[SIZE_];
-  uint32_t read = 0, write = 0;
-  uint32_t current_read = 0, current_write = 0;
-  std::set<BaseConnection *>::const_iterator iterator;
-
-  std::set<BaseConnection *> *pList = server->GetConnections();
-  int count = 0;
-  while (pList->size() != 2) {
-    if (count++ == 10000) {
-      HPS_INFO("Size %d", pList->size());
-    }
-  }
-  HPS_INFO("Size %d", pList->size());
-
-  for (iterator = pList->begin(); iterator != pList->end(); ++iterator) {
-    BaseConnection *con = *iterator;
-
-    for (int i = 0; i < ITERATIONS_; i++) {
-      for (int j = 0; j < SIZE_; j++) {
-        values[j] = 0;
-      }
-      read = 0;
-      while (read < BYTES_) {
-        con->readData(((uint8_t *) values) + read, sizeof(values) - read, &current_read);
-        read += current_read;
-        if (current_read == 0) {
-          pthread_yield();
-        }
-      }
-    }
-
-    HPS_INFO("Done receiving.. switching to sending");
-    current_write = 0;
-    write = 0;
-    while (current_write < BYTES_) {
-      con->writeData((uint8_t *) values + current_write, sizeof(values) - current_write, &write);
-      current_write += write;
-    }
-    HPS_INFO("Done sending..");
-  }
-
-  printf("Done rma\n");
-
-  eventLoop->Wait();
-  return 0;
 }
 
 int main(int argc, char **argv) {
@@ -99,7 +51,6 @@ int main(int argc, char **argv) {
   hints->ep_attr->type = FI_EP_MSG;
   hints->caps = FI_MSG | FI_RMA;
   hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
-  connect3();
-  exchange3();
+  connect();
   return 0;
 }
