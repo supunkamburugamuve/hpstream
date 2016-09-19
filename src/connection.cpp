@@ -12,7 +12,10 @@ sp_int64 Connection::systemHWMOutstandingBytes = 1024 * 1024 * 100;  // 100M
 sp_int64 Connection::systemLWMOutstandingBytes = 1024 * 1024 * 50;  // 50M
 
 Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop)
-    : BaseConnection(options, con, loop) {
+    : BaseConnection(options, con, loop),
+      mPendingWritePackets(0),
+      mNumOutstandingBytes(0),
+      mNumOutstandingPackets(0) {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
     return this->writeComplete(complets); });
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
@@ -69,11 +72,8 @@ int Connection::writeComplete(ssize_t numWritten) {
       mSentPackets.push_back(pr);
       mOutstandingPackets.pop_front();
       mNumOutstandingPackets--;
+      mPendingWritePackets--;
       numWritten -= bytesLeftForThisPacket;
-    } else {
-      // This iov structure has been partially sent out
-      pr.first->position_ += numWritten;
-      numWritten = 0;
     }
   }
 
@@ -93,13 +93,18 @@ bool Connection::stillHaveDataToWrite() {
 }
 
 int32_t Connection::writeIntoEndPoint(int fd) {
-  auto iter = mOutstandingPackets.begin();
   uint32_t size_to_write = 0;
   char *buf = NULL;
   uint32_t current_write = 0, total_write = 0;
   int write_status;
   LOG(INFO) << "Write to endpoint";
-  do {
+  int current_packet = 0;
+  for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
+    if (current_packet++ < mPendingWritePackets) {
+      // we have written this packet already and waiting for write completion
+      continue;
+    }
+
     buf = iter->first->get_header() + iter->first->position_;
     size_to_write = PacketHeader::get_packet_size(iter->first->get_header()) +
                     PacketHeader::header_size() - iter->first->position_;
@@ -110,11 +115,23 @@ int32_t Connection::writeIntoEndPoint(int fd) {
       LOG(ERROR) << "Failed to write the data";
       return write_status;
     }
+
+    // we have written this fully
+    if (current_write == size_to_write) {
+      mPendingWritePackets++;
+    } else {
+      // partial write
+      iter->first->position_ += current_write;
+    }
+
     iter++;
     total_write += current_write;
     // we loop until we write everything we want to write is successful
     // and total written data is less than batch size
-  } while (current_write == size_to_write && total_write < mWriteBatchsize);
+    if (!(current_write == size_to_write && total_write < mWriteBatchsize)) {
+      break;
+    }
+  }
   return 0;
 }
 
@@ -199,7 +216,7 @@ int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *
       *position_ = *position_ + num_read;
     } else if (num_read == 0) {
       // remote end has done a shutdown.
-      HPS_ERR("Remote end has done a shutdown");
+      LOG(ERROR) << "Remote end has done a shutdown";
       return -1;
     } else {
       // read returned negative value.
@@ -215,7 +232,7 @@ int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *
       } else {
         // something really bad happened. Bail out
         // try again
-        HPS_ERR("Something really bad happened while reading %d", errno);
+        LOG(ERROR) << "Something really bad happened while reading %d", errno;
         return -1;
       }
     }

@@ -87,6 +87,8 @@ private:
   std::list<std::pair<OutgoingPacket*, VCallback<NetworkErrorCode>>> mOutstandingPackets;
   int32_t mNumOutstandingPackets;  // primarily because list's size is linear
   int32_t mNumOutstandingBytes;
+  // number of packets we have written, but waiting for completion of the write
+  sp_int32 mPendingWritePackets;
 
   // The list of packets that have been sent but not yet been reported to the higher layer
   std::list<std::pair<OutgoingPacket*, VCallback<NetworkErrorCode>>> mSentPackets;
