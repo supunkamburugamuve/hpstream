@@ -232,7 +232,7 @@ int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *
       } else {
         // something really bad happened. Bail out
         // try again
-        LOG(ERROR) << "Something really bad happened while reading %d", errno;
+        LOG(ERROR) << "Something really bad happened while reading " << errno;
         return -1;
       }
     }
