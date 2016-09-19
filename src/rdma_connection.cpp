@@ -607,6 +607,11 @@ int RDMAConnection::ReceiveComplete() {
   }
   this->recv_buf->releaseLock();
   LOG(INFO) << "Receive complete";
+
+  read_available = sbuf->GetFilledBuffers();
+  if (read_available > 0) {
+    onReadReady(0);
+  }
   // we are ready for a read
   //onReadReady(0);
   return 0;
