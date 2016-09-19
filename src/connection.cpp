@@ -161,33 +161,38 @@ int32_t Connection::readFromEndPoint(int fd) {
 
 int32_t Connection::ReadPacket() {
   if (mIncomingPacket->data_ == NULL) {
+    uint32_t read = mIncomingPacket->position_;
     // We are still reading the header
     int32_t read_status =
         InternalPacketRead(mIncomingPacket->header_ + mIncomingPacket->position_,
-                           PacketHeader::header_size() - mIncomingPacket->position_, &mIncomingPacket->position_);
+                           PacketHeader::header_size() - mIncomingPacket->position_, &read);
 
     if (read_status != 0) {
       // Header read is either partial or had an error
       return read_status;
 
     } else {
-      // Header just completed - some sanity checking of the header
-      if (mIncomingPacket->max_packet_size_ != 0 &&
-          PacketHeader::get_packet_size(mIncomingPacket->header_) > mIncomingPacket->max_packet_size_) {
-        // Too large packet
-        LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(mIncomingPacket->header_)
-                   << ". We only accept packet sizes <= " << mIncomingPacket->max_packet_size_ << "\n";
+      // if we read something
+      if (read > 0) {
+        mIncomingPacket->position_ = read;
+        // Header just completed - some sanity checking of the header
+        if (mIncomingPacket->max_packet_size_ != 0 &&
+            PacketHeader::get_packet_size(mIncomingPacket->header_) > mIncomingPacket->max_packet_size_) {
+          // Too large packet
+          LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(mIncomingPacket->header_)
+                     << ". We only accept packet sizes <= " << mIncomingPacket->max_packet_size_ << "\n";
 
-        return -1;
+          return -1;
 
-      } else {
-        // Create the data
-        mIncomingPacket->data_ = new char[PacketHeader::get_packet_size(mIncomingPacket->header_)];
+        } else {
+          // Create the data
+          mIncomingPacket->data_ = new char[PacketHeader::get_packet_size(mIncomingPacket->header_)];
 
-        // bzero(data_, PacketHeader::get_packet_size(header_));
-        // reset the position to refer to the data_
+          // bzero(data_, PacketHeader::get_packet_size(header_));
+          // reset the position to refer to the data_
 
-        mIncomingPacket->position_ = 0;
+          mIncomingPacket->position_ = 0;
+        }
       }
     }
   }
@@ -210,31 +215,15 @@ int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *
   uint32_t to_read = _size;
   while (to_read > 0) {
     ssize_t num_read;
-    num_read = readData((uint8_t *) current, to_read, (uint32_t *) &num_read);
-    if (num_read > 0) {
+    int state = 0;
+    state = readData((uint8_t *) current, to_read, (uint32_t *) &num_read);
+    if (!state) {
       current = current + num_read;
       to_read = to_read - num_read;
       *position_ = *position_ + num_read;
-    } else if (num_read == 0) {
-      // there is nothing to read.
-      return 0;
     } else {
-      // read returned negative value.
-      if (errno == EAGAIN) {
-        // The read would block.
-        // cout << "read syscall returned the EAGAIN errno " << errno << "\n";
-        return 1;
-      } else if (errno == EINTR) {
-        // cout << "read syscall returned the EINTR errno " << errno << "\n";
-        // the syscall encountered a signal before reading anything.
-        // try again
-        continue;
-      } else {
-        // something really bad happened. Bail out
-        // try again
-        LOG(ERROR) << "Something really bad happened while reading " << errno;
-        return -1;
-      }
+      // there is nothing to read.
+      return state;
     }
   }
   return 0;
