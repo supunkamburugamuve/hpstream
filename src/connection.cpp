@@ -160,54 +160,55 @@ int32_t Connection::readFromEndPoint(int fd) {
 }
 
 int32_t Connection::ReadPacket() {
+  uint32_t read = 0;
   if (mIncomingPacket->data_ == NULL) {
-    uint32_t read = mIncomingPacket->position_;
     // We are still reading the header
-    int32_t read_status =
-        InternalPacketRead(mIncomingPacket->header_ + mIncomingPacket->position_,
-                           PacketHeader::header_size() - mIncomingPacket->position_, &read);
-
+    int32_t read_status = 0;
+    read_status = readData((uint8_t *) (mIncomingPacket->header_ + mIncomingPacket->position_),
+             PacketHeader::header_size() - mIncomingPacket->position_, &read);
     if (read_status != 0) {
       // Header read is either partial or had an error
       return read_status;
-
     } else {
       // if we read something
       if (read > 0) {
-        mIncomingPacket->position_ = read;
-        // Header just completed - some sanity checking of the header
-        if (mIncomingPacket->max_packet_size_ != 0 &&
-            PacketHeader::get_packet_size(mIncomingPacket->header_) > mIncomingPacket->max_packet_size_) {
-          // Too large packet
-          LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(mIncomingPacket->header_)
-                     << ". We only accept packet sizes <= " << mIncomingPacket->max_packet_size_ << "\n";
+        mIncomingPacket->position_ += read;
+        // now check weather we have read every thing
+        if (mIncomingPacket->position_ == PacketHeader::header_size()) {
+          // Header just completed - some sanity checking of the header
+          if (mIncomingPacket->max_packet_size_ != 0 &&
+              PacketHeader::get_packet_size(mIncomingPacket->header_) > mIncomingPacket->max_packet_size_) {
+            // Too large packet
+            LOG(ERROR) << "Too large packet size " << PacketHeader::get_packet_size(mIncomingPacket->header_)
+                       << ". We only accept packet sizes <= " << mIncomingPacket->max_packet_size_ << "\n";
 
-          return -1;
+            return -1;
 
-        } else {
-          // Create the data
-          mIncomingPacket->data_ = new char[PacketHeader::get_packet_size(mIncomingPacket->header_)];
-
-          // bzero(data_, PacketHeader::get_packet_size(header_));
-          // reset the position to refer to the data_
-
-          mIncomingPacket->position_ = 0;
+          } else {
+            // Create the data
+            mIncomingPacket->data_ = new char[PacketHeader::get_packet_size(mIncomingPacket->header_)];
+            // reset the position to refer to the data_
+            mIncomingPacket->position_ = 0;
+            // we need to read this much data
+            return PacketHeader::get_packet_size(mIncomingPacket->header_);
+          }
         }
       }
+      return PacketHeader::header_size() - mIncomingPacket->position_;
+    }
+  } else {
+    // The header has been completely read. Read the data
+    int32_t retval = 0;
+    retval = readData((uint8_t *) (mIncomingPacket->data_ + mIncomingPacket->position_),
+                      PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_, &read);
+    // now check weather we have read everything we need
+    if (retval != 0) {
+      return retval;
+    } else {
+      mIncomingPacket->position_ += read;
+      return PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_;
     }
   }
-
-  // The header has been completely read. Read the data
-  int32_t retval =
-      InternalPacketRead(mIncomingPacket->data_ + mIncomingPacket->position_,
-                         PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_,
-                         &mIncomingPacket->position_);
-  if (retval == 0) {
-    // Successfuly read the packet.
-    mIncomingPacket->position_ = 0;
-  }
-
-  return retval;
 }
 
 int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *position_) {
