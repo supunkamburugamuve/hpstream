@@ -19,6 +19,7 @@ Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopN
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
     return this->writeComplete(complets); });
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
+  mIncomingPacket = new IncomingPacket(1024*1024);
 }
 
 Connection::~Connection() { }
@@ -97,7 +98,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
   char *buf = NULL;
   uint32_t current_write = 0, total_write = 0;
   int write_status;
-  LOG(INFO) << "Write to endpoint";
+  //LOG(INFO) << "Write to endpoint";
   int current_packet = 0;
   for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
     if (current_packet++ < mPendingWritePackets) {
@@ -108,9 +109,9 @@ int32_t Connection::writeIntoEndPoint(int fd) {
     buf = iter->first->get_header() + iter->first->position_;
     size_to_write = PacketHeader::get_packet_size(iter->first->get_header()) +
                     PacketHeader::header_size() - iter->first->position_;
-
     // try to write the data
     write_status = writeData((uint8_t *) buf, size_to_write, &current_write);
+    LOG(INFO) << "current_packet=" << current_packet << " size_to_write=" << size_to_write << " current_write=" << current_write;
     if (write_status) {
       LOG(ERROR) << "Failed to write the data";
       return write_status;
@@ -124,7 +125,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
       iter->first->position_ += current_write;
     }
 
-    iter++;
+    // iter++;
     total_write += current_write;
     // we loop until we write everything we want to write is successful
     // and total written data is less than batch size

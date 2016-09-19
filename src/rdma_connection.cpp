@@ -576,9 +576,9 @@ int RDMAConnection::ReceiveComplete() {
   RDMABuffer *sbuf = this->send_buf;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
-  uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  if (free_space > 0) {
-    onWriteReady(0);
+  uint64_t read_available = sbuf->GetFilledBuffers();
+  if (read_available > 0) {
+    onReadReady(0);
   }
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);
