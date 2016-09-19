@@ -13,9 +13,9 @@ sp_int64 Connection::systemLWMOutstandingBytes = 1024 * 1024 * 50;  // 50M
 
 Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop)
     : BaseConnection(options, con, loop),
-      mPendingWritePackets(0),
-      mNumOutstandingBytes(0),
-      mNumOutstandingPackets(0) {
+      mNumOutstandingPackets(0),
+      mNumOutstandingBytes(0)
+      , mPendingWritePackets(0) {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
     return this->writeComplete(complets); });
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
