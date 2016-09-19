@@ -24,6 +24,7 @@ int32_t BaseConnection::start() {
     LOG(ERROR) << "Could not start the rdma connection";
     return -1;
   }
+  LOG(INFO) << "Connection started";
   mState = CONNECTED;
   return 0;
 }
@@ -93,6 +94,7 @@ int BaseConnection::handleWrite(int fd) {
 
   int32_t writeStatus = writeIntoEndPoint(fd);
   if (writeStatus < 0) {
+    LOG(ERROR) << "Write failed, makr connection to be disconnected";
     mWriteState = ERROR;
     mState = TO_BE_DISCONNECTED;
   }
@@ -117,6 +119,7 @@ int BaseConnection::handleRead(int fd) {
     mReadState = NOTREADY;
   } else {
     mReadState = ERROR;
+    LOG(ERROR) << "Read failed, makr connection to be disconnected";
     mState = TO_BE_DISCONNECTED;
   }
 
