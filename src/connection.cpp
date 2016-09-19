@@ -216,9 +216,8 @@ int32_t Connection::InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *
       to_read = to_read - num_read;
       *position_ = *position_ + num_read;
     } else if (num_read == 0) {
-      // remote end has done a shutdown.
-      LOG(ERROR) << "Remote end has done a shutdown";
-      return -1;
+      // there is nothing to read.
+      return 0;
     } else {
       // read returned negative value.
       if (errno == EAGAIN) {

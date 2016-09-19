@@ -88,7 +88,7 @@ int BaseConnection::handleWrite(int fd) {
   mWriteState = NOTREGISTERED;
 
   if (mState != CONNECTED) {
-    LOG(INFO) << "Not connected";
+    //LOG(INFO) << "Not connected";
     return 0;
   }
 
