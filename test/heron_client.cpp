@@ -50,7 +50,7 @@ void StMgrClient::SendHelloRequest() {
 
 void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg) {
   if (IsConnected()) {
-    LOG(INFO) << "Send message";
+    // LOG(INFO) << "Send message";
     SendMessage(_msg);
   } else {
     if (++ndropped_messages_ % 100 == 0) {
