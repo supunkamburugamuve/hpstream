@@ -32,7 +32,7 @@ int32_t BaseConnection::start() {
 void BaseConnection::closeConnection() {
   if (mState != CONNECTED) {
     // Nothing to do here
-    LOG(ERROR) << "Connection already closed, hence doing nothing";
+    //LOG(ERROR) << "Connection already closed, hence doing nothing";
     return;
   }
   mState = TO_BE_DISCONNECTED;

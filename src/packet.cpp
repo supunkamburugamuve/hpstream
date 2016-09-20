@@ -37,7 +37,10 @@ IncomingPacket::~IncomingPacket() { delete[] data_; }
 
 int32_t IncomingPacket::UnPackInt(int32_t* i) {
   if (data_ == NULL) return -1;
-  if (position_ + sizeof(int32_t) > PacketHeader::get_packet_size(header_)) return -1;
+  if (position_ + sizeof(int32_t) > PacketHeader::get_packet_size(header_)) {
+    LOG(ERROR) << "position + 4: " << (position_ + sizeof(int32_t)) << " packet size:" << PacketHeader::get_packet_size(header_);   
+    return -1;
+  }
   uint32_t network_order;
   memcpy(&network_order, data_ + position_, sizeof(int32_t));
   position_ += sizeof(int32_t);
@@ -48,7 +51,10 @@ int32_t IncomingPacket::UnPackInt(int32_t* i) {
 int32_t IncomingPacket::UnPackString(std::string* i) {
   int32_t size = 0;
   if (UnPackInt(&size) != 0) return -1;
-  if (position_ + size > PacketHeader::get_packet_size(header_)) return -1;
+  if (position_ + size > PacketHeader::get_packet_size(header_)) {
+     LOG(ERROR) << "position + 4: " << (position_ + sizeof(int32_t)) << " packet size:" << PacketHeader::get_packet_size(header_);
+    return -1;
+  }
   *i = std::string(data_ + position_, size);
   position_ += size;
   return 0;

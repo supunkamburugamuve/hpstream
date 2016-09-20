@@ -436,8 +436,8 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
       current_read_indx += can_copy;
-      rbuf->setCurrentReadIndex(current_read_indx);
     }
+    rbuf->setCurrentReadIndex(current_read_indx);
     // next copy the buffer
     memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
     // now update
