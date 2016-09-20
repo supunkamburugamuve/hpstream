@@ -111,7 +111,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
                     PacketHeader::header_size() - iter->first->position_;
     // try to write the data
     write_status = writeData((uint8_t *) buf, size_to_write, &current_write);
-    LOG(INFO) << "current_packet=" << current_packet << " size_to_write=" << size_to_write << " current_write=" << current_write;
+//    LOG(INFO) << "current_packet=" << current_packet << " size_to_write=" << size_to_write << " current_write=" << current_write;
     if (write_status) {
       LOG(ERROR) << "Failed to write the data";
       return write_status;
@@ -138,7 +138,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
 
 int32_t Connection::readFromEndPoint(int fd) {
   int32_t bytesRead = 0;
-  LOG(INFO) << "Read from endpoint";
+//  LOG(INFO) << "Read from endpoint";
   while (1) {
     int32_t read_status = ReadPacket();
     if (read_status == 0) {

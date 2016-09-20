@@ -565,7 +565,7 @@ int RDMAConnection::TransmitComplete() {
   }
   this->send_buf->releaseLock();
   
-  LOG(INFO) << "Transmit complete";
+  // LOG(INFO) << "Transmit complete";
   // we are ready for a write
   // onWriteReady(0);
   return 0;
@@ -607,7 +607,7 @@ int RDMAConnection::ReceiveComplete() {
     }
   }
   this->recv_buf->releaseLock();
-  LOG(INFO) << "Receive complete";
+  // LOG(INFO) << "Receive complete";
 
   read_available = sbuf->GetFilledBuffers();
   if (read_available > 0) {
