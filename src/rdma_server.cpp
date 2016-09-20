@@ -165,7 +165,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   // associate the connection to the context
   ret = fi_endpoint(domain, entry->info, &ep, con);
   if (ret) {
-    LOG(ERROR) << "fi_endpoint %d", ret;
+    LOG(ERROR) << "Failed to create endoint for connection " << ret;
     goto err;
   }
 
@@ -178,7 +178,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   // accept the incoming connection
   ret = fi_accept(ep, NULL, 0);
   if (ret) {
-    LOG(ERROR) << "fi_accept %d", ret;
+    LOG(ERROR) << "Failed to accept connection" << ret;
     goto err;
   }
 
@@ -189,7 +189,6 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   pending_connections_.insert(baseConnection);
   return 0;
   err:
-  LOG(ERROR) << "Error label";
   fi_reject(pep, entry->info->handle, NULL, 0);
   return ret;
 }

@@ -191,7 +191,7 @@ int RDMAConnection::AllocateBuffers(void) {
 
     ret = posix_memalign((void **)&buf, (size_t) alignment, buf_size);
     if (ret) {
-      LOG(ERROR) << "Failed to align memory to a page %d", ret;
+      LOG(ERROR) << "Failed to align memory to a page " << ret;
       return ret;
     }
   } else {
