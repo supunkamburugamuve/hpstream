@@ -641,10 +641,12 @@ int RDMAConnection::closeConnection() {
     HPS_ERR("Failed to un-register transmit from loop");
   }
 
-//  int ret = fi_shutdown(ep, 0);
-//  if (ret) {
-//    HPS_ERR("Failed to shutdown connection");
-//  }
+  int ret = fi_shutdown(ep, 0);
+  if (ret) {
+    HPS_ERR("Failed to shutdown connection");
+  }
+
+  Free();
   mState = DISCONNECTED;
   return 0;
 }

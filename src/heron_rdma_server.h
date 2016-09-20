@@ -146,7 +146,7 @@ private:
       // We could not decode the pb properly
       std::cerr << "Could not decode protocol buffer of type " << m->GetTypeName();
       delete m;
-      CloseConnection(_conn);
+        CloseConnection(_conn);
       return;
     }
     CHECK(m->IsInitialized());

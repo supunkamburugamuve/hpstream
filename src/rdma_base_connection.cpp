@@ -85,17 +85,14 @@ int BaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
 
 // Note that we hold the mutex when we come to this function
 int BaseConnection::handleWrite(int fd) {
-  mWriteState = NOTREGISTERED;
-
   if (mState != CONNECTED) {
-    //LOG(INFO) << "Not connected";
+    LOG(ERROR) << "Not connected";
     return 0;
   }
 
   int32_t writeStatus = writeIntoEndPoint(fd);
   if (writeStatus < 0) {
     LOG(ERROR) << "Write failed, makr connection to be disconnected";
-    mWriteState = ERROR;
     mState = TO_BE_DISCONNECTED;
   }
   if (mState == CONNECTED && mWriteState == NOTREGISTERED && stillHaveDataToWrite()) {
@@ -104,7 +101,6 @@ int BaseConnection::handleWrite(int fd) {
 
   bool prevValue = mCanCloseConnection;
   mCanCloseConnection = false;
-//  handleDataWritten();
   mCanCloseConnection = prevValue;
   if (mState != CONNECTED) {
     internalClose();
