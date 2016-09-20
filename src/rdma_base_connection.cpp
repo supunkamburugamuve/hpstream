@@ -44,9 +44,6 @@ void BaseConnection::internalClose() {
   if (!mCanCloseConnection) return;
   mState = DISCONNECTED;
 
-  if (mState != TO_BE_DISCONNECTED) return;
-  if (!mCanCloseConnection) return;
-  mState = DISCONNECTED;
   // for now lets close
   // todo we need to have a good look
   mRdmaConnection->closeConnection();
