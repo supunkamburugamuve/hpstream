@@ -55,7 +55,9 @@ void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
   }
 
   if (rd != sizeof entry) {
-    HPS_ERR("fi_eq_sread listen");
+    LOG(INFO) << "Unexpected event received on connection listen "
+              << rd << " and expected " << sizeof entry;
+    return;
   }
 
   if (event == FI_SHUTDOWN) {
@@ -65,7 +67,7 @@ void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
     LOG(INFO) << "Received connected event";
     Connected(&entry);
   } else {
-    HPS_ERR("Unexpected CM event %d", event);
+    LOG(ERROR) << "Unexpected CM event" << event;
   }
 }
 
@@ -159,7 +161,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 
   this->conn_ = conn_;
   this->state_ = CONNECTED;
-  printf("Connection established\n");
+  LOG(INFO) << "Connection established";
   return 0;
 }
 

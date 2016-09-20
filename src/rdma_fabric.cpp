@@ -1,4 +1,5 @@
 
+#include <glog/logging.h>
 #include "rdma_fabric.h"
 
 RDMAFabric::RDMAFabric(RDMAOptions *options, struct fi_info *info_hints) {
@@ -15,7 +16,7 @@ int RDMAFabric::Init() {
 
   ret = fi_fabric(this->info->fabric_attr, &this->fabric, NULL);
   if (ret) {
-    HPS_ERR("fi_fabric %d", ret);
+    LOG(ERROR) << "Failed to create fabric " << ret;
     return ret;
   }
 

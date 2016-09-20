@@ -1,5 +1,6 @@
 #include <rdma/fi_eq.h>
 #include <map>
+#include <glog/logging.h>
 
 #include "rdma_event_loop.h"
 
@@ -33,11 +34,16 @@ int RDMAEventLoopNoneFD::Start() {
   // start the loop thread
   ret = pthread_create(&loopThreadId, NULL, &loopEventsThreadNonBlock, (void *)this);
   if (ret) {
-    HPS_ERR("Failed to create thread %d", ret);
+    LOG(ERROR) << "Failed to create thread " << ret;
     return ret;
   }
 
   return 0;
+}
+
+int RDMAEventLoopNoneFD::Close() {
+  this->run = false;
+  return Wait();
 }
 
 int RDMAEventLoopNoneFD::Wait() {
@@ -46,7 +52,6 @@ int RDMAEventLoopNoneFD::Wait() {
 }
 
 int RDMAEventLoopNoneFD::UnRegister(struct rdma_loop_info *con) {
-  // remove the connection
   std::list<struct rdma_loop_info*>::iterator lpIt = connections.begin();
   while (lpIt != connections.end()) {
     struct rdma_loop_info* temp = *lpIt;

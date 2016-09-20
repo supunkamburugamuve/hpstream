@@ -48,6 +48,7 @@ public:
                                         sp_int64 mSecs);
   void Loop();
   int Start();
+  int Close();
   int Wait();
 
 private:

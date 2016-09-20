@@ -191,13 +191,13 @@ int RDMAConnection::AllocateBuffers(void) {
 
     ret = posix_memalign((void **)&buf, (size_t) alignment, buf_size);
     if (ret) {
-      HPS_ERR("posix_memalign %d", ret);
+      LOG(ERROR) << "Failed to align memory to a page %d", ret;
       return ret;
     }
   } else {
     buf = (uint8_t *)malloc(buf_size);
     if (!buf) {
-      HPS_ERR("No memory");
+      LOG(ERROR) << "No memory in the system";
       return -FI_ENOMEM;
     }
   }
@@ -211,11 +211,11 @@ int RDMAConnection::AllocateBuffers(void) {
     ret = fi_mr_reg(domain, buf, buf_size, hps_utils_caps_to_mr_access(info->caps),
                     0, HPS_MR_KEY, 0, &mr, NULL);
     if (ret) {
-      HPS_ERR("fi_mr_reg %d", ret);
+      LOG(ERROR) << "Failed to register memory: " << ret;
       return ret;
     }
   } else {
-    HPS_INFO("No mr");
+    LOG(ERROR) << "No memory";
     mr = &no_mr;
   }
 
@@ -304,7 +304,7 @@ int RDMAConnection::GetCQComp(struct fid_cq *cq, uint64_t *cur,
       ret = hps_utils_cq_readerr(cq);
       (*cur)++;
     } else {
-      HPS_ERR("ft_get_cq_comp %d", ret);
+      LOG(ERROR) << "ft_get_cq_comp " << ret;
     }
   }
   return ret;
@@ -315,7 +315,7 @@ int RDMAConnection::GetRXComp(uint64_t total) {
   if (rxcq) {
     ret = GetCQComp(rxcq, &rx_cq_cntr, total, timeout);
   } else {
-    HPS_ERR("Trying to get a RX completion when no RX CQ or counter were opened");
+    LOG(ERROR) << "Trying to get a RX completion when no RX CQ or counter were opened";
     ret = -FI_EOTHER;
   }
   return ret;
@@ -327,7 +327,7 @@ int RDMAConnection::GetTXComp(uint64_t total) {
   if (txcq) {
     ret = GetCQComp(txcq, &tx_cq_cntr, total, -1);
   } else {
-    HPS_ERR("Trying to get a TX completion when no TX CQ or counter were opened");
+    LOG(ERROR) << "Trying to get a TX completion when no TX CQ or counter were opened";
     ret = -FI_EOTHER;
   }
   return ret;
@@ -454,7 +454,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     uint8_t *send_buf = rbuf->GetBuffer(index);
     ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
-      HPS_ERR("Failed to post the receive buffer");
+      LOG(ERROR) << "Failed to post the receive buffer";
       rbuf->releaseLock();
       return (int) ret;
     }
@@ -497,10 +497,10 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
       // increment the head
       sbuf->IncrementSubmitted(1);
     } else {
-      HPS_ERR("Failed to post");
+      LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;
       if (error_count > MAX_ERRORS) {
-        HPS_ERR("Failed to send the buffer completely. sent %d", sent_size);
+        LOG(ERROR) << "Failed to send the buffer completely. sent " << sent_size;
         goto err;
       }
     }
@@ -542,7 +542,7 @@ int RDMAConnection::TransmitComplete() {
       uint32_t base = this->send_buf->GetBase();
       completed_bytes += this->send_buf->getContentSize(base);
       if (this->send_buf->IncrementTail((uint32_t) 1)) {
-        HPS_ERR("Failed to increment buffer data pointer");
+        LOG(ERROR) << "Failed to increment buffer data pointer";
         this->send_buf->releaseLock();
         return 1;
       }
@@ -590,7 +590,7 @@ int RDMAConnection::ReceiveComplete() {
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
     if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
-      HPS_ERR("Failed to increment buffer data pointer");
+      LOG(ERROR) << "Failed to increment buffer data pointer";
       this->recv_buf->releaseLock();
       return 1;
     }
@@ -630,20 +630,20 @@ void RDMAConnection::OnRead(enum rdma_loop_status state) {
 
 int RDMAConnection::closeConnection() {
   if (mState != CONNECTED) {
-    HPS_ERR("Connection not in CONNECTED state, cannot disconnect");
+    LOG(ERROR) << "Connection not in CONNECTED state, cannot disconnect";
   }
 
   if (eventLoop->UnRegister(&rx_loop)) {
-    HPS_ERR("Failed to un-register read from loop");
+    LOG(ERROR) << "Failed to un-register read from loop";
   }
 
   if (eventLoop->UnRegister(&tx_loop)) {
-    HPS_ERR("Failed to un-register transmit from loop");
+    LOG(ERROR) << "Failed to un-register transmit from loop";
   }
 
   int ret = fi_shutdown(ep, 0);
   if (ret) {
-    HPS_ERR("Failed to shutdown connection");
+    LOG(ERROR) << "Failed to shutdown connection";
   }
 
   Free();
@@ -659,9 +659,9 @@ char* RDMAConnection::getIPAddress() {
   ret = fi_getpeer(ep, &addr, &size);
   if (ret) {
     if (ret == -FI_ETOOSMALL) {
-      HPS_ERR("FI_ETOOSMALL, we shouln't get this");
+      LOG(ERROR) << "FI_ETOOSMALL, we shouln't get this";
     } else {
-      HPS_ERR("Failed to get peer address");
+      LOG(ERROR) << "Failed to get peer address";
     }
   }
 
@@ -679,9 +679,9 @@ uint32_t RDMAConnection::getPort() {
   ret = fi_getpeer(ep, &addr, &size);
   if (ret) {
     if (ret == -FI_ETOOSMALL) {
-      HPS_ERR("FI_ETOOSMALL, we shouln't get this");
+      LOG(ERROR) << "FI_ETOOSMALL, we shouln't get this";
     } else {
-      HPS_ERR("Failed to get peer address");
+      LOG(ERROR) << "Failed to get peer address";
     }
   }
   uint32_t port = ntohs(((struct sockaddr_in*)(&addr))->sin_port);

@@ -70,10 +70,24 @@ int RDMABaseServer::Start_Base(void) {
 
 int RDMABaseServer::Stop_Base() {
   LOG(INFO) << "Stopping the server";
+  // unregister us from any connection events
+  if (eventLoop_) {
+    eventLoop_->UnRegister(&eq_loop);
+  }
+
+  for (auto it = active_connections_.begin(); it != active_connections_.end(); ++it) {
+    BaseConnection* conn = *(it);
+    conn->closeConnection();
+    // Note:- we don't delete the connection here. They are deleted in
+    // the OnConnectionClose call.
+    CHECK(active_connections_.empty());
+  }
+
+  // free the rdma resources
   HPS_CLOSE_FID(pep);
   HPS_CLOSE_FID(eq);
+  HPS_CLOSE_FID(domain);
   HPS_CLOSE_FID(fabric);
-
   if (this->options) {
     options->Free();
   }
@@ -107,7 +121,8 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   }
 
   if (rd != sizeof entry) {
-    HPS_ERR("fi_eq_sread listen %ld and expected %ld", rd, sizeof entry);
+    LOG(INFO) << "Unexpected event received on connection listen "
+              << rd << " and expected " << sizeof entry;
     return;
   }
 
@@ -121,14 +136,14 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
     }
     return;
   } else if (event == FI_CONNREQ) {
-    LOG(INFO) << "Receive connect event";
+    LOG(INFO) << "Received connect event";
     // this is the correct fi_info associated with active end-point
     Connect(&entry);
   } else if (event == FI_CONNECTED) {
-    LOG(INFO) << "Receved connection completion event";
+    LOG(INFO) << "Received connection completion event";
     Connected(&entry);
   } else {
-    HPS_ERR("Unexpected CM event %d", event);
+    LOG(WARNING) << "Unexpected CM event: " << event;
   }
 }
 
@@ -150,7 +165,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   // associate the connection to the context
   ret = fi_endpoint(domain, entry->info, &ep, con);
   if (ret) {
-    HPS_ERR("fi_endpoint %d", ret);
+    LOG(ERROR) << "fi_endpoint %d", ret;
     goto err;
   }
 
@@ -163,7 +178,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   // accept the incoming connection
   ret = fi_accept(ep, NULL, 0);
   if (ret) {
-    HPS_ERR("fi_accept %d", ret);
+    LOG(ERROR) << "fi_accept %d", ret;
     goto err;
   }
 
@@ -174,7 +189,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   pending_connections_.insert(baseConnection);
   return 0;
   err:
-  HPS_INFO("Error label");
+  LOG(ERROR) << "Error label";
   fi_reject(pep, entry->info->handle, NULL, 0);
   return ret;
 }
@@ -206,7 +221,7 @@ int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
     return 1;
   }
 
-  HPS_INFO("Client connected");
+  LOG(INFO) << "Client connected";
   // add the connection to list
   this->active_connections_.insert(con);
   return 0;

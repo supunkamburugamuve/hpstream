@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cinttypes>
 #include <cstring>
+#include <glog/logging.h>
 
 #include "hps.h"
 #include "rdma_buffer.h"
@@ -63,9 +64,7 @@ int RDMABuffer::Init() {
 int RDMABuffer::IncrementFilled(uint32_t count) {
   uint32_t temp = this->filled_buffs + count;
   if (temp > this->no_bufs) {
-    HPS_ERR("Failed to increment the submitted, inconsistant "
-                "state temp=%" PRIu32 " submitted=%" PRId32 " "
-        "filled=%" PRId32, temp, this->submitted_buffs, this->filled_buffs);
+    LOG(ERROR) << "Failed to increment the submitted, inconsistant state";
     return 1;
   }
   this->filled_buffs = temp;
@@ -75,9 +74,7 @@ int RDMABuffer::IncrementFilled(uint32_t count) {
 int RDMABuffer::IncrementSubmitted(uint32_t count) {
   uint32_t temp = this->submitted_buffs + count;
   if (temp > this->no_bufs) {
-    HPS_ERR("Failed to increment the submitted, inconsistant state "
-                "temp=%" PRIu32 " submitted=%" PRId32 " filled=%" PRId32,
-            temp, this->submitted_buffs, this->filled_buffs);
+    LOG(ERROR) << "Failed to increment the submitted, inconsistent state";
     return 1;
   }
   this->submitted_buffs = temp;
@@ -86,7 +83,7 @@ int RDMABuffer::IncrementSubmitted(uint32_t count) {
 
 int RDMABuffer::IncrementTail(uint32_t count) {
   if (this->filled_buffs - count < 0 || this->submitted_buffs - count < 0) {
-    HPS_ERR("Failed to decrement the buffer, inconsistent state");
+    LOG(ERROR) << "Failed to decrement the buffer, inconsistent state";
     return 1;
   }
   this->base = (this->base + count) % this->no_bufs;
@@ -98,7 +95,7 @@ int RDMABuffer::IncrementTail(uint32_t count) {
 
 int RDMABuffer::setBufferContentSize(uint32_t index, uint32_t size) {
   if (index < 0 || index >= no_bufs) {
-    HPS_ERR("Index out of bound %d", index);
+    LOG(ERROR) << "Index out of bound " << index;
     return 1;
   }
   this->content_sizes[index] = size;
@@ -107,7 +104,7 @@ int RDMABuffer::setBufferContentSize(uint32_t index, uint32_t size) {
 
 uint32_t RDMABuffer::getContentSize(uint32_t index) {
   if (index < 0 || index >= no_bufs) {
-    HPS_ERR("Index out of bound %d", index);
+    LOG(ERROR) << "Index out of bound " << index;
     return 1;
   }
   return this->content_sizes[index];
