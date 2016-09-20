@@ -37,11 +37,10 @@ void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
 
 void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
-  LOG(INFO) << "Received message";
   LOG(INFO) << _message->id() << " " << _message->data();
 
   char *name = new char[100];
-  sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+  sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
   proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
   message->set_name(name);
   message->set_id(10);

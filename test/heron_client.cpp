@@ -64,7 +64,6 @@ void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg) {
 void StMgrClient::HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message) {
   LOG(INFO) << _message->id() << " " << _message->data();
   delete _message;
-  LOG(ERROR) << "We should not receive tuple messages in the client";
 }
 
 void StMgrClient::StartBackPressureConnectionCb(Connection* _connection) {
