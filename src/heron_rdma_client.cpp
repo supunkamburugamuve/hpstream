@@ -115,7 +115,7 @@ void Client::InternalSendRequest(google::protobuf::Message* _request, void* _ctx
 }
 
 void Client::InternalSendMessage(google::protobuf::Message* _message) {
-  LOG(INFO) << "Internal send message";
+//  LOG(INFO) << "Internal send message";
   if (state_ != CONNECTED) {
     LOG(ERROR) << "Client is not connected. Dropping message" << std::endl;
     delete _message;
