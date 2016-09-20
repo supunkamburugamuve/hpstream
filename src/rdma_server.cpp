@@ -128,12 +128,24 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
 
   if (event == FI_SHUTDOWN) {
     LOG(INFO) << "Received shutdown event";
-    std::list<RDMAConnection *>::const_iterator iterator;
-    RDMAConnection *c = (RDMAConnection *) entry.fid->context;
-    if (c != NULL) {
-      // now disconnect
-      c->closeConnection();
+    std::set<BaseConnection *>::iterator it = active_connections_.begin();
+//    RDMAConnection *c = (RDMAConnection *) entry.fid->context;
+//    if (c != NULL) {
+//      // now disconnect
+//      c->closeConnection();
+//    }
+    // remove the connection from the list
+    while (it != active_connections_.end()) {
+      RDMAConnection *rdmaConnection = (*it)->getEndpointConnection();
+      if (&rdmaConnection->GetEp()->fid == entry.fid) {
+        active_connections_.erase(it);
+        (*it)->closeConnection();
+        LOG(INFO) << "Closed connection";
+        break;
+      }
+      it++;
     }
+
     return;
   } else if (event == FI_CONNREQ) {
     LOG(INFO) << "Received connect event";
