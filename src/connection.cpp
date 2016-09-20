@@ -201,12 +201,17 @@ int32_t Connection::ReadPacket() {
     int32_t retval = 0;
     retval = readData((uint8_t *) (mIncomingPacket->data_ + mIncomingPacket->position_),
                       PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_, &read);
-    // now check weather we have read everything we need
     if (retval != 0) {
       return retval;
     } else {
+      // now check weather we have read evrything we need
       mIncomingPacket->position_ += read;
-      return PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_;
+      if (PacketHeader::get_packet_size(mIncomingPacket->header_) == mIncomingPacket->position_) {
+        mIncomingPacket->position_ = 0;
+        return 0;
+      } else {
+        return PacketHeader::get_packet_size(mIncomingPacket->header_) - mIncomingPacket->position_;
+      }
     }
   }
 }

@@ -436,6 +436,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       // we cannot copy everything from this buffer
       can_copy = size - read_size;
       current_read_indx += can_copy;
+      rbuf->setCurrentReadIndex(current_read_indx);
     }
     // next copy the buffer
     memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
@@ -573,7 +574,7 @@ int RDMAConnection::TransmitComplete() {
 int RDMAConnection::ReceiveComplete() {
   ssize_t cq_ret;
   struct fi_cq_err_entry comp;
-  RDMABuffer *sbuf = this->send_buf;
+  RDMABuffer *sbuf = this->recv_buf;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
   uint64_t read_available = sbuf->GetFilledBuffers();

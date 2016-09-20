@@ -38,6 +38,7 @@ void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
 void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
   LOG(INFO) << "Received message";
+  LOG(INFO) << _message->id() << " " << _message->data();
   delete _message;
 }
 
