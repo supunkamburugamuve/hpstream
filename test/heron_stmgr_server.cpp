@@ -39,6 +39,16 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
   LOG(INFO) << "Received message";
   LOG(INFO) << _message->id() << " " << _message->data();
+
+  char *name = new char[100];
+  sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+  proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
+  message->set_name(name);
+  message->set_id(10);
+  message->set_data(name);
+
+  SendMessage(_conn, (*message));
+  delete message;
   delete _message;
 }
 
