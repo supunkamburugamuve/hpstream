@@ -84,6 +84,8 @@ int BaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
 int BaseConnection::handleWrite(int fd) {
   if (mState != CONNECTED) {
     LOG(ERROR) << "Not connected";
+    mState = TO_BE_DISCONNECTED;
+    internalClose();
     return 0;
   }
 
@@ -106,6 +108,13 @@ int BaseConnection::handleWrite(int fd) {
 }
 
 int BaseConnection::handleRead(int fd) {
+  if (mState != CONNECTED) {
+    LOG(ERROR) << "Not connected";
+    mState = TO_BE_DISCONNECTED;
+    internalClose();
+    return 0;
+  }
+
   mReadState = READY;
   int32_t readStatus = readFromEndPoint(fd);
   if (readStatus >= 0) {
