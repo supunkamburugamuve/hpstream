@@ -91,7 +91,7 @@ int BaseConnection::handleWrite(int fd) {
 
   int32_t writeStatus = writeIntoEndPoint(fd);
   if (writeStatus < 0) {
-    LOG(ERROR) << "Write failed, makr connection to be disconnected";
+    LOG(ERROR) << "Write failed, mark connection to be disconnected";
     mState = TO_BE_DISCONNECTED;
   }
   if (mState == CONNECTED && mWriteState == NOTREGISTERED && stillHaveDataToWrite()) {
@@ -121,7 +121,7 @@ int BaseConnection::handleRead(int fd) {
     mReadState = NOTREADY;
   } else {
     mReadState = ERROR;
-    LOG(ERROR) << "Read failed, makr connection to be disconnected";
+    LOG(ERROR) << "Read failed, mark connection to be disconnected";
     mState = TO_BE_DISCONNECTED;
   }
 
