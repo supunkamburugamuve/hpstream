@@ -4,13 +4,15 @@
 BaseConnection::BaseConnection(RDMAOptions *options, RDMAConnection *con,
                                RDMAEventLoopNoneFD *loop)
     : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop){
+  mState = INIT;
+  mCanCloseConnection = true;
 }
 
 BaseConnection::~BaseConnection() { CHECK(mState == INIT || mState == DISCONNECTED); }
 
 int32_t BaseConnection::start() {
   if (mState != INIT) {
-    LOG(ERROR) << "Connection not in INIT State, hence cannot start";
+    LOG(ERROR) << "Connection not in INIT State, hence cannot start: " << mState;
     return -1;
   }
 
@@ -30,7 +32,7 @@ int32_t BaseConnection::start() {
 }
 
 void BaseConnection::closeConnection() {
-  if (mState != CONNECTED) {
+  if (mState != CONNECTED && mState != TO_BE_DISCONNECTED) {
     // Nothing to do here
     LOG(ERROR) << "Connection already closed, hence doing nothing";
     return;
@@ -41,7 +43,7 @@ void BaseConnection::closeConnection() {
 
 void BaseConnection::internalClose() {
   if (mState != TO_BE_DISCONNECTED) return;
-  if (!mCanCloseConnection) return;
+  //if (!mCanCloseConnection) return;
   mState = DISCONNECTED;
 
   // for now lets close
@@ -83,7 +85,7 @@ int BaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
 // Note that we hold the mutex when we come to this function
 int BaseConnection::handleWrite(int fd) {
   if (mState != CONNECTED) {
-    LOG(ERROR) << "Not connected";
+    // LOG(ERROR) << "Not connected";
     mState = TO_BE_DISCONNECTED;
     internalClose();
     return 0;
@@ -109,7 +111,7 @@ int BaseConnection::handleWrite(int fd) {
 
 int BaseConnection::handleRead(int fd) {
   if (mState != CONNECTED) {
-    LOG(ERROR) << "Not connected";
+    //LOG(ERROR) << "Not connected";
     mState = TO_BE_DISCONNECTED;
     internalClose();
     return 0;
