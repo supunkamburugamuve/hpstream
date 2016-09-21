@@ -197,14 +197,8 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
   con->SetState(WAIT_CONNECT_CONFIRM);
 
   baseConnection = CreateConnection(con, options, this->eventLoop_);
-  if (baseConnection->start()) {
-    LOG(ERROR) << "Failed to start the connection";
-    return 1;
-  }
   // add the connection to pending and wait for confirmation
-  LOG(INFO) << "Before insert pending " << pending_connections_.size();
   pending_connections_.insert(baseConnection);
-  LOG(INFO) << "Inserted pending " << pending_connections_.size();
   return 0;
   err:
   LOG(INFO) << "FI reject";
@@ -236,10 +230,10 @@ int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
   }
 
   // lets start the connection
-  //if (con->start()) {
-  //  LOG(ERROR) << "Failed to start the connection";
-  //  return 1;
-  //}
+  if (con->start()) {
+    LOG(ERROR) << "Failed to start the connection";
+    return 1;
+  }
 
   LOG(INFO) << "Client connected";
   // add the connection to list
