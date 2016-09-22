@@ -44,7 +44,7 @@ int exchange3() {
     message->set_data(name);
     client->SendTupleStreamMessage(message);
   }
-  sleep(60);
+  eventLoop->Wait();
   return 0;
 }
 
