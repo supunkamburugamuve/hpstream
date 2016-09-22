@@ -507,14 +507,14 @@ int RDMAConnection::postCredit() {
     *length = 0;
     // send the credit with the write
     uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
-    last_sent_credit = self_credit;
     *sent_credit = this->self_credit;
-    recvd_after_last_sent = 0;
 
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
     if (!PostTX(sizeof(uint32_t) + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+      last_sent_credit = self_credit;
+      recvd_after_last_sent = 0;
       sbuf->IncrementFilled(1);
       // increment the head
       sbuf->IncrementSubmitted(1);
@@ -565,15 +565,15 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     *length = current_size;
     // send the credit with the write
     uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
-    last_sent_credit = self_credit;
-    *sent_credit = last_sent_credit;
-    recvd_after_last_sent = 0;
+    *sent_credit = self_credit;
 
     memcpy(current_buf + sizeof(uint32_t) + sizeof(uint32_t), buf + sent_size, current_size);
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t) + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+      last_sent_credit = self_credit;
+      recvd_after_last_sent = 0;
       sent_size += current_size;
       sbuf->IncrementFilled(1);
       // increment the head
