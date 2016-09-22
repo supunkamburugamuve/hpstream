@@ -358,6 +358,7 @@ ssize_t RDMAConnection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx
       LOG(ERROR) << "Failed to get completion for write";
       return rc;
     }
+    LOG(INFO) << "Loooping for tx completion";
     timeout = timeout_save;
   }
   tx_seq++;
@@ -385,6 +386,7 @@ ssize_t RDMAConnection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx
       LOG(ERROR) << "Failed to get completion for receive";
       return rc;
     }
+    LOG(INFO) << "Loooping for rx completion";
     timeout = timeout_save;
   }
   rx_seq++;
