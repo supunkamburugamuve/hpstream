@@ -437,6 +437,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       current_read_indx = 0;
       // advance the base pointer
       rbuf->IncrementTail(1);
+      this->self_credit--;
       buffers_filled--;
       tail = rbuf->GetBase();
     } else {
