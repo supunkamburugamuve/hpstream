@@ -148,6 +148,15 @@ private:
   VCallback<int> onWriteReady;
   VCallback<int> onReadReady;
 
+  // credits for the flow control of messages
+  // credit for this side, we have posted this many buffers
+  uint8_t self_credit;
+  // this is the last sent credit to the peer
+  uint8_t last_sent_credit;
+  // credit of the peer as we know it
+  // when we transmit a message, we reduce the peer credit until
+  // the peer notifies us with its new credit
+  uint8_t peer_credit;
 };
 
 #endif /* HPS_CONNECTION_H_ */

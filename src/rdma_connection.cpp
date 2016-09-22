@@ -68,9 +68,11 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
 
   this->cq_attr.wait_obj = FI_WAIT_NONE;
   this->timeout = -1;
+
+  this->self_credit = 0;
+  this->last_sent_credit = 0;
+  this->peer_credit = 0;
 }
-
-
 
 void RDMAConnection::Free() {
   if (mr != &no_mr) {
@@ -256,6 +258,7 @@ int RDMAConnection::PostBuffers() {
       return (int) ret;
     }
     rBuf->IncrementSubmitted(1);
+    this->self_credit++;
   }
   return 0;
 }
@@ -419,6 +422,9 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     uint32_t *r;
     // first read the amount of data in the buffer
     r = (uint32_t *) b;
+    uint8_t *credit = b + sizeof(uint32_t);
+    // update the peer credit with the latest
+    this->peer_credit = *credit;
     // now lets see how much data we need to copy from this buffer
     need_copy = (*r) - current_read_indx;
     // now lets see how much we can copy
@@ -439,7 +445,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     }
     rbuf->setCurrentReadIndex(current_read_indx);
     // next copy the buffer
-    memcpy(buf + read_size, b + sizeof(uint32_t) + tmp_index, can_copy);
+    memcpy(buf + read_size, b + sizeof(uint32_t) + sizeof(uint8_t) + tmp_index, can_copy);
     // now update
     read_size += can_copy;
   }
@@ -459,6 +465,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       return (int) ret;
     }
     rbuf->IncrementSubmitted(1);
+    this->self_credit++;
     submittedBuffers++;
   }
   rbuf->releaseLock();
@@ -478,7 +485,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  while (sent_size < size && free_space > 0) {
+  while (sent_size < size && free_space > 0 && this->peer_credit > 0) {
     // we have space in the buffers
     head = sbuf->NextWriteIndex();
     uint8_t *current_buf = sbuf->GetBuffer(head);
@@ -487,15 +494,21 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *length = (uint32_t *) current_buf;
     // set the first 4 bytes as the content length
     *length = current_size;
-    memcpy(current_buf + sizeof(uint32_t), buf + sent_size, current_size);
+    // send the credit with the write
+    uint8_t *sent_credit = current_buf + sizeof(uint32_t);
+    last_sent_credit = self_credit;
+    *sent_credit = last_sent_credit;
+
+    memcpy(current_buf + sizeof(uint32_t) + sizeof(uint8_t), buf + sent_size, current_size);
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
-    if (!PostTX(current_size + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+    if (!PostTX(current_size + sizeof(uint32_t) + sizeof(uint8_t), current_buf, &this->tx_ctx)) {
       sent_size += current_size;
       sbuf->IncrementFilled(1);
       // increment the head
       sbuf->IncrementSubmitted(1);
+      this->peer_credit--;
     } else {
       LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;

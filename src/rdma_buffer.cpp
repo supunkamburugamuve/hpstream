@@ -8,9 +8,9 @@
 #include "hps.h"
 #include "rdma_buffer.h"
 
-RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs) {
+RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t total_buffer_size, uint32_t no_bufs) {
   this->buf = buf;
-  this->buf_size = buf_size / no_bufs;
+  this->buf_size = total_buffer_size / no_bufs;
   this->no_bufs = no_bufs;
   this->base = 0;
   this->current_read_index = 0;

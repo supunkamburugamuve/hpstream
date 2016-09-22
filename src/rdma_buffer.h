@@ -6,7 +6,7 @@
 
 class RDMABuffer {
 public:
-  RDMABuffer(uint8_t *buf, uint32_t buf_size, uint32_t no_bufs);
+  RDMABuffer(uint8_t *buf, uint32_t total_buffer_size, uint32_t no_bufs);
 
   // increment the head
   int IncrementSubmitted(uint32_t count);
