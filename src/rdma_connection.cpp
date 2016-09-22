@@ -491,8 +491,8 @@ int RDMAConnection::postCredit() {
   uint32_t head = 0;
   uint32_t error_count = 0;
 
-  LOG(INFO) << "Write 0 Self credit " << self_credit;
-  LOG(INFO) << "Write 0 Peer credit " << peer_credit;
+  LOG(INFO) << "Post 0 self credit " << self_credit;
+  LOG(INFO) << "Post 0 Peer credit " << peer_credit;
 
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
@@ -528,8 +528,8 @@ int RDMAConnection::postCredit() {
       }
     }
   }
-  LOG(INFO) << "Write Self credit " << self_credit;
-  LOG(INFO) << "Write Peer credit " << peer_credit;
+  LOG(INFO) << "Post Self credit " << self_credit;
+  LOG(INFO) << "Post Peer credit " << peer_credit;
   sbuf->releaseLock();
   return 0;
 
