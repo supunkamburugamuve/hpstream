@@ -485,7 +485,6 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
 }
 
 int RDMAConnection::postCredit() {
-  int credit = this->self_credit;
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -495,7 +494,6 @@ int RDMAConnection::postCredit() {
   LOG(INFO) << "Write 0 Self credit " << self_credit;
   LOG(INFO) << "Write 0 Peer credit " << peer_credit;
 
-  uint32_t buf_size = sbuf->GetBufferSize() - 4;
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
@@ -510,7 +508,7 @@ int RDMAConnection::postCredit() {
     // send the credit with the write
     uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
     last_sent_credit = self_credit;
-    *sent_credit = last_sent_credit;
+    *sent_credit = this->self_credit;
     recvd_after_last_sent = 0;
 
     // set the data size in the buffer
