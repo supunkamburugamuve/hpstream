@@ -72,6 +72,7 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
   this->self_credit = 0;
   this->last_sent_credit = 0;
   this->peer_credit = 0;
+  this->recvd_after_last_sent = 0;
 }
 
 void RDMAConnection::Free() {
@@ -472,6 +473,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       rbuf->releaseLock();
       return (int) ret;
     }
+    this->recvd_after_last_sent++;
     rbuf->IncrementSubmitted(1);
     this->self_credit++;
     submittedBuffers++;
@@ -480,6 +482,62 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   LOG(INFO) << "Read Peer credit " << peer_credit;
   rbuf->releaseLock();
   return 0;
+}
+
+int RDMAConnection::postCredit() {
+  int credit = this->self_credit;
+  // first lets get the available buffer
+  RDMABuffer *sbuf = this->send_buf;
+  // now determine the buffer no to use
+  uint32_t head = 0;
+  uint32_t error_count = 0;
+
+  LOG(INFO) << "Write 0 Self credit " << self_credit;
+  LOG(INFO) << "Write 0 Peer credit " << peer_credit;
+
+  uint32_t buf_size = sbuf->GetBufferSize() - 4;
+  sbuf->acquireLock();
+  // we need to send everything by using the buffers available
+  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  if (free_space > 0 && this->peer_credit > 0) {
+    // we have space in the buffers
+    head = sbuf->NextWriteIndex();
+    uint8_t *current_buf = sbuf->GetBuffer(head);
+    // now lets copy from send buffer to current buffer chosen
+    uint32_t *length = (uint32_t *) current_buf;
+    // set the first 4 bytes as the content length
+    *length = 0;
+    // send the credit with the write
+    uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
+    last_sent_credit = self_credit;
+    *sent_credit = last_sent_credit;
+    recvd_after_last_sent = 0;
+
+    // set the data size in the buffer
+    sbuf->setBufferContentSize(head, 0);
+    // send the current buffer
+    if (!PostTX(sizeof(uint32_t) + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+      sbuf->IncrementFilled(1);
+      // increment the head
+      sbuf->IncrementSubmitted(1);
+      this->peer_credit--;
+    } else {
+      LOG(ERROR) <<  "Failed to transmit the buffer";
+      error_count++;
+      if (error_count > MAX_ERRORS) {
+        LOG(ERROR) << "Failed to send the buffer completely. sent ";
+        goto err;
+      }
+    }
+  }
+  LOG(INFO) << "Write Self credit " << self_credit;
+  LOG(INFO) << "Write Peer credit " << peer_credit;
+  sbuf->releaseLock();
+  return 0;
+
+  err:
+  sbuf->releaseLock();
+  return 1;
 }
 
 int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
@@ -511,6 +569,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
     last_sent_credit = self_credit;
     *sent_credit = last_sent_credit;
+    recvd_after_last_sent = 0;
 
     memcpy(current_buf + sizeof(uint32_t) + sizeof(uint32_t), buf + sent_size, current_size);
     // set the data size in the buffer
@@ -555,6 +614,10 @@ int RDMAConnection::TransmitComplete() {
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   if (free_space > 0) {
     onWriteReady(0);
+  }
+
+  if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+    postCredit();
   }
 
   cq_ret = fi_cq_read(txcq, &comp, max_completions);
@@ -610,6 +673,10 @@ int RDMAConnection::ReceiveComplete() {
   uint64_t read_available = sbuf->GetFilledBuffers();
   if (read_available > 0) {
     onReadReady(0);
+  }
+
+  if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+    postCredit();
   }
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);

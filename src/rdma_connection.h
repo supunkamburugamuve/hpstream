@@ -153,10 +153,14 @@ private:
   uint32_t self_credit;
   // this is the last sent credit to the peer
   uint32_t last_sent_credit;
+  // number of messages received after last sent credit
+  uint32_t recvd_after_last_sent;
   // credit of the peer as we know it
   // when we transmit a message, we reduce the peer credit until
   // the peer notifies us with its new credit
   uint32_t peer_credit;
+
+  int postCredit();
 };
 
 #endif /* HPS_CONNECTION_H_ */
