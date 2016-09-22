@@ -470,6 +470,8 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     this->self_credit++;
     submittedBuffers++;
   }
+  LOG(INFO) << "Read Self credit " << self_credit;
+  LOG(INFO) << "Read Peer credit " << peer_credit;
   rbuf->releaseLock();
   return 0;
 }
@@ -521,6 +523,8 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     }
     free_space = sbuf->GetAvailableWriteSpace();
   }
+  LOG(INFO) << "Write Self credit " << self_credit;
+  LOG(INFO) << "Write Peer credit " << peer_credit;
   *write = sent_size;
   sbuf->releaseLock();
   return 0;
