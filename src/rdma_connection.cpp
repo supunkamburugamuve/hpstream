@@ -259,6 +259,7 @@ int RDMAConnection::PostBuffers() {
     }
     rBuf->IncrementSubmitted(1);
     this->self_credit++;
+    this->peer_credit++;
   }
   return 0;
 }
