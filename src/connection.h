@@ -117,6 +117,9 @@ private:
   // How many times have we enqueued data and found that we had outstanding bytes >
   // HWM of back pressure threshold
   uint8_t mNumEnqueuesWithBufferFull;
+
+  // the thread lock
+  pthread_mutex_t lock;
 };
 
 #endif

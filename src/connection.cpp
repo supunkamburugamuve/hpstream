@@ -29,6 +29,7 @@ int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packe
 int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCode> cb) {
   packet->PrepareForWriting();
   //if (registerForWrite() != 0) return -1;
+  pthread_mutex_lock(&lock);
   mOutstandingPackets.push_back(std::make_pair(packet, std::move(cb)));
   mNumOutstandingPackets++;
   mNumOutstandingBytes += packet->GetTotalPacketSize();
@@ -47,6 +48,7 @@ int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCod
       mNumEnqueuesWithBufferFull = 0;
     }
   }
+  pthread_mutex_unlock(&lock);
   return 0;
 }
 
@@ -100,6 +102,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
   int write_status;
   //LOG(INFO) << "Write to endpoint";
   int current_packet = 0;
+  pthread_mutex_lock(&lock);
   for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
     if (current_packet++ < mPendingWritePackets) {
       // we have written this packet already and waiting for write completion
@@ -133,6 +136,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
       break;
     }
   }
+  pthread_mutex_unlock(&lock);
   return 0;
 }
 
