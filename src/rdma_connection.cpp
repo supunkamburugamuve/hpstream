@@ -551,7 +551,7 @@ int RDMAConnection::TransmitComplete() {
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   // we can expect up to this
-  LOG(INFO) << "Transmit complete begin";
+  //LOG(INFO) << "Transmit complete begin";
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   if (free_space > 0) {
     onWriteReady(0);
@@ -594,7 +594,7 @@ int RDMAConnection::TransmitComplete() {
   }
   this->send_buf->releaseLock();
   
-  LOG(INFO) << "Transmit complete end";
+  //LOG(INFO) << "Transmit complete end";
   // we are ready for a write
   // onWriteReady(0);
   return 0;
@@ -606,7 +606,7 @@ int RDMAConnection::ReceiveComplete() {
   RDMABuffer *sbuf = this->recv_buf;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
-  LOG(INFO) << "Receive complete begin";
+  //LOG(INFO) << "Receive complete begin";
   uint64_t read_available = sbuf->GetFilledBuffers();
   if (read_available > 0) {
     onReadReady(0);
@@ -637,7 +637,7 @@ int RDMAConnection::ReceiveComplete() {
     }
   }
   this->recv_buf->releaseLock();
-  LOG(INFO) << "Receive complete end";
+  //LOG(INFO) << "Receive complete end";
 
   read_available = sbuf->GetFilledBuffers();
   if (read_available > 0) {
