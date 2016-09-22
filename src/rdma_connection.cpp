@@ -402,6 +402,10 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t submittedBuffers;
   uint32_t noOfBuffers;
   uint32_t index = 0;
+
+  LOG(INFO) << "Read 0 Self credit " << self_credit;
+  LOG(INFO) << "Read 0 Peer credit " << peer_credit;
+
   // go through the buffers
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
@@ -484,6 +488,9 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   uint32_t current_size = 0;
   uint32_t head = 0;
   uint32_t error_count = 0;
+
+  LOG(INFO) << "Write 0 Self credit " << self_credit;
+  LOG(INFO) << "Write 0 Peer credit " << peer_credit;
 
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   sbuf->acquireLock();
