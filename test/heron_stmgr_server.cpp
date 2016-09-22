@@ -12,6 +12,7 @@ StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, 
   InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);
   LOG(INFO) << "Init server";
   spouts_under_back_pressure_ = false;
+  count = 0;
 }
 
 StMgrServer::~StMgrServer() {
@@ -49,6 +50,11 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
   SendMessage(_conn, (*message));
   delete message;
   delete _message;
+
+  count++;
+  if (count % 100 == 0 || count > 900) {
+    printf("count%d\n", count);
+  }
 }
 
 void StMgrServer::StartBackPressureConnectionCb(Connection* _connection) {

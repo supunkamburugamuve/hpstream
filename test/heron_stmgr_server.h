@@ -80,7 +80,7 @@ sp_string topology_name_;
 sp_string topology_id_;
 sp_string stmgr_id_;
 std::vector<sp_string> expected_instances_;
-StMgr *stmgr_;
+int count;
 
 bool spouts_under_back_pressure_;
 };

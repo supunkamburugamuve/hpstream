@@ -35,7 +35,7 @@ int connect3() {
 }
 
 int exchange3() {
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 10000; i++) {
     char *name = new char[100];
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
@@ -44,7 +44,7 @@ int exchange3() {
     message->set_data(name);
     client->SendTupleStreamMessage(message);
   }
-  sleep(30);
+  sleep(60);
   return 0;
 }
 
