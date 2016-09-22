@@ -497,7 +497,7 @@ int RDMAConnection::postCredit() {
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  if (free_space > 0 && this->peer_credit > 0) {
+  if (free_space > 0) {
     // we have space in the buffers
     head = sbuf->NextWriteIndex();
     uint8_t *current_buf = sbuf->GetBuffer(head);
