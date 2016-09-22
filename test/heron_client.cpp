@@ -62,7 +62,11 @@ void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg) {
 }
 
 void StMgrClient::HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message) {
-  LOG(INFO) << _message->id() << " " << _message->data();
+  //LOG(INFO) << _message->id() << " " << _message->data();
+  count++;
+  if (count % 100 == 0 || count > 900) {
+     printf("count%d\n", count);
+  }
   delete _message;
 }
 

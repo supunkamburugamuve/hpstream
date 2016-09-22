@@ -32,6 +32,7 @@ private:
 
   sp_string other_stmgr_id_;
   bool quit_;
+  uint32_t count;
 
   // Configs to be read
   sp_int32 reconnect_other_streammgrs_interval_sec_;
