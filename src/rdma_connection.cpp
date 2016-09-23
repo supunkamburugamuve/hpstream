@@ -487,9 +487,6 @@ int RDMAConnection::postCredit() {
   uint32_t head = 0;
   uint32_t error_count = 0;
 
-  LOG(INFO) << "Post 0 self credit " << self_credit;
-  LOG(INFO) << "Post 0 Peer credit " << peer_credit;
-
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
