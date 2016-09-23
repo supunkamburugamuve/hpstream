@@ -44,8 +44,8 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
   } else {
     if (count != _message->id()) {
       LOG(ERROR) << "Invalid message sequence, count: " << count << " id: " << _message->id();
-      count++;
     }
+    count++;
   }
 
   char *name = new char[100];
