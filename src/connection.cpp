@@ -65,6 +65,7 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
 
 int Connection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
+  pthread_mutex_lock(&lock);
   while (numWritten > 0) {
     auto pr = mOutstandingPackets.front();
     // This iov structure was completely written as instructed
@@ -88,6 +89,7 @@ int Connection::writeComplete(ssize_t numWritten) {
       mOnConnectionBufferEmpty(this);
     }
   }
+  pthread_mutex_unlock(&lock);
   return 0;
 }
 
