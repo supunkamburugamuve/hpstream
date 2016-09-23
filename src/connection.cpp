@@ -119,6 +119,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
 //    LOG(INFO) << "current_packet=" << current_packet << " size_to_write=" << size_to_write << " current_write=" << current_write;
     if (write_status) {
       LOG(ERROR) << "Failed to write the data";
+      pthread_mutex_unlock(&lock);
       return write_status;
     }
 
