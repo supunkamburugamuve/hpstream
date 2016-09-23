@@ -135,6 +135,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
     // we loop until we write everything we want to write is successful
     // and total written data is less than batch size
     if (!(current_write == size_to_write && total_write < mWriteBatchsize)) {
+      LOG(INFO) << "Break write";
       break;
     }
   }
