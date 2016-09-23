@@ -39,6 +39,14 @@ void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
 void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
   //LOG(INFO) << _message->id() << " " << _message->data();
+  if (_message->id() == -1) {
+    count = 0;
+  } else {
+    if (count != _message->id()) {
+      LOG(ERROR) << "Invalid message sequence, count: " << count << " id: " << _message->id();
+      count++;
+    }
+  }
 
   char *name = new char[100];
   sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
