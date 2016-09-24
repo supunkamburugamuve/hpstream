@@ -23,11 +23,13 @@ RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t total_buffer_size, uint32_t no_buf
 }
 
 int RDMABuffer::acquireLock() {
-  return pthread_mutex_lock(&lock);
+  return 0;
+//  return pthread_mutex_lock(&lock);
 }
 
 int RDMABuffer::releaseLock() {
-  return pthread_mutex_unlock(&lock);
+  return 0;
+//  return pthread_mutex_unlock(&lock);
 }
 
 uint8_t * RDMABuffer::GetBuffer(int i) {
