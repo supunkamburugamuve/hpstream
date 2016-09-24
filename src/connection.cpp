@@ -80,6 +80,10 @@ int Connection::writeComplete(ssize_t numWritten) {
       mNumOutstandingPackets--;
       mPendingWritePackets--;
       numWritten -= bytesLeftForThisPacket;
+    } else {
+      // This iov structure has been partially sent out
+      pr.first->position_ += numWritten;
+      numWritten = 0;
     }
   }
 
