@@ -21,7 +21,6 @@ int RDMAEventLoopNoneFD::RegisterRead(struct rdma_loop_info *connection) {
 
 void RDMAEventLoopNoneFD::Loop() {
   while (run) {
-    LOG(INFO) << "Loooping";
     for (std::list<struct rdma_loop_info *>::iterator it = connections.begin();
          it != connections.end(); ++it) {
       struct rdma_loop_info *c = *it;
