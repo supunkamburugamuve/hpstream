@@ -68,11 +68,11 @@ int Connection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
   LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
-  while (numWritten > 0) {
+  while (numWritten > 0 && mPendingWritePackets > 0) {
     auto pr = mOutstandingPackets.front();
-    // This iov structure was completely written as instructed
     int32_t bytesLeftForThisPacket = PacketHeader::get_packet_size(pr.first->get_header()) +
                                      PacketHeader::header_size() - pr.first->position_;
+    // This iov structure was completely written as instructed
     if (numWritten >= bytesLeftForThisPacket) {
         // This whole packet has been consumed
       mSentPackets.push_back(pr);
@@ -130,9 +130,10 @@ int32_t Connection::writeIntoEndPoint(int fd) {
       return write_status;
     }
 
-    // we have written this fully
+    // we have written this fully to the buffers
     if (current_write == size_to_write) {
       mPendingWritePackets++;
+      iter->first->position_ = 0;
     } else {
       // partial write
       iter->first->position_ += current_write;
