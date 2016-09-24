@@ -165,6 +165,7 @@ int32_t Connection::readFromEndPoint(int fd) {
       return -1;
     }
 //  }
+  return 0;
 }
 
 int32_t Connection::ReadPacket() {
