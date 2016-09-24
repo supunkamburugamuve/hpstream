@@ -147,7 +147,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
 int32_t Connection::readFromEndPoint(int fd) {
   int32_t bytesRead = 0;
 //  LOG(INFO) << "Read from endpoint";
-  while (1) {
+//  while (1) {
     int32_t read_status = ReadPacket();
     if (read_status == 0) {
       // Packet was succcessfully read.
@@ -164,7 +164,7 @@ int32_t Connection::readFromEndPoint(int fd) {
     } else {
       return -1;
     }
-  }
+//  }
 }
 
 int32_t Connection::ReadPacket() {
