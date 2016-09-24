@@ -512,7 +512,7 @@ int RDMAConnection::postCredit() {
       // increment the head
       sbuf->IncrementSubmitted(1);
       this->peer_credit--;
-      LOG(INFO) << "Decrementing Peer credit " << self_credit;
+      LOG(INFO) << "Decrementing Peer credit " << peer_credit;
     } else {
       LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;
