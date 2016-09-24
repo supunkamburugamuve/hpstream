@@ -543,7 +543,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
 
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   sbuf->acquireLock();
-  LOG(INFO) << "Lock";
+  LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   while (sent_size < size && free_space > 0 && this->peer_credit > 0) {
