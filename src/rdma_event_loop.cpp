@@ -27,6 +27,7 @@ void RDMAEventLoopNoneFD::Loop() {
       c->callback(AVAILABLE);
     }
   }
+  LOG(INFO) << "Loop exit";
 }
 
 int RDMAEventLoopNoneFD::Start() {
