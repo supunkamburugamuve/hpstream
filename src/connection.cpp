@@ -75,7 +75,7 @@ int Connection::writeComplete(ssize_t numWritten) {
     // This iov structure was completely written as instructed
     if (numWritten >= bytesLeftForThisPacket) {
         // This whole packet has been consumed
-      mSentPackets.push_back(pr);
+      // mSentPackets.push_back(pr);
       mOutstandingPackets.pop_front();
       mNumOutstandingPackets--;
       mPendingWritePackets--;
