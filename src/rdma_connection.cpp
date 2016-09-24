@@ -603,12 +603,12 @@ int RDMAConnection::TransmitComplete() {
   // we can expect up to this
   //LOG(INFO) << "Transmit complete begin";
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  if (free_space > 0) {
-    onWriteReady(0);
-  }
-
   if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
     postCredit();
+  }
+
+  if (free_space > 0) {
+    onWriteReady(0);
   }
 
   cq_ret = fi_cq_read(txcq, &comp, max_completions);
