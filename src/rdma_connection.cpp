@@ -643,7 +643,7 @@ int RDMAConnection::TransmitComplete() {
       return (int) cq_ret;
     }
   }
-  if (onWriteComplete != NULL) {
+  if (onWriteComplete != NULL && completed_bytes > 0) {
     // call the calback with the completed bytes
     onWriteComplete(completed_bytes);
   }

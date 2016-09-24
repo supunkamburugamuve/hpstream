@@ -66,7 +66,7 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
 
 int Connection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
-  LOG(INFO) << "Connect LOCK";
+  // LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   while (numWritten > 0 && mPendingWritePackets > 0) {
     auto pr = mOutstandingPackets.front();
