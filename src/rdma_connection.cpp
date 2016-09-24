@@ -409,6 +409,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
   rbuf->acquireLock();
+  LOG(INFO) << "Lock";
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
     rbuf->releaseLock();
@@ -488,6 +489,7 @@ int RDMAConnection::postCredit() {
   uint32_t error_count = 0;
 
   sbuf->acquireLock();
+  LOG(INFO) << "Lock";
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   if (free_space > 0) {
@@ -541,6 +543,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
 
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   sbuf->acquireLock();
+  LOG(INFO) << "Lock";
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   while (sent_size < size && free_space > 0 && this->peer_credit > 0) {
@@ -616,6 +619,7 @@ int RDMAConnection::TransmitComplete() {
 
   //HPS_INFO("tansmit complete %ld", cq_ret);
   this->send_buf->acquireLock();
+  LOG(INFO) << "Lock";
   if (cq_ret > 0) {
     this->tx_cq_cntr += cq_ret;
     for (int i = 0; i < cq_ret; i++) {
@@ -672,6 +676,7 @@ int RDMAConnection::ReceiveComplete() {
     return 0;
   }
   this->recv_buf->acquireLock();
+  LOG(INFO) << "Lock";
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
     if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
