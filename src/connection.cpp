@@ -29,7 +29,7 @@ int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packe
 int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCode> cb) {
   packet->PrepareForWriting();
   //if (registerForWrite() != 0) return -1;
-  LOG(INFO) << "Connect LOCK";
+  // LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   mOutstandingPackets.push_back(std::make_pair(packet, std::move(cb)));
   mNumOutstandingPackets++;
