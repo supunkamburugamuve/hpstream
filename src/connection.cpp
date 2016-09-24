@@ -29,6 +29,7 @@ int32_t Connection::sendPacket(OutgoingPacket* packet) { return sendPacket(packe
 int32_t Connection::sendPacket(OutgoingPacket* packet, VCallback<NetworkErrorCode> cb) {
   packet->PrepareForWriting();
   //if (registerForWrite() != 0) return -1;
+  LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   mOutstandingPackets.push_back(std::make_pair(packet, std::move(cb)));
   mNumOutstandingPackets++;
@@ -65,6 +66,7 @@ int32_t Connection::registerForBackPressure(VCallback<Connection*> cbStarter,
 
 int Connection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
+  LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   while (numWritten > 0) {
     auto pr = mOutstandingPackets.front();
@@ -104,6 +106,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
   int write_status;
   //LOG(INFO) << "Write to endpoint";
   int current_packet = 0;
+  LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
     if (current_packet++ < mPendingWritePackets) {
