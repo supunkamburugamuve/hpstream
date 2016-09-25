@@ -20,6 +20,7 @@ Connection::Connection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopN
     return this->writeComplete(complets); });
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
   mIncomingPacket = new IncomingPacket(1024*1024);
+  pthread_mutex_init(&lock, NULL);
 }
 
 Connection::~Connection() { }
