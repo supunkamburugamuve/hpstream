@@ -7,8 +7,8 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -ggdb -std=gnu++11")
 
 project(hpstream)
 
-set(GLOG_PATH /N/u/skamburu/projects/glog-0.3.4/build)
-set(FABRIC_PATH /N/u/skamburu/projects/fabbuild/fab)
+set(GLOG_PATH /home/supun/dev/projects/stream/glog/build)
+set(FABRIC_PATH /home/supun/dev/projects/stream/fabric-build)
 set(PROTOC_PATH /N/u/skamburu/projects/protobuf/build)
 set(UUID_PATH /N/u/skamburu/projects/libuuid-1.0.3/build)
 
