@@ -604,6 +604,7 @@ int RDMAConnection::TransmitComplete() {
   //LOG(INFO) << "Transmit complete begin";
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+    LOG(INFO) << "receive";
     postCredit();
   }
 
@@ -668,6 +669,7 @@ int RDMAConnection::ReceiveComplete() {
   }
 
   if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+    LOG(INFO) << "receive";
     postCredit();
   }
   // we can expect up to this
