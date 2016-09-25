@@ -60,7 +60,7 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
   delete _message;
 
   count++;
-  if (count % 1000 == 0 || count > 900) {
+  if (count % 1000 == 0 && count > 900) {
     printf("count%d\n", count);
   }
 }
