@@ -110,7 +110,6 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   if (state == TRYAGAIN) {
     return;
   }
-  LOG(INFO) << "On connect";
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
   if (rd == 0 || rd == -EAGAIN) {
