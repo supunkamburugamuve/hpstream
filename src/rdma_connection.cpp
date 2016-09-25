@@ -676,6 +676,7 @@ int RDMAConnection::ReceiveComplete() {
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
+    LOG(INFO) << "Return";
     return 0;
   }
   LOG(INFO) << "Lock";
