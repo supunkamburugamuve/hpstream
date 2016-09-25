@@ -24,6 +24,7 @@ void RDMAEventLoopNoneFD::Loop() {
     for (std::list<struct rdma_loop_info *>::iterator it = connections.begin();
          it != connections.end(); ++it) {
       struct rdma_loop_info *c = *it;
+      LOG(INFO) << "Calling";
       c->callback(AVAILABLE);
     }
   }
