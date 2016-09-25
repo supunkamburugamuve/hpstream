@@ -677,10 +677,10 @@ int RDMAConnection::ReceiveComplete() {
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-    LOG(INFO) << "Return";
+    // LOG(INFO) << "Return";
     return 0;
   }
-  LOG(INFO) << "Lock";
+//  LOG(INFO) << "Lock";
   this->recv_buf->acquireLock();
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
