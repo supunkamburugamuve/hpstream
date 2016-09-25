@@ -113,7 +113,7 @@ int32_t Connection::writeIntoEndPoint(int fd) {
   LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
-    LOG(INFO) << "Write data";
+    //LOG(INFO) << "Write data";
     if (current_packet++ < mPendingWritePackets) {
       // we have written this packet already and waiting for write completion
       continue;
