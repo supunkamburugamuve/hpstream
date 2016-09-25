@@ -408,7 +408,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   // go through the buffers
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
-  LOG(INFO) << "Lock";
+  //LOG(INFO) << "Lock";
   rbuf->acquireLock();
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
@@ -489,7 +489,7 @@ int RDMAConnection::postCredit() {
   uint32_t error_count = 0;
 
   sbuf->acquireLock();
-  LOG(INFO) << "Lock";
+  //LOG(INFO) << "Lock";
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   if (free_space > 0) {
@@ -542,7 +542,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   uint32_t error_count = 0;
 
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
-  LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
+  //LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
