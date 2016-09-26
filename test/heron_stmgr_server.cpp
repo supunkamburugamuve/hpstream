@@ -38,7 +38,7 @@ void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
 
 void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
-  //LOG(INFO) << _message->id() << " " << _message->data();
+  LOG(INFO) << _message->id() << " " << _message->data();
   if (_message->id() == -1) {
     count = 0;
   } else {
@@ -59,9 +59,9 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
   delete message;
   delete _message;
 
-  count++;
-  if (count % 1000 == 0 && count > 900) {
-    printf("count%d\n", count);
+  //printf("%d\n", (count % 1000));
+  if ((count % 1000) == 0) {
+    printf("count %d\n", count);
   }
 }
 

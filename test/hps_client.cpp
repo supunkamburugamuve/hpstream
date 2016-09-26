@@ -40,7 +40,7 @@ int exchange3() {
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
     message->set_name(name);
-    message->set_id(-1);
+    message->set_id(i);
     message->set_data(name);
     client->SendTupleStreamMessage(message);
   }
