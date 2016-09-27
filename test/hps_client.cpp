@@ -72,10 +72,10 @@ int main(int argc, char **argv) {
     printf("dst addr: %s\n", options.dst_addr);
   }
 
-  hints->ep_attr->type = FI_EP_MSG;
-  hints->caps = FI_MSG | FI_RMA;
+  hints->ep_attr->type = FI_EP_MSG | FI_EP_RDM;
+  hints->caps = FI_MSG | FI_RMA | FI_READ | FI_WRITE;
   hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
-
+  print_info(hints);
   connect3();
   exchange3();
   return 0;

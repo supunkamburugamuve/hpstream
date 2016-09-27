@@ -44,6 +44,7 @@ int hps_utils_get_info(RDMAOptions *options, struct fi_info *hints, struct fi_in
 uint64_t hps_utils_caps_to_mr_access(uint64_t caps);
 int hps_utils_poll_fd(int fd, int timeout);
 int hps_utils_cq_readerr(struct fid_cq *cq);
+void print_info(struct fi_info *info);
 
 #define INTEG_SEED 7
 

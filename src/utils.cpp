@@ -108,6 +108,11 @@ int hps_utils_read_addr_opts(char **node, char **service, struct fi_info *hints,
   return 0;
 }
 
+void print_info(struct fi_info *info) {
+  char *out = fi_tostr(info, FI_TYPE_INFO);
+  printf(out);
+}
+
 int print_short_info(struct fi_info *info) {
   for (struct fi_info *cur = info; cur; cur = cur->next) {
     printf("provider: %s\n", cur->fabric_attr->prov_name);
