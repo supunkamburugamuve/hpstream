@@ -279,6 +279,7 @@ int RDMAConnection::SpinForCompletion(struct fid_cq *cq, uint64_t *cur,
   }
 
   while (total - *cur > 0) {
+    LOG(ERROR) << "Spin for completion";
     ret = fi_cq_read(cq, &comp, 1);
     if (ret > 0) {
       if (timeout >= 0) {
