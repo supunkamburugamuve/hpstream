@@ -16,6 +16,9 @@
 #include <poll.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <ctime>
+#include <iostream>
+#include <chrono>
 
 #include "hps.h"
 #include "options.h"
@@ -49,6 +52,23 @@ void print_info(struct fi_info *info);
 #define INTEG_SEED 7
 
 int print_short_info(struct fi_info *info);
+
+class Timer
+{
+public:
+  Timer() { clock_gettime(CLOCK_REALTIME, &beg_); }
+
+  double elapsed() {
+    clock_gettime(CLOCK_REALTIME, &end_);
+    return (end_.tv_sec - beg_.tv_sec) * 1000 +
+           (end_.tv_nsec - beg_.tv_nsec) / 1000.;
+  }
+
+  void reset() { clock_gettime(CLOCK_REALTIME, &beg_); }
+
+private:
+  timespec beg_, end_;
+};
 
 #endif /* end HPS_UTILS */
 
