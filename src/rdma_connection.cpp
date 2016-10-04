@@ -674,9 +674,9 @@ int RDMAConnection::ReceiveComplete() {
   size_t max_completions = rx_seq - rx_cq_cntr;
   //LOG(INFO) << "Receive complete begin";
   uint64_t read_available = sbuf->GetFilledBuffers();
-//  if (read_available > 0) {
-//    onReadReady(0);
-//  }
+  if (read_available > 0) {
+    onReadReady(0);
+  }
 
   //LOG(INFO) << "Read completions";
   // we can expect up to this
