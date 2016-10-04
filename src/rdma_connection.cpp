@@ -474,6 +474,10 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       return (int) ret;
     }
     this->recvd_after_last_sent++;
+    if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+      //LOG(INFO) << "receive";
+      postCredit();
+    }
     rbuf->IncrementSubmitted(1);
     this->self_credit++;
     LOG(INFO) << "Incrementing Self credit " << self_credit;
@@ -609,10 +613,10 @@ int RDMAConnection::TransmitComplete() {
   //LOG(INFO) << "Transmit complete begin";
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   //LOG(INFO) << "Transmit complete";
-  if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+  //if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
     //LOG(INFO) << "receive";
-    postCredit();
-  }
+  //  postCredit();
+  //}
 
   if (free_space > 0) {
     onWriteReady(0);
@@ -674,10 +678,6 @@ int RDMAConnection::ReceiveComplete() {
     onReadReady(0);
   }
 
-  if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
-    //LOG(INFO) << "receive";
-    postCredit();
-  }
   //LOG(INFO) << "Read completions";
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);
