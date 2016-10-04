@@ -406,6 +406,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t submittedBuffers;
   uint32_t noOfBuffers;
   uint32_t index = 0;
+  bool readData = false;
   // go through the buffers
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
@@ -481,10 +482,11 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       postCredit();
     }
     LOG(INFO) << "Incrementing Self credit " << self_credit;
+    readData = true;
     submittedBuffers++;
   }
   rbuf->releaseLock();
-  LOG(ERROR) << "Read time: " << timer.elapsed();
+  LOG(ERROR) << "Read time: " << timer.elapsed() << " read: " << readData;
   return 0;
 }
 
@@ -548,7 +550,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   uint32_t current_size = 0;
   uint32_t head = 0;
   uint32_t error_count = 0;
-
+  bool sent = false;
   Timer timer;
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   //LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
@@ -590,9 +592,10 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
         goto err;
       }
     }
+    sent = true;
     free_space = sbuf->GetAvailableWriteSpace();
   }
-  LOG(ERROR) << "Write time: " << timer.elapsed();
+  LOG(ERROR) << "Write time: " << timer.elapsed() << " sent: " << sent;
   *write = sent_size;
   sbuf->releaseLock();
   return 0;
