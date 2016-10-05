@@ -63,9 +63,11 @@ void StMgrClient::SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg) {
 
 void StMgrClient::HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message) {
   //LOG(INFO) << _message->id() << " " << _message->data();
+  Timer timer;
   count++;
   if (count % 1000 == 0) {
-     printf("count%d\n", count);
+    double t = _message->time();
+     printf("count: %d time: %lf\n ", count, (timer.currentTime() - t));
   }
   delete _message;
 }

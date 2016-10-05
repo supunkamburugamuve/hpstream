@@ -140,6 +140,13 @@ class TupleMessage : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::std::string* release_data();
   void set_allocated_data(::std::string* data);
 
+  // required double time = 4;
+  bool has_time() const;
+  void clear_time();
+  static const int kTimeFieldNumber = 4;
+  double time() const;
+  void set_time(double value);
+
   // @@protoc_insertion_point(class_scope:proto.stmgr.TupleMessage)
  private:
   inline void set_has_name();
@@ -148,6 +155,8 @@ class TupleMessage : public ::google::protobuf::Message /* @@protoc_insertion_po
   inline void clear_has_id();
   inline void set_has_data();
   inline void clear_has_data();
+  inline void set_has_time();
+  inline void clear_has_time();
 
   // helper for ByteSize()
   int RequiredFieldsByteSizeFallback() const;
@@ -157,6 +166,7 @@ class TupleMessage : public ::google::protobuf::Message /* @@protoc_insertion_po
   mutable int _cached_size_;
   ::google::protobuf::internal::ArenaStringPtr name_;
   ::google::protobuf::internal::ArenaStringPtr data_;
+  double time_;
   ::google::protobuf::int32 id_;
   friend void  protobuf_AddDesc_message_2eproto();
   friend void protobuf_AssignDesc_message_2eproto();
@@ -303,6 +313,30 @@ inline void TupleMessage::set_allocated_data(::std::string* data) {
   }
   data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
   // @@protoc_insertion_point(field_set_allocated:proto.stmgr.TupleMessage.data)
+}
+
+// required double time = 4;
+inline bool TupleMessage::has_time() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void TupleMessage::set_has_time() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void TupleMessage::clear_has_time() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void TupleMessage::clear_time() {
+  time_ = 0;
+  clear_has_time();
+}
+inline double TupleMessage::time() const {
+  // @@protoc_insertion_point(field_get:proto.stmgr.TupleMessage.time)
+  return time_;
+}
+inline void TupleMessage::set_time(double value) {
+  set_has_time();
+  time_ = value;
+  // @@protoc_insertion_point(field_set:proto.stmgr.TupleMessage.time)
 }
 
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS

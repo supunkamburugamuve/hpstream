@@ -4,4 +4,5 @@ message TupleMessage {
   required string name = 1;
   required int32 id = 2;
   optional string data = 3;
+  required double time = 4;
 }

@@ -54,6 +54,7 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
   message->set_name(name);
   message->set_id(10);
   message->set_data(name);
+  message->set_time(_message->time());
 
   SendMessage(_conn, (*message));
   delete message;

@@ -37,10 +37,11 @@ void protobuf_AssignDesc_message_2eproto() {
       "message.proto");
   GOOGLE_CHECK(file != NULL);
   TupleMessage_descriptor_ = file->message_type(0);
-  static const int TupleMessage_offsets_[3] = {
+  static const int TupleMessage_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TupleMessage, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TupleMessage, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TupleMessage, data_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TupleMessage, time_),
   };
   TupleMessage_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -85,9 +86,9 @@ void protobuf_AddDesc_message_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\rmessage.proto\022\013proto.stmgr\"6\n\014TupleMes"
+    "\n\rmessage.proto\022\013proto.stmgr\"D\n\014TupleMes"
     "sage\022\014\n\004name\030\001 \002(\t\022\n\n\002id\030\002 \002(\005\022\014\n\004data\030\003"
-    " \001(\t", 84);
+    " \001(\t\022\014\n\004time\030\004 \002(\001", 98);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "message.proto", &protobuf_RegisterTypes);
   TupleMessage::default_instance_ = new TupleMessage();
@@ -108,6 +109,7 @@ struct StaticDescriptorInitializer_message_2eproto {
 const int TupleMessage::kNameFieldNumber;
 const int TupleMessage::kIdFieldNumber;
 const int TupleMessage::kDataFieldNumber;
+const int TupleMessage::kTimeFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 TupleMessage::TupleMessage()
@@ -133,6 +135,7 @@ void TupleMessage::SharedCtor() {
   name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_ = 0;
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  time_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -175,15 +178,35 @@ TupleMessage* TupleMessage::New(::google::protobuf::Arena* arena) const {
 
 void TupleMessage::Clear() {
 // @@protoc_insertion_point(message_clear_start:proto.stmgr.TupleMessage)
-  if (_has_bits_[0 / 32] & 7u) {
+#if defined(__clang__)
+#define ZR_HELPER_(f) \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Winvalid-offsetof\"") \
+  __builtin_offsetof(TupleMessage, f) \
+  _Pragma("clang diagnostic pop")
+#else
+#define ZR_HELPER_(f) reinterpret_cast<char*>(\
+  &reinterpret_cast<TupleMessage*>(16)->f)
+#endif
+
+#define ZR_(first, last) do {\
+  ::memset(&first, 0,\
+           ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
+} while (0)
+
+  if (_has_bits_[0 / 32] & 15u) {
+    ZR_(time_, id_);
     if (has_name()) {
       name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
     }
-    id_ = 0;
     if (has_data()) {
       data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
     }
   }
+
+#undef ZR_HELPER_
+#undef ZR_
+
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   if (_internal_metadata_.have_unknown_fields()) {
     mutable_unknown_fields()->Clear();
@@ -244,6 +267,21 @@ bool TupleMessage::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(33)) goto parse_time;
+        break;
+      }
+
+      // required double time = 4;
+      case 4: {
+        if (tag == 33) {
+         parse_time:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
+                 input, &time_)));
+          set_has_time();
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -298,6 +336,11 @@ void TupleMessage::SerializeWithCachedSizes(
       3, this->data(), output);
   }
 
+  // required double time = 4;
+  if (has_time()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(4, this->time(), output);
+  }
+
   if (_internal_metadata_.have_unknown_fields()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -335,6 +378,11 @@ void TupleMessage::SerializeWithCachedSizes(
         3, this->data(), target);
   }
 
+  // required double time = 4;
+  if (has_time()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(4, this->time(), target);
+  }
+
   if (_internal_metadata_.have_unknown_fields()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -361,13 +409,18 @@ int TupleMessage::RequiredFieldsByteSizeFallback() const {
         this->id());
   }
 
+  if (has_time()) {
+    // required double time = 4;
+    total_size += 1 + 8;
+  }
+
   return total_size;
 }
 int TupleMessage::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:proto.stmgr.TupleMessage)
   int total_size = 0;
 
-  if (((_has_bits_[0] & 0x00000003) ^ 0x00000003) == 0) {  // All required fields are present.
+  if (((_has_bits_[0] & 0x0000000b) ^ 0x0000000b) == 0) {  // All required fields are present.
     // required string name = 1;
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -377,6 +430,9 @@ int TupleMessage::ByteSize() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
         this->id());
+
+    // required double time = 4;
+    total_size += 1 + 8;
 
   } else {
     total_size += RequiredFieldsByteSizeFallback();
@@ -433,6 +489,9 @@ void TupleMessage::MergeFrom(const TupleMessage& from) {
       set_has_data();
       data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
     }
+    if (from.has_time()) {
+      set_time(from.time());
+    }
   }
   if (from._internal_metadata_.have_unknown_fields()) {
     mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -454,7 +513,7 @@ void TupleMessage::CopyFrom(const TupleMessage& from) {
 }
 
 bool TupleMessage::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+  if ((_has_bits_[0] & 0x0000000b) != 0x0000000b) return false;
 
   return true;
 }
@@ -467,6 +526,7 @@ void TupleMessage::InternalSwap(TupleMessage* other) {
   name_.Swap(&other->name_);
   std::swap(id_, other->id_);
   data_.Swap(&other->data_);
+  std::swap(time_, other->time_);
   std::swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
@@ -613,6 +673,30 @@ void TupleMessage::clear_data() {
   }
   data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
   // @@protoc_insertion_point(field_set_allocated:proto.stmgr.TupleMessage.data)
+}
+
+// required double time = 4;
+bool TupleMessage::has_time() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+void TupleMessage::set_has_time() {
+  _has_bits_[0] |= 0x00000008u;
+}
+void TupleMessage::clear_has_time() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+void TupleMessage::clear_time() {
+  time_ = 0;
+  clear_has_time();
+}
+ double TupleMessage::time() const {
+  // @@protoc_insertion_point(field_get:proto.stmgr.TupleMessage.time)
+  return time_;
+}
+ void TupleMessage::set_time(double value) {
+  set_has_time();
+  time_ = value;
+  // @@protoc_insertion_point(field_set:proto.stmgr.TupleMessage.time)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

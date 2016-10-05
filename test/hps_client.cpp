@@ -31,18 +31,22 @@ int connect3() {
   client->Start_base();
   eventLoop->Start();
   while (!client->IsConnected());
+  sleep(2);
   return 1;
 }
 
 int exchange3() {
-  for (int i = -1; i < 10000; i++) {
+  Timer timer;
+  for (int i = -1; i < 1000000; i++) {
     char *name = new char[100];
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
     message->set_name(name);
     message->set_id(i);
     message->set_data(name);
+    message->set_time(timer.currentTime());
     client->SendTupleStreamMessage(message);
+    delete name;
   }
   eventLoop->Wait();
   return 0;
@@ -50,8 +54,8 @@ int exchange3() {
 
 int main(int argc, char **argv) {
   int op;
-  options.buf_size = 1024 * 60;
-  options.no_buffers = 6;
+  options.buf_size = 1024 * 64;
+  options.no_buffers = 60;
   hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {

@@ -26,8 +26,8 @@ int connect() {
 
 int main(int argc, char **argv) {
   int op;
-  options.buf_size = 1024 * 60;
-  options.no_buffers = 6;
+  options.buf_size = 1024 * 64;
+  options.no_buffers = 60;
   hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
