@@ -558,7 +558,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  while (sent_size < size && free_space > 0 && this->peer_credit > 1) {
+  while (sent_size < size && free_space > 0 && this->peer_credit > 2) {
     // we have space in the buffers
     head = sbuf->NextWriteIndex();
     uint8_t *current_buf = sbuf->GetBuffer(head);
