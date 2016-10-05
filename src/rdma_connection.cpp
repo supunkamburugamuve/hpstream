@@ -513,7 +513,7 @@ int RDMAConnection::postCredit() {
     // send the credit with the write
     uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
     *sent_credit = this->self_credit;
-    LOG(INFO) << "Sending self credit " << self_credit;
+    LOG(ERROR) << "Sending self credit " << self_credit;
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
@@ -533,6 +533,8 @@ int RDMAConnection::postCredit() {
         goto err;
       }
     }
+  } else {
+    LOG(ERROR) << "Free space not available to post credit " << self_credit;
   }
   sbuf->releaseLock();
   LOG(ERROR) << "Post credit time: " << timer.elapsed();
