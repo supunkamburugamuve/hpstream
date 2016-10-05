@@ -478,7 +478,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     this->recvd_after_last_sent++;
     rbuf->IncrementSubmitted(1);
     this->self_credit++;
-    if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
+    if (recvd_after_last_sent >= (last_sent_credit / 2) && self_credit > 0) {
       LOG(ERROR) << "recvd_after_last_sent: " << recvd_after_last_sent << " self_credit:" << self_credit;
       postCredit();
     }
