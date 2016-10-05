@@ -487,7 +487,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     submittedBuffers++;
   }
   rbuf->releaseLock();
-  LOG(ERROR) << "Read time: " << timer.elapsed() << " read: " << readData;
+  LOG(ERROR) << "Read time: " << timer.elapsed() << " read: " << readData << " self: " << self_credit << " peer: " << peer_credit;
   return 0;
 }
 
@@ -534,10 +534,10 @@ int RDMAConnection::postCredit() {
       }
     }
   } else {
-    LOG(ERROR) << "Free space not available to post credit " << self_credit;
+    LOG(ERROR) << "Free space not available to post credit " << " self: " << self_credit << " peer: " << peer_credit;
   }
   sbuf->releaseLock();
-  LOG(ERROR) << "Post credit time: " << timer.elapsed();
+  LOG(ERROR) << "Post credit time: " << timer.elapsed() << " self: " << self_credit << " peer: " << peer_credit;
   return 0;
 
   err:
@@ -598,7 +598,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     sent = true;
     free_space = sbuf->GetAvailableWriteSpace();
   }
-  LOG(ERROR) << "Write time: " << timer.elapsed() << " sent: " << sent;
+  LOG(ERROR) << "Write time: " << timer.elapsed() << " sent: " << sent << " self: " << self_credit << " peer: " << peer_credit;
   *write = sent_size;
   sbuf->releaseLock();
   return 0;
