@@ -431,9 +431,11 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     uint32_t *r;
     // first read the amount of data in the buffer
     r = (uint32_t *) b;
-    uint8_t *credit = b + sizeof(uint32_t);
+    int32_t *credit = (int32_t *) (b + sizeof(uint32_t));
     // update the peer credit with the latest
-    this->peer_credit = *credit;
+    if (*credit >= 0) {
+      this->peer_credit = *credit;
+    }
     // now lets see how much data we need to copy from this buffer
     need_copy = (*r) - current_read_indx;
     // now lets see how much we can copy
@@ -511,13 +513,13 @@ int RDMAConnection::postCredit() {
     // set the first 4 bytes as the content length
     *length = 0;
     // send the credit with the write
-    uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
+    int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
     *sent_credit = this->self_credit;
     LOG(ERROR) << "Sending self credit " << self_credit;
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
-    if (!PostTX(sizeof(uint32_t) + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+    if (!PostTX(sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx)) {
       last_sent_credit = self_credit;
       recvd_after_last_sent = 0;
       sbuf->IncrementFilled(1);
@@ -570,15 +572,16 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     // set the first 4 bytes as the content length
     *length = current_size;
     // send the credit with the write
-    uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
-    *sent_credit = self_credit;
+    int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
+    //*sent_credit = self_credit;
+    *sent_credit = -1;
     LOG(INFO) << "Sending Self credit " << self_credit;
 
-    memcpy(current_buf + sizeof(uint32_t) + sizeof(uint32_t), buf + sent_size, current_size);
+    memcpy(current_buf + sizeof(uint32_t) + sizeof(int32_t), buf + sent_size, current_size);
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
-    if (!PostTX(current_size + sizeof(uint32_t) + sizeof(uint32_t), current_buf, &this->tx_ctx)) {
+    if (!PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx)) {
       last_sent_credit = self_credit;
       recvd_after_last_sent = 0;
       sent_size += current_size;

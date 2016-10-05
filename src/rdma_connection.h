@@ -150,15 +150,15 @@ private:
 
   // credits for the flow control of messages
   // credit for this side, we have posted this many buffers
-  uint32_t self_credit;
+  int32_t self_credit;
   // this is the last sent credit to the peer
-  uint32_t last_sent_credit;
+  int32_t last_sent_credit;
   // number of messages received after last sent credit
-  uint32_t recvd_after_last_sent;
+  int32_t recvd_after_last_sent;
   // credit of the peer as we know it
   // when we transmit a message, we reduce the peer credit until
   // the peer notifies us with its new credit
-  uint32_t peer_credit;
+  int32_t peer_credit;
 
   int postCredit();
 };
