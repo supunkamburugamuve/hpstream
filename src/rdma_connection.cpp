@@ -583,7 +583,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx)) {
       last_sent_credit = self_credit;
-      recvd_after_last_sent = 0;
+      // recvd_after_last_sent = 0;
       sent_size += current_size;
       sbuf->IncrementFilled(1);
       // increment the head
