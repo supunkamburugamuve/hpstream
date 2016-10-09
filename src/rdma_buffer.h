@@ -12,7 +12,7 @@ public:
   int IncrementSubmitted(uint32_t count);
 
   // increment the base
-  int IncrementTail(uint32_t count);
+  int IncrementBase(uint32_t count);
 
   int IncrementFilled(uint32_t count);
 

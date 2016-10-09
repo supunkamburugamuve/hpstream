@@ -70,9 +70,10 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
   this->timeout = -1;
 
   this->self_credit = 0;
-  this->last_sent_credit = 0;
+  this->total_sent_credit = 0;
   this->peer_credit = 0;
-  this->recvd_after_last_sent = 0;
+  this->total_used_credit = 0;
+  this->credit_used_checkpoint = 0;
 }
 
 void RDMAConnection::Free() {
@@ -261,8 +262,15 @@ int RDMAConnection::PostBuffers() {
     rBuf->IncrementSubmitted(1);
     this->self_credit++;
     this->peer_credit++;
-    this->last_sent_credit++;
   }
+//  this->total_sent_credit = 0;
+//  this->self_credit = rBuf->GetNoOfBuffers() / 2 - 1;
+  this->peer_credit = rBuf->GetNoOfBuffers()  - 1;
+  this->total_sent_credit = rBuf->GetNoOfBuffers() - 1;
+  this->total_used_credit = 0;
+  this->credit_used_checkpoint = 0;
+  this->credit_messages_ = new bool[noBufs];
+  memset(this->credit_messages_, 0, sizeof(bool) * noBufs);
   return 0;
 }
 
@@ -407,12 +415,9 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t submittedBuffers;
   uint32_t noOfBuffers;
   uint32_t index = 0;
-  bool readData = false;
   // go through the buffers
   RDMABuffer *rbuf = this->recv_buf;
   // now lock the buffer
-  //LOG(INFO) << "Lock";
-  Timer timer;
   rbuf->acquireLock();
   if (rbuf->GetFilledBuffers() == 0) {
     *read = 0;
@@ -428,16 +433,19 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   uint32_t read_size = 0;
   while (read_size < size &&  buffers_filled > 0) {
     uint8_t *b = rbuf->GetBuffer(tail);
-    uint32_t *r;
+    uint32_t *length;
     // first read the amount of data in the buffer
-    r = (uint32_t *) b;
+    length = (uint32_t *) b;
     int32_t *credit = (int32_t *) (b + sizeof(uint32_t));
     // update the peer credit with the latest
     if (*credit >= 0) {
-      this->peer_credit = *credit;
+      this->peer_credit += *credit;
+      // lets mark it zero in case we are not moving to next buffer
+      *credit = 0;
     }
+
     // now lets see how much data we need to copy from this buffer
-    need_copy = (*r) - current_read_indx;
+    need_copy = (*length) - current_read_indx;
     // now lets see how much we can copy
     uint32_t can_copy = 0;
     uint32_t tmp_index = current_read_indx;
@@ -445,10 +453,11 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     if (size - read_size >= need_copy) {
       can_copy = need_copy;
       current_read_indx = 0;
+      credit_messages_[tail] = length <= 0;
       // advance the base pointer
-      rbuf->IncrementTail(1);
-      this->self_credit--;
-      LOG(INFO) << "Decremented Self credit " << self_credit;
+      rbuf->IncrementBase(1);
+
+      // this->self_credit--;
       buffers_filled--;
       tail = rbuf->GetBase();
     } else {
@@ -477,19 +486,21 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       rbuf->releaseLock();
       return (int) ret;
     }
-    this->recvd_after_last_sent++;
+    this->total_used_credit++;
     rbuf->IncrementSubmitted(1);
-    this->self_credit++;
-    LOG(ERROR) << "recvd_after_last_sent: " << recvd_after_last_sent << " self_credit:" << self_credit;
-    if (recvd_after_last_sent >= (last_sent_credit / 2) && self_credit > 0) {
+    int32_t available_credit = total_used_credit - credit_used_checkpoint;
+    if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
+      if (available_credit > noOfBuffers - 1) {
+        LOG(ERROR) << "Credit should never be > no of buffers available: " << available_credit;
+      }
       postCredit();
     }
+    LOG(ERROR) << "Read self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
     LOG(INFO) << "Incrementing Self credit " << self_credit;
-    readData = true;
     submittedBuffers++;
   }
   rbuf->releaseLock();
-  LOG(ERROR) << "Read time: " << timer.elapsed() << " read: " << readData << " self: " << self_credit << " peer: " << peer_credit;
+
   return 0;
 }
 
@@ -499,9 +510,7 @@ int RDMAConnection::postCredit() {
   // now determine the buffer no to use
   uint32_t head = 0;
   uint32_t error_count = 0;
-  Timer timer;
   sbuf->acquireLock();
-  //LOG(INFO) << "Lock";
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   if (free_space > 0) {
@@ -514,19 +523,23 @@ int RDMAConnection::postCredit() {
     *length = 0;
     // send the credit with the write
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
-    *sent_credit = this->self_credit;
-    LOG(ERROR) << "Sending self credit " << self_credit;
+    int32_t available_credit = total_used_credit - credit_used_checkpoint;
+    if (available_credit > sbuf->GetNoOfBuffers() - 1) {
+      LOG(ERROR) << "Available credit > no of buffers, something is wrong: " << available_credit;
+      available_credit = sbuf->GetNoOfBuffers() - 1;
+    }
+    *sent_credit = available_credit;
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
     if (!PostTX(sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx)) {
-      last_sent_credit = self_credit;
-      recvd_after_last_sent = 0;
+      total_sent_credit += available_credit;
+      credit_used_checkpoint += available_credit;
       sbuf->IncrementFilled(1);
       // increment the head
       sbuf->IncrementSubmitted(1);
-      // this->peer_credit--;
-      LOG(INFO) << "Decrementing Peer credit " << peer_credit;
+      LOG(ERROR) << "Post self: " << self_credit << " peer: "
+                 << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
     } else {
       LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;
@@ -536,10 +549,11 @@ int RDMAConnection::postCredit() {
       }
     }
   } else {
-    LOG(ERROR) << "Free space not available to post credit " << " self: " << self_credit << " peer: " << peer_credit;
+    LOG(ERROR) << "Free space not available to post credit "
+               << " self: " << self_credit << " peer: " << peer_credit;
   }
   sbuf->releaseLock();
-  LOG(ERROR) << "Post credit time: " << timer.elapsed() << " self: " << self_credit << " peer: " << peer_credit;
+
   return 0;
 
   err:
@@ -556,13 +570,18 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   uint32_t head = 0;
   uint32_t error_count = 0;
   bool sent = false;
+  bool credit_set;
   Timer timer;
+  int32_t no_buffers = sbuf->GetNoOfBuffers();
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   //LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
   sbuf->acquireLock();
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  while (sent_size < size && free_space > 0 && this->peer_credit > 2) {
+  uint32_t free_buffs = sbuf->GetNoOfBuffers() - sbuf->GetFilledBuffers();
+  while (sent_size < size && free_space > 0 && this->peer_credit > 0 && free_buffs > 1) {
+  //while (sent_size < size && free_space > 0) {
+    credit_set = false;
     // we have space in the buffers
     head = sbuf->NextWriteIndex();
     uint8_t *current_buf = sbuf->GetBuffer(head);
@@ -573,23 +592,35 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     *length = current_size;
     // send the credit with the write
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
-    //*sent_credit = self_credit;
-    *sent_credit = -1;
-    LOG(INFO) << "Sending Self credit " << self_credit;
+    int32_t available_credit = total_used_credit - credit_used_checkpoint;
+    if (available_credit > 0  && self_credit > 0) {
+      //LOG(ERROR) << "total_used_credit: " << total_used_credit << " self_credit:" << self_credit << " total_sent_credit" << total_sent_credit;
+      *sent_credit =  available_credit;
+//      *sent_credit = -1;
+      credit_set = true;
+    } else {
+      *sent_credit = -1;
+    }
 
     memcpy(current_buf + sizeof(uint32_t) + sizeof(int32_t), buf + sent_size, current_size);
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx)) {
-      last_sent_credit = self_credit;
-      // recvd_after_last_sent = 0;
+      //LOG(ERROR) << "******************   Credit set: " << credit_set;
+      if (credit_set) {
+        //LOG(ERROR) << "*********************************  Setting credit acquired to 0";
+//        total_used_credit = 0;
+        total_sent_credit += available_credit;
+        credit_used_checkpoint += available_credit;
+      }
+
       sent_size += current_size;
       sbuf->IncrementFilled(1);
       // increment the head
       sbuf->IncrementSubmitted(1);
       this->peer_credit--;
-      LOG(INFO) << "Decremented Peer credit " << peer_credit;
+      LOG(ERROR) << "Write self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
     } else {
       LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;
@@ -601,7 +632,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     sent = true;
     free_space = sbuf->GetAvailableWriteSpace();
   }
-  LOG(ERROR) << "Write time: " << timer.elapsed() << " sent: " << sent << " self: " << self_credit << " peer: " << peer_credit;
+
   *write = sent_size;
   sbuf->releaseLock();
   return 0;
@@ -621,11 +652,6 @@ int RDMAConnection::TransmitComplete() {
   // we can expect up to this
   //LOG(INFO) << "Transmit complete begin";
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  //LOG(INFO) << "Transmit complete";
-  //if (recvd_after_last_sent == last_sent_credit && self_credit > 0) {
-    //LOG(INFO) << "receive";
-  //  postCredit();
-  //}
 
   if (free_space > 0) {
     onWriteReady(0);
@@ -645,7 +671,7 @@ int RDMAConnection::TransmitComplete() {
     for (int i = 0; i < cq_ret; i++) {
       uint32_t base = this->send_buf->GetBase();
       completed_bytes += this->send_buf->getContentSize(base);
-      if (this->send_buf->IncrementTail((uint32_t) 1)) {
+      if (this->send_buf->IncrementBase((uint32_t) 1)) {
         LOG(ERROR) << "Failed to increment buffer data pointer";
         this->send_buf->releaseLock();
         return 1;
@@ -668,10 +694,6 @@ int RDMAConnection::TransmitComplete() {
     onWriteComplete(completed_bytes);
   }
   this->send_buf->releaseLock();
-  
-  //LOG(INFO) << "Transmit complete end";
-  // we are ready for a write
-  // onWriteReady(0);
   return 0;
 }
 
@@ -683,15 +705,18 @@ int RDMAConnection::ReceiveComplete() {
   size_t max_completions = rx_seq - rx_cq_cntr;
   //LOG(INFO) << "Receive complete begin";
   uint64_t read_available = sbuf->GetFilledBuffers();
-  if (read_available > 0) {
-    onReadReady(0);
-  }
+//  if (read_available > 0) {
+//    onReadReady(0);
+//  }
 
   //LOG(INFO) << "Read completions";
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
     // LOG(INFO) << "Return";
+    if (read_available > 0) {
+      onReadReady(0);
+    }
     return 0;
   }
 //  LOG(INFO) << "Lock";

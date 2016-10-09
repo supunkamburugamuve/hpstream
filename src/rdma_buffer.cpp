@@ -83,7 +83,7 @@ int RDMABuffer::IncrementSubmitted(uint32_t count) {
   return 0;
 }
 
-int RDMABuffer::IncrementTail(uint32_t count) {
+int RDMABuffer::IncrementBase(uint32_t count) {
   if (this->filled_buffs - count < 0 || this->submitted_buffs - count < 0) {
     LOG(ERROR) << "Failed to decrement the buffer, inconsistent state";
     return 1;

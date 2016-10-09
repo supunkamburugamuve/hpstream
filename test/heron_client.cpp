@@ -65,7 +65,7 @@ void StMgrClient::HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message)
   //LOG(INFO) << _message->id() << " " << _message->data();
   Timer timer;
   count++;
-  if (count % 1000 == 0) {
+  if (count % 10000 == 0) {
     double t = _message->time();
      printf("count: %d time: %lf\n ", count, (timer.currentTime() - t));
   }
