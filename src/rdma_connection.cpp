@@ -482,7 +482,7 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     uint8_t *send_buf = rbuf->GetBuffer(index);
     ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
     if (ret) {
-      LOG(ERROR) << "Failed to post the receive buffer";
+      LOG(ERROR) << "Failed to post the receive buffer: " << ret;
       rbuf->releaseLock();
       return (int) ret;
     }
@@ -491,12 +491,12 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     int32_t available_credit = total_used_credit - credit_used_checkpoint;
     if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
       if (available_credit > noOfBuffers - 1) {
-        LOG(ERROR) << "Credit should never be > no of buffers available: " << available_credit;
+        LOG(ERROR) << "Credit should never be greater than no of buffers available: "
+                   << available_credit << " > " << noOfBuffers;
       }
       postCredit();
     }
-    LOG(ERROR) << "Read self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
-    LOG(INFO) << "Incrementing Self credit " << self_credit;
+//    LOG(ERROR) << "Read self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
     submittedBuffers++;
   }
   rbuf->releaseLock();
@@ -538,8 +538,8 @@ int RDMAConnection::postCredit() {
       sbuf->IncrementFilled(1);
       // increment the head
       sbuf->IncrementSubmitted(1);
-      LOG(ERROR) << "Post self: " << self_credit << " peer: "
-                 << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
+//      LOG(ERROR) << "Post self: " << self_credit << " peer: "
+//                 << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
     } else {
       LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;
@@ -569,9 +569,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   uint32_t current_size = 0;
   uint32_t head = 0;
   uint32_t error_count = 0;
-  bool sent = false;
   bool credit_set;
-  Timer timer;
   int32_t no_buffers = sbuf->GetNoOfBuffers();
   uint32_t buf_size = sbuf->GetBufferSize() - 4;
   //LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
@@ -580,7 +578,6 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   uint32_t free_buffs = sbuf->GetNoOfBuffers() - sbuf->GetFilledBuffers();
   while (sent_size < size && free_space > 0 && this->peer_credit > 0 && free_buffs > 1) {
-  //while (sent_size < size && free_space > 0) {
     credit_set = false;
     // we have space in the buffers
     head = sbuf->NextWriteIndex();
@@ -594,9 +591,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
     int32_t available_credit = total_used_credit - credit_used_checkpoint;
     if (available_credit > 0  && self_credit > 0) {
-      //LOG(ERROR) << "total_used_credit: " << total_used_credit << " self_credit:" << self_credit << " total_sent_credit" << total_sent_credit;
       *sent_credit =  available_credit;
-//      *sent_credit = -1;
       credit_set = true;
     } else {
       *sent_credit = -1;
@@ -607,10 +602,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
     if (!PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx)) {
-      //LOG(ERROR) << "******************   Credit set: " << credit_set;
       if (credit_set) {
-        //LOG(ERROR) << "*********************************  Setting credit acquired to 0";
-//        total_used_credit = 0;
         total_sent_credit += available_credit;
         credit_used_checkpoint += available_credit;
       }
@@ -620,7 +612,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
       // increment the head
       sbuf->IncrementSubmitted(1);
       this->peer_credit--;
-      LOG(ERROR) << "Write self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
+//      LOG(ERROR) << "Write self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
     } else {
       LOG(ERROR) <<  "Failed to transmit the buffer";
       error_count++;
@@ -629,7 +621,6 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
         goto err;
       }
     }
-    sent = true;
     free_space = sbuf->GetAvailableWriteSpace();
   }
 
@@ -703,23 +694,17 @@ int RDMAConnection::ReceiveComplete() {
   RDMABuffer *sbuf = this->recv_buf;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
-  //LOG(INFO) << "Receive complete begin";
   uint64_t read_available = sbuf->GetFilledBuffers();
-//  if (read_available > 0) {
-//    onReadReady(0);
-//  }
 
-  //LOG(INFO) << "Read completions";
   // we can expect up to this
   cq_ret = fi_cq_read(rxcq, &comp, max_completions);
   if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-    // LOG(INFO) << "Return";
     if (read_available > 0) {
       onReadReady(0);
     }
     return 0;
   }
-//  LOG(INFO) << "Lock";
+
   this->recv_buf->acquireLock();
   if (cq_ret > 0) {
     this->rx_cq_cntr += cq_ret;
@@ -741,14 +726,11 @@ int RDMAConnection::ReceiveComplete() {
     }
   }
   this->recv_buf->releaseLock();
-  //LOG(INFO) << "Receive complete end";
 
   read_available = sbuf->GetFilledBuffers();
   if (read_available > 0) {
     onReadReady(0);
   }
-  // we are ready for a read
-  //onReadReady(0);
   return 0;
 }
 
