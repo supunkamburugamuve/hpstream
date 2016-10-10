@@ -525,7 +525,7 @@ int RDMAConnection::postCredit() {
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
     int32_t available_credit = total_used_credit - credit_used_checkpoint;
     if (available_credit > sbuf->GetNoOfBuffers() - 1) {
-      LOG(ERROR) << "Available credit > no of buffers, something is wrong: " << available_credit;
+      LOG(ERROR) << "Available credit > no of buffers, something is wrong: " << available_credit << " > " << sbuf->GetNoOfBuffers();
       available_credit = sbuf->GetNoOfBuffers() - 1;
     }
     *sent_credit = available_credit;
