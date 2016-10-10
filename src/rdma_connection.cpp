@@ -260,11 +260,8 @@ int RDMAConnection::PostBuffers() {
       return (int) ret;
     }
     rBuf->IncrementSubmitted(1);
-    this->self_credit++;
-    this->peer_credit++;
   }
-//  this->total_sent_credit = 0;
-//  this->self_credit = rBuf->GetNoOfBuffers() / 2 - 1;
+  this->self_credit = rBuf->GetNoOfBuffers();
   this->peer_credit = rBuf->GetNoOfBuffers()  - 1;
   this->total_sent_credit = rBuf->GetNoOfBuffers() - 1;
   this->total_used_credit = 0;
@@ -525,7 +522,8 @@ int RDMAConnection::postCredit() {
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
     int32_t available_credit = total_used_credit - credit_used_checkpoint;
     if (available_credit > sbuf->GetNoOfBuffers() - 1) {
-      LOG(ERROR) << "Available credit > no of buffers, something is wrong: " << available_credit << " > " << sbuf->GetNoOfBuffers();
+      LOG(ERROR) << "Available credit > no of buffers, something is wrong: "
+                 << available_credit << " > " << sbuf->GetNoOfBuffers();
       available_credit = sbuf->GetNoOfBuffers() - 1;
     }
     *sent_credit = available_credit;
