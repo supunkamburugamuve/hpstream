@@ -7,7 +7,7 @@ struct timespec start, end_t;
 RDMAConnection *con;
 RDMAOptions options;
 struct fi_info *hints;
-RDMAEventLoopNoneFD *eventLoop;
+RDMAEventLoop *eventLoop;
 RDMAFabric *fabric;
 StMgrClient *client;
 
@@ -26,7 +26,7 @@ int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
 int connect3() {
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
-  eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
+  eventLoop = new RDMAEventLoop(fabric->GetFabric());
   client = new StMgrClient(eventLoop, &options, fabric);
   client->Start_base();
   eventLoop->Start();

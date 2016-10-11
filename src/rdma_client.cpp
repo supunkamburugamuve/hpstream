@@ -11,7 +11,7 @@
 #include "connection.h"
 
 RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
-                               RDMAEventLoopNoneFD *loop) {
+                               RDMAEventLoop *loop) {
   this->info_hints = rdmaFabric->GetHints();
   this->eventLoop_ = loop;
   this->options = opts;
@@ -19,16 +19,11 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
   this->fabric = rdmaFabric->GetFabric();
   this->info = rdmaFabric->GetInfo();
   this->eq_attr = {};
-  this->eq_attr.wait_obj = FI_WAIT_NONE;
+  this->eq_attr.wait_obj = FI_WAIT_FD;
   this->conn_ = NULL;
   this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
   this->state_ = INIT;
-
-  int ret = this->eventLoop_->RegisterRead(&this->eq_loop);
-  if (ret) {
-    LOG(ERROR) << "Failed to register event queue fid" << ret;
-  }
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
@@ -101,6 +96,13 @@ int RDMABaseClient::Start_base(void) {
     return ret;
   }
 
+  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
+  if (ret) {
+    HPS_ERR("Failed to get event queue fid %d", ret);
+    return ret;
+  }
+  this->eq_loop.fid = eq_fid;
+
   ret = fi_domain(this->fabric, this->info, &domain, NULL);
   if (ret) {
     LOG(ERROR) << "fi_domain " << ret;
@@ -138,6 +140,12 @@ int RDMABaseClient::Start_base(void) {
   this->state_ = CONNECTING;
   this->conn_ = CreateConnection(con, options, this->eventLoop_);
   this->connection_ = con;
+
+  ret = this->eventLoop_->RegisterRead(&this->eq->fid, &this->eq_loop);
+  if (ret) {
+    LOG(ERROR) << "Failed to register event queue fid" << ret;
+  }
+
   LOG(INFO) << "Wating for connection completion";
   return 0;
 }

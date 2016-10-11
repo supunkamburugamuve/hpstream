@@ -6,24 +6,24 @@
 #include "rdma_connection.h"
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
-#include "rdma_base_connecion.h"
+#include "rdma_base_connection.h"
 
 class RDMABaseClient {
 public:
   enum ClientState {INIT = 0, DISCONNECTED, CONNECTING, CONNECTED };
-  RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
+  RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   int Start_base(void);
   int Stop_base();
   // Instantiate a new connection
   virtual BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
-                                           RDMAEventLoopNoneFD* ss) = 0;
+                                           RDMAEventLoop* ss) = 0;
   void OnConnect(enum rdma_loop_status state);
   bool IsConnected();
 protected:
   BaseConnection *conn_;
   // the connection
   RDMAConnection *connection_;
-  RDMAEventLoopNoneFD *eventLoop_;
+  RDMAEventLoop *eventLoop_;
   ClientState state_;
 private:
   // options for initialization

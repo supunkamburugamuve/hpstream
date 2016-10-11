@@ -6,7 +6,7 @@
 
 const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
-StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric)
+StMgrServer::StMgrServer(RDMAEventLoop* eventLoop, RDMAOptions *_options, RDMAFabric *fabric)
     : Server(fabric, eventLoop, _options) {
   // stmgr related handlers
   InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);

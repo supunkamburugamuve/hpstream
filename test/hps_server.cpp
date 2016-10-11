@@ -4,7 +4,7 @@
 RDMAOptions options;
 struct fi_info *hints;
 StMgrServer *server;
-RDMAEventLoopNoneFD *eventLoop;
+RDMAEventLoop *eventLoop;
 RDMAFabric *fabric;
 
 #define ITERATIONS_ 1000000
@@ -15,7 +15,7 @@ int connect() {
   int ret = 0;
   fabric = new RDMAFabric(&options, hints);
   fabric->Init();
-  eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
+  eventLoop = new RDMAEventLoop(fabric->GetFabric());
 
   server = new StMgrServer(eventLoop, &options, fabric);
   server->Start();

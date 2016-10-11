@@ -1,8 +1,8 @@
 #include <glog/logging.h>
-#include "rdma_base_connecion.h"
+#include "rdma_base_connection.h"
 
 BaseConnection::BaseConnection(RDMAOptions *options, RDMAConnection *con,
-                               RDMAEventLoopNoneFD *loop)
+                               RDMAEventLoop *loop)
     : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop){
   mState = INIT;
   mCanCloseConnection = true;

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <glog/logging.h>
 #include "rdma_event_loop.h"
-#include "rdma_base_connecion.h"
+#include "rdma_base_connection.h"
 #include "connection.h"
 #include "rdma_server.h"
 #include "ridgen.h"
@@ -32,7 +32,7 @@ public:
   // Constructor
   // The Constructor simply inits the member variable.
   // Users must call Start method to start sending/receiving packets.
-  Server(RDMAFabric *fabric, RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options);
+  Server(RDMAFabric *fabric, RDMAEventLoop* eventLoop, RDMAOptions *_options);
 
   // Destructor.
   virtual ~Server();
@@ -102,7 +102,7 @@ public:
   virtual void StopBackPressureConnectionCb(Connection* _connection);
 
   // Return the underlying EventLoop.
-  RDMAEventLoopNoneFD* getEventLoop() { return eventLoop_; }
+  RDMAEventLoop* getEventLoop() { return eventLoop_; }
 
 protected:
   // Called when a new connection is accepted.
@@ -122,7 +122,7 @@ public:
 
   // Create the connection
   BaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
-                                   RDMAEventLoopNoneFD* ss);
+                                   RDMAEventLoop* ss);
 
   // Called when connection is accepted
   virtual void HandleNewConnection_Base(BaseConnection* newConnection);
@@ -178,7 +178,7 @@ private:
 
   void InternalSendRequest(Connection* _conn, google::protobuf::Message* _request, sp_int64 _msecs,
                            google::protobuf::Message* _response_placeholder, void* _ctx);
-  void OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status status);
+  void OnPacketTimer(REQID _id, RDMAEventLoop::Status status);
 
   typedef std::function<void(Connection*, IncomingPacket*)> handler;
   std::unordered_map<std::string, handler> requestHandlers;

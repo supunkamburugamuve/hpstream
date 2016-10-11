@@ -30,7 +30,7 @@ public:
   // Whether a read/write would block?
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
-  BaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop);
+  BaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoop *loop);
 
   virtual ~BaseConnection();
 
@@ -131,7 +131,7 @@ protected:
   RDMAOptions *mRdmaOptions;
 
   // The underlying event loop
-  RDMAEventLoopNoneFD* mEventLoop;
+  RDMAEventLoop* mEventLoop;
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.

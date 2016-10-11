@@ -25,7 +25,7 @@ class StMgr;
 
 class StMgrServer : public Server {
 public:
-StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric);
+StMgrServer(RDMAEventLoop* eventLoop, RDMAOptions *_options, RDMAFabric *fabric);
 
 virtual ~StMgrServer();
 
