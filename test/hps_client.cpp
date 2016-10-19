@@ -4,16 +4,12 @@
 #include <unistd.h>
 
 struct timespec start, end_t;
-RDMAConnection *con;
 RDMAOptions options;
-struct fi_info *hints;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 StMgrClient *client;
 
-#define ITERATIONS_ 1000000
 #define SIZE_ 10000
-#define BYTES_ (SIZE_ * 4)
 
 int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
   int64_t elapsed;
@@ -24,7 +20,7 @@ int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
 }
 
 int connect3() {
-  fabric = new RDMAFabric(&options, hints);
+  fabric = new RDMAFabric(&options);
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
   client = new StMgrClient(eventLoop, &options, fabric);
@@ -56,12 +52,10 @@ int main(int argc, char **argv) {
   int op;
   options.buf_size = 1024 * 64;
   options.no_buffers = 10;
-  hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {
       default:
-        rdma_parseinfo(op, optarg, hints);
         rdma_parse_addr_opts(op, optarg, &options);
         break;
       case '?':
@@ -76,10 +70,6 @@ int main(int argc, char **argv) {
     printf("dst addr: %s\n", options.dst_addr);
   }
 
-  hints->ep_attr->type = FI_EP_MSG;
-  hints->caps = FI_MSG | FI_RMA;
-  hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
-  print_info(hints);
   connect3();
   exchange3();
   return 0;

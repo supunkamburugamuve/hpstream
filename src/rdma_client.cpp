@@ -32,25 +32,20 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
-  //LOG(INFO) << "Connect event 1";
+  struct fi_eq_cm_entry entry;
+  uint32_t event;
+  ssize_t rd;
+  if (state == TRYAGAIN) {
+    return;
+  }
+
   if (state_ != CONNECTED && state_ != CONNECTING) {
     return;
   }
 
-  struct fi_eq_cm_entry entry;
-  uint32_t event;
-  ssize_t rd;
-
-  if (state == TRYAGAIN) {
-    return;
-  }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
-  if (rd == 0) {
-    return;
-  }
-
-  if (rd < 0) {
+  if (rd <= 0) {
     return;
   }
 

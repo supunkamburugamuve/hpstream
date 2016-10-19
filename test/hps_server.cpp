@@ -2,7 +2,6 @@
 #include "heron_stmgr_server.h"
 
 RDMAOptions options;
-struct fi_info *hints;
 StMgrServer *server;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
@@ -13,7 +12,7 @@ RDMAFabric *fabric;
 
 int connect() {
   int ret = 0;
-  fabric = new RDMAFabric(&options, hints);
+  fabric = new RDMAFabric(&options);
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
 
@@ -28,12 +27,10 @@ int main(int argc, char **argv) {
   int op;
   options.buf_size = 1024 * 64;
   options.no_buffers = 10;
-  hints = fi_allocinfo();
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {
       default:
-        rdma_parseinfo(op, optarg, hints);
         rdma_parse_addr_opts(op, optarg, &options);
         break;
       case '?':
@@ -48,10 +45,6 @@ int main(int argc, char **argv) {
     printf("dst addr: %s\n", options.dst_addr);
   }
 
-  hints->ep_attr->type = FI_EP_MSG;
-  hints->caps = FI_MSG | FI_RMA;
-  hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
-  print_info(hints);
   connect();
   return 0;
 }
