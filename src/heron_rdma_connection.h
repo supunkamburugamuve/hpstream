@@ -2,7 +2,7 @@
 #define CONNECTION_H_
 
 #include "rdma_base_connection.h"
-#include "packet.h"
+#include "rdma_packet.h"
 
 class HeronRDMAConnection : public RDMABaseConnection {
 public:

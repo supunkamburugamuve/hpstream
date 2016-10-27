@@ -2,7 +2,7 @@
 #include <iostream>
 #include <glog/logging.h>
 #include "rdma_server.h"
-#include "connection.h"
+#include "heron_rdma_connection.h"
 
 RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
   this->options = opts;

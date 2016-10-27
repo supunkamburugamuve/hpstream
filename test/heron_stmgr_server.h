@@ -5,7 +5,7 @@
 #include <set>
 #include <vector>
 #include <sptypes.h>
-#include <connection.h>
+#include <heron_rdma_connection.h>
 #include <heron_rdma_server.h>
 #include <message.pb.h>
 #include "network_error.h"

@@ -1,6 +1,6 @@
 #include <netinet/in.h>
 #include <glog/logging.h>
-#include "packet.h"
+#include "rdma_packet.h"
 #include <google/protobuf/message.h>
 #include <google/protobuf/message_lite.h>
 
