@@ -6,37 +6,37 @@
 
 const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
-StMgrServer::StMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric)
-    : Server(fabric, eventLoop, _options) {
+RDMAStMgrServer::RDMAStMgrServer(RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options, RDMAFabric *fabric)
+    : RDMAServer(fabric, eventLoop, _options) {
   // stmgr related handlers
-  InstallMessageHandler(&StMgrServer::HandleTupleStreamMessage);
+  InstallMessageHandler(&RDMAStMgrServer::HandleTupleStreamMessage);
   LOG(INFO) << "Init server";
   spouts_under_back_pressure_ = false;
   count = 0;
 }
 
-StMgrServer::~StMgrServer() {
+RDMAStMgrServer::~RDMAStMgrServer() {
   Stop();
 }
 
 
-sp_string StMgrServer::MakeBackPressureCompIdMetricName(const sp_string& instanceid) {
+sp_string RDMAStMgrServer::MakeBackPressureCompIdMetricName(const sp_string& instanceid) {
   return METRIC_TIME_SPENT_BACK_PRESSURE_COMPID + instanceid;
 }
 
-void StMgrServer::HandleNewConnection(Connection* _conn) {
+void RDMAStMgrServer::HandleNewConnection(HeronRDMAConnection* _conn) {
   // There is nothing to be done here. Instead we wait
   // for the register/hello
   LOG(INFO) << "Got new connection " << _conn << " from " << _conn->getIPAddress() << ":"
             << _conn->getPort();
 }
 
-void StMgrServer::HandleConnectionClose(Connection* _conn, NetworkErrorCode) {
+void RDMAStMgrServer::HandleConnectionClose(HeronRDMAConnection* _conn, NetworkErrorCode) {
   LOG(INFO) << "Got connection close of " << _conn << " from " << _conn->getIPAddress() << ":"
             << _conn->getPort();
 }
 
-void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
+void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
   LOG(INFO) << _message->id() << " " << _message->data();
   if (_message->id() == -1) {
@@ -66,21 +66,21 @@ void StMgrServer::HandleTupleStreamMessage(Connection* _conn,
   }
 }
 
-void StMgrServer::StartBackPressureConnectionCb(Connection* _connection) {
+void RDMAStMgrServer::StartBackPressureConnectionCb(HeronRDMAConnection* _connection) {
   // The connection will notify us when we can stop the back pressure
   _connection->setCausedBackPressure();
 }
 
-void StMgrServer::StopBackPressureConnectionCb(Connection* _connection) {
+void RDMAStMgrServer::StopBackPressureConnectionCb(HeronRDMAConnection* _connection) {
   _connection->unsetCausedBackPressure();
 }
 
-void StMgrServer::SendStartBackPressureToOtherStMgrs() {
+void RDMAStMgrServer::SendStartBackPressureToOtherStMgrs() {
   LOG(INFO) << "Sending start back pressure notification to all other "
             << "stream managers";
   }
 
-void StMgrServer::SendStopBackPressureToOtherStMgrs() {
+void RDMAStMgrServer::SendStopBackPressureToOtherStMgrs() {
   LOG(INFO) << "Sending stop back pressure notification to all other "
             << "stream managers";
 }

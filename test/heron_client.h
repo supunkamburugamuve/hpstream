@@ -6,10 +6,10 @@
 
 class StMgrClientMgr;
 
-class StMgrClient : public Client {
+class RDMAStMgrClient : public RDMAClient {
 public:
-  StMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _options, RDMAFabric *fabric);
-  virtual ~StMgrClient();
+  RDMAStMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _options, RDMAFabric *fabric);
+  virtual ~RDMAStMgrClient();
 
   void Quit();
 
@@ -26,9 +26,9 @@ private:
   void OnReConnectTimer();
   void SendHelloRequest();
   // Do back pressure
-  virtual void StartBackPressureConnectionCb(Connection* _connection);
+  virtual void StartBackPressureConnectionCb(HeronRDMAConnection* _connection);
   // Relieve back pressure
-  virtual void StopBackPressureConnectionCb(Connection* _connection);
+  virtual void StopBackPressureConnectionCb(HeronRDMAConnection* _connection);
 
   sp_string other_stmgr_id_;
   bool quit_;

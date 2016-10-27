@@ -2,7 +2,7 @@
 #include "heron_stmgr_server.h"
 
 RDMAOptions options;
-StMgrServer *server;
+RDMAStMgrServer *server;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
 
@@ -16,7 +16,7 @@ int connect() {
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
 
-  server = new StMgrServer(eventLoop, &options, fabric);
+  server = new RDMAStMgrServer(eventLoop, &options, fabric);
   server->Start();
   eventLoop->Start();
   eventLoop->Wait();

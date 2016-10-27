@@ -13,7 +13,7 @@ using namespace std;
  * An abstract base class to represent a network connection between 2 endpoints.
  * Provides support for non-blocking reads and writes.
  */
-class BaseConnection {
+class RDMABaseConnection {
 public:
   // The state of the connection
   enum State {
@@ -30,9 +30,9 @@ public:
   // Whether a read/write would block?
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
-  BaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop);
+  RDMABaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop);
 
-  virtual ~BaseConnection();
+  virtual ~RDMABaseConnection();
 
   /**
    * Start the connection. Should only be called when in INIT state.

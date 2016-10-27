@@ -7,7 +7,7 @@ struct timespec start, end_t;
 RDMAOptions options;
 RDMAEventLoopNoneFD *eventLoop;
 RDMAFabric *fabric;
-StMgrClient *client;
+RDMAStMgrClient *client;
 
 #define SIZE_ 10000
 
@@ -23,7 +23,7 @@ int connect3() {
   fabric = new RDMAFabric(&options);
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
-  client = new StMgrClient(eventLoop, &options, fabric);
+  client = new RDMAStMgrClient(eventLoop, &options, fabric);
   client->Start_base();
   eventLoop->Start();
   while (!client->IsConnected());
