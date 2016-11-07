@@ -14,6 +14,7 @@ public:
   void Quit();
 
   void SendTupleStreamMessage(proto::stmgr::TupleMessage* _msg);
+  void SendHelloRequest();
 
 protected:
   virtual void HandleConnect(NetworkErrorCode status);
@@ -24,7 +25,6 @@ private:
   void HandleTupleStreamMessage(proto::stmgr::TupleMessage* _message);
 
   void OnReConnectTimer();
-  void SendHelloRequest();
   // Do back pressure
   virtual void StartBackPressureConnectionCb(HeronRDMAConnection* _connection);
   // Relieve back pressure

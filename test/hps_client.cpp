@@ -23,9 +23,9 @@ int connect3() {
   fabric = new RDMAFabric(&options);
   fabric->Init();
   eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
+  eventLoop->Start();
   client = new RDMAStMgrClient(eventLoop, &options, fabric);
   client->Start_base();
-  eventLoop->Start();
   while (!client->IsConnected());
   sleep(2);
   return 1;
@@ -43,6 +43,15 @@ int exchange3() {
     message->set_time(timer.currentTime());
     client->SendTupleStreamMessage(message);
     delete name;
+  }
+  eventLoop->Wait();
+  return 0;
+}
+
+int exchange4() {
+  Timer timer;
+  for (int i = -1; i < 1000000; i++) {
+    client->SendHelloRequest();
   }
   eventLoop->Wait();
   return 0;

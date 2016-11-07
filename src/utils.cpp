@@ -7,6 +7,7 @@
 #include <rdma/fi_domain.h>
 #include <rdma/fi_errno.h>
 #include <poll.h>
+#include <glog/logging.h>
 
 #include "utils.h"
 
@@ -49,7 +50,6 @@ static int hps_utils_getaddr(char *node, char *service,
                              struct fi_info *hints, uint64_t flags) {
   int ret;
   struct fi_info *fi;
-
   if (!node && !service) {
     if (flags & FI_SOURCE) {
       hints->src_addr = NULL;
@@ -60,8 +60,7 @@ static int hps_utils_getaddr(char *node, char *service,
     }
     return 0;
   }
-
-  printf("Get info with options node=%s service=%s flags=%d\n", node, service, (int)flags);
+  LOG(INFO) << "Get info with options node= " << node << " service= " << service << "flags= " << (int)flags;
 
   ret = fi_getinfo(HPS_FIVERSION, node, service, flags, hints, &fi);
   if (ret) {
@@ -110,7 +109,7 @@ int hps_utils_read_addr_opts(char **node, char **service, struct fi_info *hints,
 
 void print_info(struct fi_info *info) {
   char *out = fi_tostr(info, FI_TYPE_INFO);
-  printf(out);
+  LOG(INFO) << "FI Info: " << out;
 }
 
 int print_short_info(struct fi_info *info) {
@@ -140,9 +139,10 @@ int hps_utils_get_info(RDMAOptions *options, struct fi_info *hints, struct fi_in
 
   // now lets retrieve the available network services
   // according to hints
+  LOG(INFO) << "Get info with options node= " << node << " service= " << service << "flags= " << (int)flags;
   int ret = fi_getinfo(HPS_FIVERSION, node, service, flags, hints, info);
   if (ret) {
-    HPS_ERR("Fi_info failed %d", ret);
+    LOG(ERROR) << "Fi_info failed " << ret;
     return 1;
   }
 
@@ -175,10 +175,10 @@ int hps_utils_cq_readerr(struct fid_cq *cq){
 
   ret = fi_cq_readerr(cq, &cq_err, 0);
   if (ret < 0) {
-    HPS_ERR("fi_cq_readerr %ld", ret);
+    LOG(ERROR) << "fi_cq_readerr" << ret;
   } else {
-    printf("%s\n", fi_cq_strerror(cq, cq_err.prov_errno,
-                                  cq_err.err_data, NULL, 0));
+    LOG(ERROR) << fi_cq_strerror(cq, cq_err.prov_errno,
+                                  cq_err.err_data, NULL, 0);
     ret = -cq_err.err;
   }
   return (int) ret;

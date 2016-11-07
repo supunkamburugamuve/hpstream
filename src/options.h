@@ -23,6 +23,8 @@ public:
 
   RDMAOptions();
   void Free();
+  void SetSource(char *src_addr, char *src_port);
+  void SetDest(char *dst_addr, char *dst_port);
 private:
 };
 

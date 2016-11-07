@@ -27,12 +27,12 @@ sp_string RDMAStMgrServer::MakeBackPressureCompIdMetricName(const sp_string& ins
 void RDMAStMgrServer::HandleNewConnection(HeronRDMAConnection* _conn) {
   // There is nothing to be done here. Instead we wait
   // for the register/hello
-  LOG(INFO) << "Got new connection " << _conn << " from " << _conn->getIPAddress() << ":"
+  LOG(ERROR) << "Got new connection " << _conn << " from " << _conn->getIPAddress() << ":"
             << _conn->getPort();
 }
 
 void RDMAStMgrServer::HandleConnectionClose(HeronRDMAConnection* _conn, NetworkErrorCode) {
-  LOG(INFO) << "Got connection close of " << _conn << " from " << _conn->getIPAddress() << ":"
+  LOG(ERROR) << "Got connection close of " << _conn << " from " << _conn->getIPAddress() << ":"
             << _conn->getPort();
 }
 
@@ -56,6 +56,7 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   message->set_data(name);
   message->set_time(_message->time());
 
+  delete name;
   SendMessage(_conn, (*message));
   delete message;
   delete _message;
@@ -64,6 +65,23 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   if ((count % 10000) == 0) {
     printf("count %d\n", count);
   }
+}
+
+void RDMAStMgrServer::HandleStMgrHelloRequest(REQID _id, HeronRDMAConnection* _conn,
+                                              proto::stmgr::TupleMessage* _message) {
+  LOG(INFO) << "Got a hello message from stmgr ";
+  char *name = new char[100];
+  sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
+  proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
+  message->set_name(name);
+  message->set_id(10);
+  message->set_data(name);
+  message->set_time(_message->time());
+
+  SendMessage(_conn, (*message));
+  delete _message;
+
+  SendResponse(_id, _conn, (*message));
 }
 
 void RDMAStMgrServer::StartBackPressureConnectionCb(HeronRDMAConnection* _connection) {

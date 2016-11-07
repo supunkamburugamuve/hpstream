@@ -14,6 +14,7 @@ RDMAStMgrClient::RDMAStMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _o
       quit_(false),
       ndropped_messages_(0) {
   InstallMessageHandler(&RDMAStMgrClient::HandleTupleStreamMessage);
+  InstallResponseHandler(new proto::stmgr::TupleMessage(), &RDMAStMgrClient::HandleHelloResponse);
 }
 
 RDMAStMgrClient::~RDMAStMgrClient() {
@@ -40,11 +41,19 @@ void RDMAStMgrClient::HandleClose(NetworkErrorCode _code) {
 
 void RDMAStMgrClient::HandleHelloResponse(void*, proto::stmgr::TupleMessage* _response,
                                       NetworkErrorCode _status) {
+  LOG(INFO) << "Received hello response";
 }
 
 void RDMAStMgrClient::OnReConnectTimer() { Start(); }
 
 void RDMAStMgrClient::SendHelloRequest() {
+  char *name = new char[100];
+  sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+  proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
+  message->set_name(name);
+  message->set_id(1);
+  message->set_data(name);
+  message->set_time(1000.5);
   return;
 }
 

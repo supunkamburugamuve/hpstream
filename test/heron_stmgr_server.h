@@ -43,8 +43,9 @@ private:
   sp_string MakeBackPressureCompIdMetricName(const sp_string &instanceid);
 
   void HandleTupleStreamMessage(HeronRDMAConnection *_conn, proto::stmgr::TupleMessage *_message);
-
-// Backpressure message from and to other stream managers
+  void HandleStMgrHelloRequest(REQID _id, HeronRDMAConnection* _conn,
+                                                proto::stmgr::TupleMessage* _request);
+  // Backpressure message from and to other stream managers
   void SendStartBackPressureToOtherStMgrs();
 
   void SendStopBackPressureToOtherStMgrs();

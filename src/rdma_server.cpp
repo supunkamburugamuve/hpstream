@@ -138,8 +138,9 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
     while (it != active_connections_.end()) {
       RDMAConnection *rdmaConnection = (*it)->getEndpointConnection();
       if (&rdmaConnection->GetEp()->fid == entry.fid) {
-        active_connections_.erase(it);
+        HandleConnectionClose_Base(*it, OK);
         (*it)->closeConnection();
+        active_connections_.erase(it);
         LOG(INFO) << "Closed connection";
         break;
       }
@@ -238,6 +239,8 @@ int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
   LOG(INFO) << "Client connected";
   // add the connection to list
   this->active_connections_.insert(con);
+  // ask the inheritors to handle the connect event
+  HandleNewConnection_Base(con);
   return 0;
 }
 
