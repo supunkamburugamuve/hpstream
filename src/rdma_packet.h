@@ -22,7 +22,7 @@ namespace google {
  * header instead of directly accessing the buffer.
  */
 
-const uint32_t kSPPacketSize = sizeof(uint32_t);
+const uint32_t rdmakSPPacketSize = sizeof(uint32_t);
 
 class RDMAPacketHeader {
 public:
@@ -85,17 +85,6 @@ private:
   // the packet read itself.
   friend class HeronRDMAConnection;
 
-  // Read the packet from the file descriptor fd.
-  // Returns 0 if the packet has been read completely.
-  // A > 0 return value indicates that the packet was
-  // partially read and there was no more data. Further read
-  // calls are necessary to completely read the packet.
-  // A negative return value implies an irreovrable error
-//  int32_t Read(Connection *fd);
-//
-//  // Helper method for Read to do the low level read calls.
-//  int32_t InternalRead(Connection *con, char* buffer, uint32_t size);
-
   // The maximum packet length allowed. 0 means no limit
   uint32_t max_packet_size_;
 
@@ -103,7 +92,7 @@ private:
   uint32_t position_;
 
   // The pointer to the header.
-  char header_[kSPPacketSize];
+  char header_[rdmakSPPacketSize];
 
   // The pointer to the data.
   char* data_;

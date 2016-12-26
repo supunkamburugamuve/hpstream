@@ -15,6 +15,7 @@
 #include "rdma_client.h"
 #include "ridgen.h"
 
+
 /*
  * Client class definition
  * Given a host/port, the client tries to connect to the host port.
@@ -38,7 +39,7 @@ public:
   // Note that constructor doesn't do much beyond initializing some members.
   // Users must explicitly invoke the Start method to be able to send requests
   // and receive responses.
-  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop);
+  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
   virtual ~RDMAClient();
 
   // This starts the connect opereation.
@@ -95,7 +96,8 @@ public:
                               void (T::*method)(void* _ctx, M*, NetworkErrorCode status)) {
     google::protobuf::Message* m = new M();
     T* t = static_cast<T*>(this);
-    responseHandlers[m->GetTypeName()] = std::bind(&RDMAClient::dispatchResponse<T, M>, this, t, method,
+    responseHandlers[m->GetTypeName()] = std::bind(&RDMAClient::dispatchResponse<T, M>,
+                                                   this, t, method,
                                                    std::placeholders::_1, std::placeholders::_2);
     requestResponseMap_[_request->GetTypeName()] = m->GetTypeName();
     delete m;
@@ -139,7 +141,7 @@ public:
   }
 
   // Return the underlying EventLoop.
-  RDMAEventLoopNoneFD* getEventLoop() { return eventLoop_; }
+  RDMAEventLoop* getEventLoop() { return eventLoop_; }
 
 protected:
   // Derived class should implement this method to handle Connection
@@ -170,7 +172,7 @@ protected:
 private:
   //! Imlement methods of BaseClient
   virtual RDMABaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
-                                           RDMAEventLoopNoneFD* ss);
+                                               RDMAEventLoop* ss);
   virtual void HandleConnect_Base(NetworkErrorCode status);
   virtual void HandleClose_Base(NetworkErrorCode status);
 
@@ -187,7 +189,7 @@ private:
 
   // Internal method to be called by the EventLoop class
   // when a packet timer expires
-  void OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status status);
+  void OnPacketTimer(REQID _id, RDMAEventLoop::Status status);
 
   template <typename T, typename M>
   void dispatchResponse(T* _t, void (T::*method)(void* _ctx, M*, NetworkErrorCode),
@@ -253,7 +255,7 @@ private:
   }
 
   //! Map from reqid to the response/context pair of the request
-  std::unordered_map<REQID, std::pair<string, void*>, REQID_Hash> context_map_;
+  std::unordered_map<REQID, std::pair<string, void*>> context_map_;
 
   typedef std::function<void(RDMAIncomingPacket*)> handler;
   std::unordered_map<std::string, handler> requestHandlers;
@@ -265,5 +267,6 @@ private:
   // REQID generator
   REQID_Generator* message_rid_gen_;
 };
+
 
 #endif  // CLIENT_H_

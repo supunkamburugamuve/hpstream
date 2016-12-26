@@ -22,16 +22,6 @@ RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t total_buffer_size, uint32_t no_buf
   Init();
 }
 
-int RDMABuffer::acquireLock() {
-  return 0;
-//  return pthread_mutex_lock(&lock);
-}
-
-int RDMABuffer::releaseLock() {
-  return 0;
-//  return pthread_mutex_unlock(&lock);
-}
-
 uint8_t * RDMABuffer::GetBuffer(int i) {
   return buffers[i];
 }
@@ -127,5 +117,4 @@ uint64_t RDMABuffer::GetAvailableWriteSpace() {
 uint32_t RDMABuffer::NextWriteIndex() {
   return (base + this->filled_buffs) % this->no_bufs;
 }
-
 

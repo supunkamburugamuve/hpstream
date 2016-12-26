@@ -41,15 +41,15 @@ void rdma_parse_addr_opts(int op, char *optarg, RDMAOptions *opts) {
   switch (op) {
     case 's':
       printf("source addr: %s\n", optarg);
-      opts->src_addr = optarg;
+      opts->src_addr = strdup(optarg);
       break;
     case 'b':
       printf("source port: %s\n", optarg);
-      opts->src_port = optarg;
+      opts->src_port = strdup(optarg);
       break;
     case 'p':
       printf("dst port: %s\n", optarg);
-      opts->dst_port = optarg;
+      opts->dst_port = strdup(optarg);
       break;
     default:
       /* let getopt handle unknown opts*/

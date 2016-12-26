@@ -12,6 +12,7 @@
 #include <rdma/fi_tagged.h>
 #include <rdma/fi_rma.h>
 #include <rdma/fi_errno.h>
+#include <glog/logging.h>
 
 #include "rdma_buffer.h"
 #include "utils.h"
@@ -24,8 +25,8 @@ class RDMAConnection {
 public:
 
   RDMAConnection(RDMAOptions *opts,
-             struct fi_info *info, struct fid_fabric *fabric,
-             struct fid_domain *domain, RDMAEventLoopNoneFD *loop);
+                 struct fi_info *info, struct fid_fabric *fabric,
+                 struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
   virtual ~RDMAConnection();
@@ -50,6 +51,7 @@ public:
   }
 
   void SetState(ConnectionState st) {
+    LOG(INFO) << "Connection state changed to: " << st;
     this->mState = st;
   }
 
@@ -124,7 +126,7 @@ private:
 
   int timeout;
 
-  RDMAEventLoopNoneFD *eventLoop;
+  RDMAEventLoop *eventLoop;
 
   /** Private methods */
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
@@ -165,6 +167,7 @@ private:
   bool * credit_messages_;
   int postCredit();
 };
+
 
 #endif /* HPS_CONNECTION_H_ */
 

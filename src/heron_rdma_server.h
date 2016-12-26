@@ -32,7 +32,7 @@ public:
   // Constructor
   // The Constructor simply inits the member variable.
   // Users must call Start method to start sending/receiving packets.
-  RDMAServer(RDMAFabric *fabric, RDMAEventLoopNoneFD* eventLoop, RDMAOptions *_options);
+  RDMAServer(RDMAFabric *fabric, RDMAEventLoop* eventLoop, RDMAOptions *_options);
 
   // Destructor.
   virtual ~RDMAServer();
@@ -102,7 +102,7 @@ public:
   virtual void StopBackPressureConnectionCb(HeronRDMAConnection* _connection);
 
   // Return the underlying EventLoop.
-  RDMAEventLoopNoneFD* getEventLoop() { return eventLoop_; }
+  RDMAEventLoop* getEventLoop() { return eventLoop_; }
 
 protected:
   // Called when a new connection is accepted.
@@ -122,7 +122,7 @@ public:
 
   // Create the connection
   RDMABaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
-                                   RDMAEventLoopNoneFD* ss);
+                                       RDMAEventLoop* ss);
 
   // Called when connection is accepted
   virtual void HandleNewConnection_Base(RDMABaseConnection* newConnection);
@@ -146,7 +146,7 @@ private:
       // We could not decode the pb properly
       std::cerr << "Could not decode protocol buffer of type " << m->GetTypeName();
       delete m;
-        CloseConnection(_conn);
+      CloseConnection(_conn);
       return;
     }
     CHECK(m->IsInitialized());
@@ -178,14 +178,14 @@ private:
 
   void InternalSendRequest(HeronRDMAConnection* _conn, google::protobuf::Message* _request, sp_int64 _msecs,
                            google::protobuf::Message* _response_placeholder, void* _ctx);
-  void OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status status);
+  void OnPacketTimer(REQID _id, RDMAEventLoop::Status status);
 
   typedef std::function<void(HeronRDMAConnection*, RDMAIncomingPacket*)> handler;
   std::unordered_map<std::string, handler> requestHandlers;
   std::unordered_map<std::string, handler> messageHandlers;
 
   // For acting like a client
-  std::unordered_map<REQID, std::pair<google::protobuf::Message*, void*>, REQID_Hash > context_map_;
+  std::unordered_map<REQID, std::pair<google::protobuf::Message*, void*> > context_map_;
   REQID_Generator* request_rid_gen_;
 };
 

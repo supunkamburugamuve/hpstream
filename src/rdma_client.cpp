@@ -11,41 +11,43 @@
 #include "heron_rdma_connection.h"
 
 RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
-                               RDMAEventLoopNoneFD *loop) {
+                               RDMAEventLoop *loop) {
   this->info_hints = rdmaFabric->GetHints();
   this->eventLoop_ = loop;
   this->options = opts;
   this->eq = NULL;
   this->fabric = rdmaFabric->GetFabric();
-  this->info = rdmaFabric->GetInfo();
+  // this->info = rdmaFabric->GetInfo();
   this->eq_attr = {};
   this->eq_attr.wait_obj = FI_WAIT_NONE;
   this->conn_ = NULL;
   this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
   this->state_ = INIT;
-
-  int ret = this->eventLoop_->RegisterRead(&this->eq_loop);
-  if (ret) {
-    LOG(ERROR) << "Failed to register event queue fid" << ret;
-  }
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
+  // LOG(INFO) << "On connect callback";
   struct fi_eq_cm_entry entry;
   uint32_t event;
   ssize_t rd;
-  if (state == TRYAGAIN) {
-    return;
-  }
 
   if (state_ != CONNECTED && state_ != CONNECTING) {
+    LOG(INFO) << "Un-expected state";
     return;
   }
 
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
-  if (rd <= 0) {
+  if (rd == -FI_EAGAIN) {
+    return;
+  }
+
+  if (rd < 0) {
+    if (rd == -FI_EAVAIL) {
+      rd = hps_utils_eq_readerr(eq);
+      LOG(WARNING) << "Failed to read the eq: " << rd;
+    }
     return;
   }
 
@@ -85,17 +87,33 @@ int RDMABaseClient::Start_base(void) {
   struct fid_ep *ep = NULL;
   struct fid_domain *domain = NULL;
   RDMAConnection *con = NULL;
-
   if (state_ != INIT) {
     LOG(ERROR) << "Failed to start connection not in INIT state";
     return -1;
   }
+
+  ret = hps_utils_get_info_client(options, info_hints, &info);
+  if (ret) {
+    LOG(ERROR) << "Failed to get server information";
+    return ret;
+  }
+  //LOG(INFO) << "Pring info";
+  //print_info(this->info);
 
   ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
   if (ret) {
     LOG(ERROR) << "fi_eq_open %d" << ret;
     return ret;
   }
+
+  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
+  if (ret) {
+    LOG(ERROR) << "Failed to get event queue fid " << ret;
+    return ret;
+  }
+  LOG(INFO) << "EQ FID: " << eq_fid;
+  this->eq_loop.fid = eq_fid;
+  this->eq_loop.desc = &this->eq->fid;
 
   ret = fi_domain(this->fabric, this->info, &domain, NULL);
   if (ret) {
@@ -125,6 +143,13 @@ int RDMABaseClient::Start_base(void) {
     return ret;
   }
 
+  ret = this->eventLoop_->RegisterRead(&this->eq_loop);
+  if (ret) {
+    LOG(ERROR) << "Failed to register event queue fid" << ret;
+    return ret;
+  }
+
+
   ret = fi_connect(ep, this->info->dest_addr, NULL, 0);
   if (ret) {
     LOG(ERROR) << "fi_connect %d" << ret;
@@ -146,8 +171,8 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 
   int ret;
   if (entry->fid != &(this->connection_->GetEp()->fid)) {
-    ret = -FI_EOTHER;
-    return ret;
+    LOG(INFO) << "The fids are not matching";
+    return -FI_EOTHER;
   }
 
   if (conn_->start()) {
@@ -158,6 +183,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
   this->conn_ = conn_;
   this->state_ = CONNECTED;
   LOG(INFO) << "Connection established";
+  HandleConnect_Base(OK);
   return 0;
 }
 

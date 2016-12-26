@@ -3,17 +3,19 @@
 #include <glog/logging.h>
 #include "rdma_server.h"
 #include "heron_rdma_connection.h"
+#include "utils.h"
 
-RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop) {
+RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop) {
   this->options = opts;
   this->info_hints = rdmaFabric->GetHints();
   this->eventLoop_ = loop;
   this->pep = NULL;
-  this->info_pep = rdmaFabric->GetInfo();
+//  this->info_pep = rdmaFabric->GetInfo();
   this->eq = NULL;
   this->fabric = rdmaFabric->GetFabric();
   this->eq_attr = {};
   this->domain = NULL;
+  this->rdmaFabric = rdmaFabric;
   // initialize this attribute, search weather this is correct
   this->eq_attr.wait_obj = FI_WAIT_NONE;
 
@@ -25,46 +27,61 @@ RDMABaseServer::~RDMABaseServer() {}
 
 int RDMABaseServer::Start_Base(void) {
   int ret;
-  LOG(INFO) << "Starting the server";
+  LOG(INFO) << "Starting the RDMA server";
+  ret = hps_utils_get_info_server(options, info_hints, &info_pep);
+  if (ret) {
+    LOG(ERROR) << "Failed to get server information";
+    return ret;
+  }
+
   ret = fi_domain(this->fabric, info_pep, &this->domain, NULL);
   if (ret) {
-    HPS_ERR("fi_domain %d", ret);
+    LOG(INFO) << "fi_domain " << ret;
     return ret;
   }
 
   // open the event queue for passive end-point
   ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
   if (ret) {
-    HPS_ERR("fi_eq_open %d", ret);
+    LOG(INFO) << "fi_eq_open " << ret;
     return ret;
   }
+
+  ret = hps_utils_get_eq_fd(this->options, this->eq, &this->eq_fid);
+  if (ret) {
+    LOG(ERROR) << "Failed to get event queue fid: " << ret;
+    return ret;
+  }
+  LOG(INFO) << "EQ FID: " << eq_fid;
+  this->eq_loop.fid = eq_fid;
+  this->eq_loop.desc = &this->eq->fid;
 
   // allocates a passive end-point
   ret = fi_passive_ep(this->fabric, this->info_pep, &this->pep, NULL);
   if (ret) {
-    HPS_ERR("fi_passive_ep %d", ret);
+    LOG(INFO) << "fi_passive_ep " << ret;
     return ret;
   }
 
   // bind the passive end-point to the event queue
   ret = fi_pep_bind(this->pep, &eq->fid, 0);
   if (ret) {
-    HPS_ERR("fi_pep_bind %d", ret);
+    LOG(INFO) << "fi_pep_bind " << ret;
     return ret;
   }
 
   ret = this->eventLoop_->RegisterRead(&this->eq_loop);
   if (ret) {
-    HPS_ERR("Failed to register event queue fid %d", ret);
+    LOG(INFO) << "Failed to register event queue fid " << ret;
     return ret;
   }
   // start listen for incoming connections
   ret = fi_listen(this->pep);
   if (ret) {
-    HPS_ERR("fi_listen %d", ret);
+    LOG(INFO) << "fi_listen " << ret;
     return ret;
   }
-
+  LOG(INFO) << "Started listening for incoming RDMA connections";
   return 0;
 }
 
@@ -107,16 +124,17 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   uint32_t event;
   ssize_t rd;
 
-  if (state == TRYAGAIN) {
-    return;
-  }
   // read the events for incoming messages
   rd = fi_eq_read(eq, &event, &entry, sizeof entry, 0);
-  if (rd == 0 || rd == -EAGAIN) {
+  if (rd == 0 || rd == -FI_EAGAIN) {
     return;
   }
 
   if (rd < 0) {
+    if (rd == -FI_EAVAIL) {
+      rd = hps_utils_eq_readerr(eq);
+      LOG(WARNING) << "Failed to red the eq: " + rd;
+    }
     return;
   }
 
@@ -129,19 +147,14 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
   if (event == FI_SHUTDOWN) {
     LOG(INFO) << "Received shutdown event";
     std::set<RDMABaseConnection *>::iterator it = active_connections_.begin();
-//    RDMAConnection *c = (RDMAConnection *) entry.fid->context;
-//    if (c != NULL) {
-//      // now disconnect
-//      c->closeConnection();
-//    }
     // remove the connection from the list
     while (it != active_connections_.end()) {
       RDMAConnection *rdmaConnection = (*it)->getEndpointConnection();
       if (&rdmaConnection->GetEp()->fid == entry.fid) {
         HandleConnectionClose_Base(*it, OK);
         (*it)->closeConnection();
-        active_connections_.erase(it);
         LOG(INFO) << "Closed connection";
+        active_connections_.erase(it);
         break;
       }
       it++;

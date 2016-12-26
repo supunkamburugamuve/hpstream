@@ -30,7 +30,7 @@ public:
   // Whether a read/write would block?
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
-  RDMABaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoopNoneFD *loop);
+  RDMABaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoop *loop);
 
   virtual ~RDMABaseConnection();
 
@@ -91,12 +91,6 @@ protected:
   virtual bool stillHaveDataToWrite() = 0;
 
   /**
-   * Called after WriteIntoEndPoint is successful.
-   * Usually meant for cleaning up packets that have been sent.
-   */
-//  virtual void handleDataWritten() = 0;
-
-  /**
    * Called by the base class when the connection fd is readable.
    * The derived classes read in the data coming into the connection.
    *
@@ -123,7 +117,7 @@ protected:
 
   // Endpoint read registration
   //int32_t unregisterEndpointForRead();
- // int32_t registerEndpointForRead();
+  // int32_t registerEndpointForRead();
 
   // underlying rdma connection
   RDMAConnection *mRdmaConnection;
@@ -131,7 +125,7 @@ protected:
   RDMAOptions *mRdmaOptions;
 
   // The underlying event loop
-  RDMAEventLoopNoneFD* mEventLoop;
+  RDMAEventLoop* mEventLoop;
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
@@ -160,10 +154,6 @@ private:
   // Our own callbacks that we register for internal reads/write events.
   VCallback<int> mOnRead;
   VCallback<int> mOnWrite;
-
-  // Connection Endpoint
-  // ConnectionEndPoint* mEndpoint;
-
 
   bool mCanCloseConnection;
 };

@@ -69,6 +69,26 @@ public:
   size_t operator()(const REQID& x) const { return std::hash<std::string>()(x.str()); }
 };
 
+namespace std {
+  template <>
+  struct hash<REQID>
+  {
+    std::size_t operator()(const REQID& k) const
+    {
+      using std::size_t;
+      using std::hash;
+      using std::string;
+
+      // Compute individual hash values for first,
+      // second and third and combine them using XOR
+      // and bit shifting:
+
+      return ((hash<string>()(k.str())));
+    }
+  };
+
+}
+
 class REQID_Generator {
  public:
   //! Constructor that uses underlying UUID library

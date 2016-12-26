@@ -1,24 +1,42 @@
 #include "hps_utils.h"
+#include "heron_client.h"
 #include "heron_stmgr_server.h"
 
 RDMAOptions options;
+RDMAEventLoop *eventLoop;
+RDMAFabric *loopFabric;
+RDMAStMgrClient *client;
 RDMAStMgrServer *server;
-RDMAEventLoopNoneFD *eventLoop;
-RDMAFabric *fabric;
 
-#define ITERATIONS_ 1000000
 #define SIZE_ 10000
-#define BYTES_ (SIZE_ * 4)
 
 int connect() {
   int ret = 0;
-  fabric = new RDMAFabric(&options);
-  fabric->Init();
-  eventLoop = new RDMAEventLoopNoneFD(fabric->GetFabric());
-
-  server = new RDMAStMgrServer(eventLoop, &options, fabric);
-  server->Start();
+  loopFabric = new RDMAFabric(&options);
+  loopFabric->Init();
+  eventLoop = new RDMAEventLoop(loopFabric);
   eventLoop->Start();
+
+  RDMAOptions *clientOptions = new RDMAOptions();
+  clientOptions->dst_addr = options.dst_addr;
+  clientOptions->dst_port = options.dst_port;
+  clientOptions->options = 0;
+  clientOptions->buf_size = 64 * 1024;
+  clientOptions->no_buffers = 10;
+
+  RDMAOptions *serverOptions = new RDMAOptions();
+  serverOptions->src_port = options.src_port;
+  serverOptions->src_addr = options.src_addr;
+  serverOptions->options = 0;
+  serverOptions->buf_size = 64 * 1024;
+  serverOptions->no_buffers = 10;
+  RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
+  serverFabric->Init();
+  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, clientOptions);
+  server->Start();
+  server->origin = false;
+
+  LOG(INFO) << "Started server";
   eventLoop->Wait();
   return ret;
 }

@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <unordered_map>
+#include <vector>
 
 #include <rdma/fabric.h>
 #include <list>
@@ -17,6 +18,7 @@
 #include "rdma_event_loop.h"
 #include "hps.h"
 #include "sptypes.h"
+#include "rdma_fabric.h"
 
 enum rdma_loop_status {AVAILABLE, TRYAGAIN};
 
@@ -38,24 +40,31 @@ struct rdma_loop_info {
   enum rdma_loop_event event;
 };
 
-class RDMAEventLoopNoneFD {
+class RDMAEventLoop {
 public:
   enum Status {};
-  RDMAEventLoopNoneFD(struct fid_fabric *fabric);
-  int RegisterRead(struct rdma_loop_info *connection);
-  int UnRegister(struct rdma_loop_info *con);
-  sp_int64 registerTimer(VCallback<RDMAEventLoopNoneFD::Status> cb, bool persistent,
-                                        sp_int64 mSecs);
+  RDMAEventLoop(RDMAFabric *rdmaFabric);
+  int RegisterRead(struct rdma_loop_info *info);
+  int UnRegister(struct rdma_loop_info *info);
+  sp_int64 registerTimer(VCallback<RDMAEventLoop::Status> cb, bool persistent,
+                         sp_int64 mSecs);
+  RDMAFabric * get_fabric() { return rdmaFabric; }
   void Loop();
   int Start();
   int Close();
   int Wait();
-
 private:
-  bool run;
+  bool run_;
   pthread_t loopThreadId;
-  std::list<struct fid *> fids;
-  std::list<struct rdma_loop_info *> connections;
+  RDMAFabric *rdmaFabric;
+  struct fid_fabric *fabric;
+  int epfd_;
+  struct fid **fids_;
+  struct epoll_event* events_;
+  // current capacity of events and fids
+  sp_int32 current_capacity_;
+  std::vector<struct rdma_loop_info *> event_details;
 };
+
 
 #endif

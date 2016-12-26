@@ -38,9 +38,6 @@ public:
   }
   int setBufferContentSize(uint32_t index, uint32_t size);
   uint32_t getContentSize(uint32_t index);
-  // wait until a buffer becomes available for write
-  int acquireLock();
-  int releaseLock();
   /** Free the buffer */
   void Free();
 

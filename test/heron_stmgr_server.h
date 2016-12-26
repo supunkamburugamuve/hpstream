@@ -9,6 +9,7 @@
 #include <heron_rdma_server.h>
 #include <message.pb.h>
 #include "network_error.h"
+#include "heron_client.h"
 
 namespace heron {
   namespace common {
@@ -25,13 +26,18 @@ class StMgr;
 
 class RDMAStMgrServer : public RDMAServer {
 public:
-  RDMAStMgrServer(RDMAEventLoopNoneFD *eventLoop, RDMAOptions *_options, RDMAFabric *fabric);
+  RDMAStMgrServer(RDMAEventLoop *eventLoop, RDMAOptions *_options, RDMAFabric *fabric,
+                  RDMAOptions *clientOptions);
 
   virtual ~RDMAStMgrServer();
 
   bool HaveAllInstancesConnectedToUs() const {
     return active_instances_.size() == expected_instances_.size();
   }
+
+
+  void setRDMAClient(RDMAStMgrClient *rdmaClient) { rdma_client_ = rdmaClient; };
+  bool origin;
 
 
 protected:
@@ -84,6 +90,10 @@ private:
   int count;
 
   bool spouts_under_back_pressure_;
+
+  RDMAStMgrClient *rdma_client_;
+
+  RDMAOptions *clientOptions_;
 };
 
 #endif  // SRC_CPP_SVCS_STMGR_SRC_MANAGER_STMGR_SERVER_H_

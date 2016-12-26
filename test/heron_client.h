@@ -8,7 +8,7 @@ class StMgrClientMgr;
 
 class RDMAStMgrClient : public RDMAClient {
 public:
-  RDMAStMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _options, RDMAFabric *fabric);
+  RDMAStMgrClient(RDMAEventLoop* eventLoop, RDMAOptions* _options, RDMAFabric *fabric);
   virtual ~RDMAStMgrClient();
 
   void Quit();

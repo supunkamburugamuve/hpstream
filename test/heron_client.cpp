@@ -9,7 +9,7 @@
 
 #include "heron_client.h"
 
-RDMAStMgrClient::RDMAStMgrClient(RDMAEventLoopNoneFD* eventLoop, RDMAOptions* _options, RDMAFabric *fabric)
+RDMAStMgrClient::RDMAStMgrClient(RDMAEventLoop* eventLoop, RDMAOptions* _options, RDMAFabric *fabric)
     : RDMAClient(_options, fabric, eventLoop),
       quit_(false),
       ndropped_messages_(0) {

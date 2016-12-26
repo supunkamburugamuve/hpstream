@@ -4,7 +4,7 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>
 
-RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoopNoneFD *loop)
+RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop)
     : RDMABaseClient(opts, rdmaFabric, loop) {
   Init();
 }
@@ -29,15 +29,15 @@ void RDMAClient::SendResponse(REQID _id, const google::protobuf::Message& _respo
                         REQID_size + RDMAOutgoingPacket::SizeRequiredToPackProtocolBuffer(byte_size);
   RDMAOutgoingPacket* opkt = new RDMAOutgoingPacket(data_size);
   CHECK_EQ(opkt->PackString(_response.GetTypeName()), 0) << "Message type packing failed";
-  CHECK_EQ(opkt->PackREQID(_id), 0) << "RID packing failed";
-  CHECK_EQ(opkt->PackProtocolBuffer(_response, byte_size), 0) << "Protocol buffer packing failed";
+  CHECK_EQ(opkt->PackREQID(_id), 0)  << "RID packing failed";
+  CHECK_EQ(opkt->PackProtocolBuffer(_response, byte_size), 0)  << "Protocol buffer packing failed";
   InternalSendResponse(opkt);
   return;
 }
 
 void RDMAClient::SendMessage(google::protobuf::Message* _message) {
   // LOG(INFO) << "Send request";
-  InternalSendMessage(_message); 
+  InternalSendMessage(_message);
 }
 
 sp_int64 RDMAClient::AddTimer(VCallback<> cb, sp_int64 _msecs) {
@@ -47,7 +47,7 @@ sp_int64 RDMAClient::AddTimer(VCallback<> cb, sp_int64 _msecs) {
 sp_int32 RDMAClient::RemoveTimer(sp_int64 timer_id) { return 0;}
 
 RDMABaseConnection* RDMAClient::CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
-                                         RDMAEventLoopNoneFD* ss) {
+                                                 RDMAEventLoop* ss) {
   HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss);
 
   conn->registerForNewPacket([this](RDMAIncomingPacket* pkt) { this->OnNewPacket(pkt); });
@@ -93,7 +93,7 @@ void RDMAClient::InternalSendRequest(google::protobuf::Message* _request, void* 
   sp_uint32 sop = RDMAOutgoingPacket::SizeRequiredToPackString(_request->GetTypeName()) + REQID_size +
                   RDMAOutgoingPacket::SizeRequiredToPackProtocolBuffer(byte_size);
   RDMAOutgoingPacket* opkt = new RDMAOutgoingPacket(sop);
-  CHECK_EQ(opkt->PackString(_request->GetTypeName()), 0) << "Request type packing failed";
+  CHECK_EQ(opkt->PackString(_request->GetTypeName()), 0) << "Message type packing failed";
   CHECK_EQ(opkt->PackREQID(rid), 0) << "RID packing failed";
   CHECK_EQ(opkt->PackProtocolBuffer(*_request, byte_size), 0) << "Protocol buffer packing failed";
 
@@ -108,7 +108,7 @@ void RDMAClient::InternalSendRequest(google::protobuf::Message* _request, void* 
     return;
   }
   if (_msecs > 0) {
-    auto cb = [rid, this](RDMAEventLoopNoneFD::Status s) { this->OnPacketTimer(rid, s); };
+    auto cb = [rid, this](RDMAEventLoop::Status s) { this->OnPacketTimer(rid, s); };
     CHECK_GT(eventLoop_->registerTimer(std::move(cb), false, _msecs), 0);
   }
   return;
@@ -130,7 +130,7 @@ void RDMAClient::InternalSendMessage(google::protobuf::Message* _message) {
   sp_uint32 sop = RDMAOutgoingPacket::SizeRequiredToPackString(_message->GetTypeName()) + REQID_size +
                   RDMAOutgoingPacket::SizeRequiredToPackProtocolBuffer(byte_size);
   RDMAOutgoingPacket* opkt = new RDMAOutgoingPacket(sop);
-  CHECK_EQ(opkt->PackString(_message->GetTypeName()), 0) << "Message type packing failed";
+  CHECK_EQ(opkt->PackString(_message->GetTypeName()), 0) << "Request type packing failed";
   CHECK_EQ(opkt->PackREQID(rid), 0) << "RID packing failed";
   CHECK_EQ(opkt->PackProtocolBuffer(*_message, byte_size), 0) << "Protocol buffer packing failed";
 
@@ -168,8 +168,7 @@ void RDMAClient::OnNewPacket(RDMAIncomingPacket* _ipkt) {
 
   if (_ipkt->UnPackString(&typname) != 0) {
     HeronRDMAConnection* conn = static_cast<HeronRDMAConnection*>(conn_);
-    LOG(FATAL) << "UnPackString failed from connection " << conn << " from hostport "
-               << conn->getIPAddress() << ":" << conn->getPort();
+    LOG(FATAL) << "UnPackString failed from connection ";
   }
 
   if (requestHandlers.count(typname) > 0) {
@@ -189,7 +188,7 @@ void RDMAClient::OnNewPacket(RDMAIncomingPacket* _ipkt) {
   delete _ipkt;
 }
 
-void RDMAClient::OnPacketTimer(REQID _id, RDMAEventLoopNoneFD::Status) {
+void RDMAClient::OnPacketTimer(REQID _id, RDMAEventLoop::Status) {
   if (context_map_.find(_id) == context_map_.end()) {
     // most likely this was due to the requests being retired before the timer.
     return;
