@@ -14,7 +14,7 @@
 class RDMABaseServer {
 public:
   RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
-  ~RDMABaseServer();
+  virtual ~RDMABaseServer();
   /**
    * Start the server
    */

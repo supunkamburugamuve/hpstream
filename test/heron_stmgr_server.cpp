@@ -3,11 +3,12 @@
 #include <set>
 #include <vector>
 #include <heron_rdma_server.h>
+#include <utils.h>
 
 const sp_string METRIC_TIME_SPENT_BACK_PRESSURE_COMPID = "__time_spent_back_pressure_by_compid/";
 
 RDMAStMgrServer::RDMAStMgrServer(RDMAEventLoop* eventLoop, RDMAOptions *_options,
-                                 RDMAFabric *fabric, RDMAOptions *clientOptions)
+                                 RDMAFabric *fabric, RDMAOptions *clientOptions, Timer *timer)
     : RDMAServer(fabric, eventLoop, _options) {
   // stmgr related handlers
   InstallMessageHandler(&RDMAStMgrServer::HandleTupleStreamMessage);
@@ -16,6 +17,7 @@ RDMAStMgrServer::RDMAStMgrServer(RDMAEventLoop* eventLoop, RDMAOptions *_options
   count = 0;
   rdma_client_ = NULL;
   clientOptions_ = clientOptions;
+  timer_ = timer;
 }
 
 RDMAStMgrServer::~RDMAStMgrServer() {
@@ -45,7 +47,7 @@ void RDMAStMgrServer::HandleConnectionClose(HeronRDMAConnection* _conn, NetworkE
 
 void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
-  LOG(INFO) << _message->id() << " " << _message->data();
+//  LOG(INFO) << _message->id() << " " << _message->data();
   if (_message->id() == -1) {
     count = 0;
   } else {
@@ -54,28 +56,26 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
     }
     count++;
   }
-  LOG(INFO) << "Received";
+//  LOG(INFO) << "Received";
 
   char *name = new char[100];
   sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
   proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
   message->set_name(name);
-  message->set_id(10);
+  message->set_id(_message->id());
   message->set_data(name);
   message->set_time(_message->time());
 
   if (rdma_client_ != NULL) {
     rdma_client_->SendMessage(message);
-  } else {
-    delete _message;
   }
-
+  delete _message;
   delete[] name;
   // SendMessage(_conn, (*message));
   // delete message;
   //printf("%d\n", (count % 1000));
-  if ((count % 10000) == 0) {
-    printf("count %d\n", count);
+  if ((count % 1000) == 0) {
+    printf("count %d %lf\n", count, timer_->elapsed());
   }
 }
 

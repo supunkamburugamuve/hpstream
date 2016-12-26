@@ -18,7 +18,7 @@
 		if ((fd)) {						\
 			ret = fi_ep_bind((ep), &(fd)->fid, (flags));	\
 			if (ret) {					\
-				HPS_ERR("fi_ep_bind %d", ret);		\
+				LOG(ERROR) << "fi_ep_bind " << ret;		\
 				return ret;				\
 			}						\
 		}							\
@@ -756,6 +756,24 @@ void RDMAConnection::OnWrite(enum rdma_loop_status state) {
 
 void RDMAConnection::OnRead(enum rdma_loop_status state) {
   ReceiveComplete();
+}
+
+int RDMAConnection::ConnectionClosed() {
+  if (mState != CONNECTED) {
+    LOG(ERROR) << "Connection not in CONNECTED state, cannot disconnect";
+  }
+
+  if (eventLoop->UnRegister(&rx_loop)) {
+    LOG(ERROR) << "Failed to un-register read from loop";
+  }
+
+  if (eventLoop->UnRegister(&tx_loop)) {
+    LOG(ERROR) << "Failed to un-register transmit from loop";
+  }
+
+  Free();
+  mState = DISCONNECTED;
+  return 0;
 }
 
 int RDMAConnection::closeConnection() {

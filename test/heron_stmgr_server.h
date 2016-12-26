@@ -27,7 +27,7 @@ class StMgr;
 class RDMAStMgrServer : public RDMAServer {
 public:
   RDMAStMgrServer(RDMAEventLoop *eventLoop, RDMAOptions *_options, RDMAFabric *fabric,
-                  RDMAOptions *clientOptions);
+                  RDMAOptions *clientOptions, Timer *timer);
 
   virtual ~RDMAStMgrServer();
 
@@ -94,6 +94,8 @@ private:
   RDMAStMgrClient *rdma_client_;
 
   RDMAOptions *clientOptions_;
+
+  Timer *timer_;
 };
 
 #endif  // SRC_CPP_SVCS_STMGR_SRC_MANAGER_STMGR_SERVER_H_

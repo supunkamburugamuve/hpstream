@@ -58,6 +58,9 @@ public:
   // disconnect
   int closeConnection();
 
+  // remove end has done a connection close
+  int ConnectionClosed();
+
   uint32_t getPort();
 
   char *getIPAddress();

@@ -7,6 +7,7 @@ RDMAEventLoop *eventLoop;
 RDMAFabric *loopFabric;
 RDMAStMgrClient *client;
 RDMAStMgrServer *server;
+Timer timer;
 
 #define SIZE_ 10000
 
@@ -32,7 +33,7 @@ int connect() {
   serverOptions->no_buffers = 10;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, clientOptions);
+  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, clientOptions, &timer);
   server->Start();
   server->origin = false;
 
@@ -41,10 +42,28 @@ int connect() {
   return ret;
 }
 
+void  INThandler(int sig) {
+  char  c;
+
+  signal(sig, SIG_IGN);
+
+  client->Quit();
+  delete client;
+  server->Stop();
+  delete server;
+
+  eventLoop->Stop();
+  delete eventLoop;
+
+  exit(0);
+}
+
+
 int main(int argc, char **argv) {
   int op;
   options.buf_size = 1024 * 64;
   options.no_buffers = 10;
+  signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {

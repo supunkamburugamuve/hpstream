@@ -148,9 +148,10 @@ int RDMAEventLoop::Start() {
   return 0;
 }
 
-int RDMAEventLoop::Close() {
+int RDMAEventLoop::Stop() {
   this->run_ = false;
-  return Wait();
+  close(epfd_);
+  return 0;
 }
 
 int RDMAEventLoop::Wait() {

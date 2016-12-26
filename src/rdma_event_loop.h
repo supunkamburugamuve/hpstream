@@ -51,7 +51,7 @@ public:
   RDMAFabric * get_fabric() { return rdmaFabric; }
   void Loop();
   int Start();
-  int Close();
+  int Stop();
   int Wait();
 private:
   bool run_;

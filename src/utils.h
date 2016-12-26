@@ -19,6 +19,7 @@
 #include <ctime>
 #include <iostream>
 #include <chrono>
+#include <glog/logging.h>
 
 #include "hps.h"
 #include "options.h"
@@ -29,8 +30,7 @@
 		if ((fd)) {					\
 			ret = fi_close(&(fd)->fid);		\
 			if (ret)				\
-				HPS_ERR("fi_close (%d) fid %d",	\
-					ret, (int) (fd)->fid.fclass);	\
+				LOG(WARNING) << "Failed to close fid: " << (int) (fd)->fid.fclass << " with error: " << ret;	\
 			fd = NULL;				\
 		}						\
 	} while (0)

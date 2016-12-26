@@ -58,7 +58,6 @@ void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
   }
 
   if (event == FI_SHUTDOWN) {
-    HandleClose_Base(OK);
     Stop_base();
     LOG(INFO) << "Received shutdown event";
   } else if (event == FI_CONNECTED) {
@@ -76,9 +75,27 @@ int RDMABaseClient::Stop_base() {
   }
 
   this->connection_->closeConnection();
+  delete connection_;
   HPS_CLOSE_FID(eq);
-  HPS_CLOSE_FID(fabric);
   this->state_ = DISCONNECTED;
+
+  HPS_CLOSE_FID(eq);
+
+  if (this->options) {
+    options->Free();
+  }
+
+  if (this->info) {
+    fi_freeinfo(this->info);
+    this->info = NULL;
+  }
+
+  if (conn_) {
+    delete conn_;
+    conn_ = NULL;
+  }
+
+  HandleClose_Base(OK);
   return 0;
 }
 
@@ -97,8 +114,6 @@ int RDMABaseClient::Start_base(void) {
     LOG(ERROR) << "Failed to get server information";
     return ret;
   }
-  //LOG(INFO) << "Pring info";
-  //print_info(this->info);
 
   ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
   if (ret) {

@@ -10,6 +10,7 @@ RDMAEventLoop *eventLoop;
 RDMAFabric *loopFabric;
 RDMAStMgrClient *client;
 RDMAStMgrServer *server;
+Timer timer;
 
 #define SIZE_ 10000
 
@@ -35,7 +36,7 @@ int connect3() {
   serverOptions->no_buffers = 10;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, NULL);
+  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, NULL, &timer);
   server->Start();
   server->origin = true;
 
@@ -62,9 +63,9 @@ int connect3() {
 }
 
 int exchange3() {
-  Timer timer;
-  sleep(20);
-  for (int i = -1; i < 10000; i++) {
+  sleep(2);
+  timer.reset();
+  for (int i = -1; i < 100000; i++) {
     char *name = new char[100];
     // LOG(INFO) << "Sending message";
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -93,13 +94,14 @@ void  INThandler(int sig) {
   char  c;
 
   signal(sig, SIG_IGN);
-  exit(0);
+
 //  eventLoop->Close();
-//  client->Quit();
+  client->Quit();
 //  delete client;
 //  server->Stop();
 //  delete server;
 //  delete eventLoop;
+  exit(0);
 }
 
 int main(int argc, char **argv) {

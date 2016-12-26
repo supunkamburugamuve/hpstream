@@ -89,7 +89,9 @@ int RDMABaseServer::Stop_Base() {
   LOG(INFO) << "Stopping the server";
   // unregister us from any connection events
   if (eventLoop_) {
-    eventLoop_->UnRegister(&eq_loop);
+    if (!eventLoop_->UnRegister(&eq_loop)) {
+      LOG(WARNING) << "Failed to unregistet event loop";
+    }
   }
 
   for (auto it = active_connections_.begin(); it != active_connections_.end(); ++it) {
@@ -104,7 +106,7 @@ int RDMABaseServer::Stop_Base() {
   HPS_CLOSE_FID(pep);
   HPS_CLOSE_FID(eq);
   HPS_CLOSE_FID(domain);
-  HPS_CLOSE_FID(fabric);
+//  HPS_CLOSE_FID(fabric);
   if (this->options) {
     options->Free();
   }
@@ -152,7 +154,7 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
       RDMAConnection *rdmaConnection = (*it)->getEndpointConnection();
       if (&rdmaConnection->GetEp()->fid == entry.fid) {
         HandleConnectionClose_Base(*it, OK);
-        (*it)->closeConnection();
+        rdmaConnection->ConnectionClosed();
         LOG(INFO) << "Closed connection";
         active_connections_.erase(it);
         break;
