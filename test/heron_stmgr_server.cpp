@@ -50,10 +50,13 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
 //  LOG(INFO) << _message->id() << " " << _message->data();
   if (_message->id() == -1) {
     count = 0;
-  } else {
-    if (count != _message->id()) {
-      LOG(ERROR) << "Invalid message sequence, count: " << count << " id: " << _message->id();
+    if (!origin) {
+      timer_->reset();
     }
+  } else {
+//    if (count != _message->id()) {
+//      LOG(ERROR) << "Invalid message sequence, count: " << count << " id: " << _message->id();
+//    }
     count++;
   }
 //  LOG(INFO) << "Received";
@@ -74,7 +77,7 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   // SendMessage(_conn, (*message));
   // delete message;
   //printf("%d\n", (count % 1000));
-  if ((count % 1000) == 0) {
+  if ((count % 10000) == 0) {
     printf("count %d %lf\n", count, timer_->elapsed());
   }
 }

@@ -65,7 +65,7 @@ int connect3() {
 int exchange3() {
   sleep(2);
   timer.reset();
-  for (int i = -1; i < 100000; i++) {
+  for (int i = -1; i < 1000000; i++) {
     char *name = new char[100];
     // LOG(INFO) << "Sending message";
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -95,12 +95,13 @@ void  INThandler(int sig) {
 
   signal(sig, SIG_IGN);
 
-//  eventLoop->Close();
   client->Quit();
-//  delete client;
-//  server->Stop();
-//  delete server;
-//  delete eventLoop;
+  delete client;
+  server->Stop();
+  delete server;
+
+  eventLoop->Stop();
+  delete eventLoop;
   exit(0);
 }
 

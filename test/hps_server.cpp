@@ -44,7 +44,7 @@ int connect() {
 
 void  INThandler(int sig) {
   char  c;
-
+  printf("Signal handler");
   signal(sig, SIG_IGN);
 
   client->Quit();

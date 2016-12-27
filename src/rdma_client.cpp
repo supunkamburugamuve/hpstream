@@ -23,6 +23,7 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
   this->conn_ = NULL;
   this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
   this->eq_loop.event = CONNECTION;
+  this->eq_loop.valid = true;
   this->state_ = INIT;
 }
 

@@ -38,6 +38,7 @@ struct rdma_loop_info {
   int fid;
   fid_t desc;
   enum rdma_loop_event event;
+  bool valid;
 };
 
 class RDMAEventLoop {
@@ -54,6 +55,8 @@ public:
   int Stop();
   int Wait();
 private:
+  int RemoveItems();
+
   bool run_;
   pthread_t loopThreadId;
   RDMAFabric *rdmaFabric;
@@ -64,6 +67,8 @@ private:
   // current capacity of events and fids
   sp_int32 current_capacity_;
   std::vector<struct rdma_loop_info *> event_details;
+  sp_int32 to_unregister_items;
+  pthread_spinlock_t spinlock_;
 };
 
 

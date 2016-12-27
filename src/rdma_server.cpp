@@ -21,6 +21,7 @@ RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
 
   this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };
   this->eq_loop.event = CONNECTION;
+  this->eq_loop.valid = true;
 }
 
 RDMABaseServer::~RDMABaseServer() {}

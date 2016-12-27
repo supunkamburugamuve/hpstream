@@ -21,6 +21,7 @@ RDMAEventLoop::RDMAEventLoop(RDMAFabric *_rdmaFabric) {
   this->current_capacity_ = __DEFAULT_EVENT_CAPACITY__;
   this->events_ = new struct epoll_event[current_capacity_];
   this->fids_ = new fid_t[current_capacity_];
+  this->to_unregister_items = 0;
   // create the epoll
   epfd_ = epoll_create1(0);
   if (epfd_ < 0) {
@@ -28,6 +29,7 @@ RDMAEventLoop::RDMAEventLoop(RDMAFabric *_rdmaFabric) {
     LOG(FATAL) << "Epoll creation failed: " << strerror(errno);
     throw ret;
   }
+  pthread_spin_init(&spinlock_, PTHREAD_PROCESS_PRIVATE);
 }
 
 void RDMAEventLoop::Loop() {
@@ -42,7 +44,9 @@ void RDMAEventLoop::Loop() {
 
     memset(events_, 0, sizeof (struct epoll_event) * current_capacity_);
 //    LOG(INFO) << "Wait.......... wit size " << size;
+    pthread_spin_lock(&spinlock_);
     int trywait = fi_trywait(fabric, fids_, size);
+    pthread_spin_unlock(&spinlock_);
     if (trywait == FI_SUCCESS) {
       errno = 0;
       ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd_, events_, size, -1));
@@ -69,6 +73,9 @@ void RDMAEventLoop::Loop() {
         c->callback(TRYAGAIN);
       }
     }
+//    if (to_unregister_items > 0) {
+//      RemoveItems();
+//    }
   }
 }
 
@@ -106,21 +113,12 @@ int RDMAEventLoop::RegisterRead(struct rdma_loop_info *info) {
   return 0;
 }
 
-int RDMAEventLoop::UnRegister(struct rdma_loop_info *info) {
-  struct epoll_event event;
-  int ret;
-  ret = epoll_ctl(epfd_, EPOLL_CTL_DEL, info->fid, &event);
-  if (ret) {
-    ret = -errno;
-    LOG(ERROR) << "Failed to un-register connection " << strerror(errno);
-    return ret;
-  }
-  bool found = false;
+int RDMAEventLoop::RemoveItems(){
   // remove from list
   for (std::vector<struct rdma_loop_info *>::iterator it = event_details.begin();
        it != event_details.end(); it++) {
-    if (*it == info) {
-      found = true;
+    if (!(*it)->valid) {
+      LOG(INFO) << "Remove item with FID: " << (*it)->fid;
       event_details.erase(it);
     }
   }
@@ -131,9 +129,36 @@ int RDMAEventLoop::UnRegister(struct rdma_loop_info *info) {
   for (std::vector<struct rdma_loop_info *>::iterator it = event_details.begin();
        it != event_details.end(); it++) {
     fids_[index] = (*it)->desc;
+    index++;
   }
 
-  return found ? 0 : 1;
+  to_unregister_items = 0;
+  return 0;
+}
+
+int RDMAEventLoop::UnRegister(struct rdma_loop_info *info) {
+  LOG(INFO) << "Un-register fid: " << info->fid;
+  info->valid = false;
+  to_unregister_items++;
+  pthread_spin_lock(&spinlock_);
+  for (std::vector<struct rdma_loop_info *>::iterator it = event_details.begin();
+       it != event_details.end(); it++) {
+    if (!(*it)->fid == info->fid) {
+      LOG(INFO) << "Remove item with FID: " << (*it)->fid;
+      it = event_details.erase(it);
+    }
+  }
+
+  sp_int32 index = 0;
+  memset(fids_, 0, sizeof (struct fid *) * this->current_capacity_);
+  // construct the fid list again we don't downsize
+  for (std::vector<struct rdma_loop_info *>::iterator it = event_details.begin();
+       it != event_details.end(); it++) {
+    fids_[index] = (*it)->desc;
+    index++;
+  }
+  pthread_spin_unlock(&spinlock_);
+  return 0;
 }
 
 int RDMAEventLoop::Start() {

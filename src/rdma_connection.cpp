@@ -41,6 +41,8 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
 
   this->tx_loop.callback = [this](enum rdma_loop_status state) { return this->OnWrite(state); };
   this->rx_loop.callback = [this](enum rdma_loop_status state) { return this->OnRead(state); };
+  this->tx_loop.valid = true;
+  this->rx_loop.valid = true;
   this->tx_loop.event = CQ_TRANSMIT;
   this->rx_loop.event = CQ_READ;
 
@@ -451,8 +453,16 @@ int RDMAConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     length = (uint32_t *) b;
     int32_t *credit = (int32_t *) (b + sizeof(uint32_t));
     // update the peer credit with the latest
-    if (*credit >= 0) {
+    if (*credit > 0) {
+      LOG(INFO) << "Received credit: " << *credit << " peer credit: " << peer_credit;
       this->peer_credit += *credit;
+      if (this->peer_credit > rbuf->GetNoOfBuffers() - 1) {
+        this->peer_credit = rbuf->GetNoOfBuffers() - 1;
+      }
+      RDMABuffer *sbuf = this->send_buf;
+      if (sbuf->GetAvailableWriteSpace() > 0) {
+        onWriteReady(0);
+      }
       // lets mark it zero in case we are not moving to next buffer
       *credit = 0;
     }
@@ -540,6 +550,7 @@ int RDMAConnection::postCredit() {
                  << available_credit << " > " << sbuf->GetNoOfBuffers();
       available_credit = sbuf->GetNoOfBuffers() - 1;
     }
+    LOG(INFO) << "Posting credit: " << available_credit;
     *sent_credit = available_credit;
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
@@ -584,7 +595,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   bool credit_set;
   // int32_t no_buffers = sbuf->GetNoOfBuffers();
   uint32_t buf_size = sbuf->GetBufferSize() - 8;
-//  LOG(INFO) << "Lock with peer credit: " << this->peer_credit;
+  LOG(INFO) << "Peer credit: " << this->peer_credit;
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   uint32_t free_buffs = sbuf->GetNoOfBuffers() - sbuf->GetFilledBuffers();
@@ -602,6 +613,7 @@ int RDMAConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
     int32_t available_credit = total_used_credit - credit_used_checkpoint;
     if (available_credit > 0  && self_credit > 0) {
+//      LOG(INFO) << "Sending credit: " << available_credit;
       *sent_credit =  available_credit;
       credit_set = true;
     } else {
