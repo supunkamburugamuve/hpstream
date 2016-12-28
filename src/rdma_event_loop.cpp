@@ -43,7 +43,6 @@ void RDMAEventLoop::Loop() {
     }
 
     memset(events_, 0, sizeof (struct epoll_event) * current_capacity_);
-//    LOG(INFO) << "Wait.......... wit size " << size;
     pthread_spin_lock(&spinlock_);
     int trywait = fi_trywait(fabric, fids_, size);
     pthread_spin_unlock(&spinlock_);
@@ -52,7 +51,7 @@ void RDMAEventLoop::Loop() {
       ret = (int) TEMP_FAILURE_RETRY(epoll_wait(epfd_, events_, size, -1));
       if (ret < 0) {
         ret = -errno;
-        LOG(ERROR) << "epoll_wait " << ret;
+        LOG(WARNING) << "Error in epoll wait " << ret;
       }
       for (int j = 0; j < ret; j++) {
         struct epoll_event *event = events_ + j;
@@ -80,7 +79,7 @@ void RDMAEventLoop::Loop() {
 }
 
 int RDMAEventLoop::RegisterRead(struct rdma_loop_info *info) {
-  struct epoll_event event;
+  struct epoll_event *event = new struct epoll_event();
   int ret;
   // add the vent to the list
   this->event_details.push_back(info);
@@ -101,38 +100,15 @@ int RDMAEventLoop::RegisterRead(struct rdma_loop_info *info) {
   // add the fid so we can use trywait
   fids_[size - 1] = info->desc;
 
-  event.data.ptr = (void *) info;
-  event.events = EPOLLIN;
-  ret = epoll_ctl(epfd_, EPOLL_CTL_ADD, info->fid, &event);
+  event->data.ptr = (void *) info;
+  event->events = EPOLLIN;
+  ret = epoll_ctl(epfd_, EPOLL_CTL_ADD, info->fid, event);
   if (ret) {
     ret = -errno;
     LOG(FATAL) << "Failed to register event queue" << strerror(errno);
     return ret;
   }
 
-  return 0;
-}
-
-int RDMAEventLoop::RemoveItems(){
-  // remove from list
-  for (std::vector<struct rdma_loop_info *>::iterator it = event_details.begin();
-       it != event_details.end(); it++) {
-    if (!(*it)->valid) {
-      LOG(INFO) << "Remove item with FID: " << (*it)->fid;
-      event_details.erase(it);
-    }
-  }
-
-  sp_int32 index = 0;
-  memset(fids_, 0, sizeof (struct fid *) * this->current_capacity_);
-  // construct the fid list again we don't downsize
-  for (std::vector<struct rdma_loop_info *>::iterator it = event_details.begin();
-       it != event_details.end(); it++) {
-    fids_[index] = (*it)->desc;
-    index++;
-  }
-
-  to_unregister_items = 0;
   return 0;
 }
 
@@ -181,6 +157,8 @@ int RDMAEventLoop::Stop() {
 
 int RDMAEventLoop::Wait() {
   pthread_join(loopThreadId, NULL);
+  delete []events_;
+  delete []fids_;
   return 0;
 }
 

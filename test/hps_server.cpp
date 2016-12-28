@@ -22,15 +22,15 @@ int connect() {
   clientOptions->dst_addr = options.dst_addr;
   clientOptions->dst_port = options.dst_port;
   clientOptions->options = 0;
-  clientOptions->buf_size = 64 * 1024;
-  clientOptions->no_buffers = 10;
+  clientOptions->buf_size = BUFFER_SIZE;
+  clientOptions->no_buffers = BUFFERS;
 
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
   serverOptions->src_addr = options.src_addr;
   serverOptions->options = 0;
-  serverOptions->buf_size = 64 * 1024;
-  serverOptions->no_buffers = 10;
+  serverOptions->buf_size = BUFFER_SIZE;
+  serverOptions->no_buffers = BUFFERS;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
   server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, clientOptions, &timer);
@@ -47,13 +47,13 @@ void  INThandler(int sig) {
   printf("Signal handler");
   signal(sig, SIG_IGN);
 
-  client->Quit();
-  delete client;
-  server->Stop();
-  delete server;
-
-  eventLoop->Stop();
-  delete eventLoop;
+//  client->Quit();
+//  delete client;
+//  server->Stop();
+//  delete server;
+//
+//  eventLoop->Stop();
+//  delete eventLoop;
 
   exit(0);
 }
@@ -61,8 +61,8 @@ void  INThandler(int sig) {
 
 int main(int argc, char **argv) {
   int op;
-  options.buf_size = 1024 * 64;
-  options.no_buffers = 10;
+  options.buf_size = BUFFER_SIZE;
+  options.no_buffers = BUFFERS;
   signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {

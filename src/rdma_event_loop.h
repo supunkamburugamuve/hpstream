@@ -55,8 +55,6 @@ public:
   int Stop();
   int Wait();
 private:
-  int RemoveItems();
-
   bool run_;
   pthread_t loopThreadId;
   RDMAFabric *rdmaFabric;

@@ -32,8 +32,8 @@ int connect3() {
   serverOptions->src_port = options.src_port;
   serverOptions->src_addr = options.src_addr;
   serverOptions->options = 0;
-  serverOptions->buf_size = 64 * 1024;
-  serverOptions->no_buffers = 10;
+  serverOptions->buf_size = BUFFER_SIZE;
+  serverOptions->no_buffers = BUFFERS;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
   server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, NULL, &timer);
@@ -45,8 +45,8 @@ int connect3() {
   clientOptions->dst_addr = options.dst_addr;
   clientOptions->dst_port = options.dst_port;
   clientOptions->options = 0;
-  clientOptions->buf_size = 64 * 1024;
-  clientOptions->no_buffers = 10;
+  clientOptions->buf_size = BUFFER_SIZE;
+  clientOptions->no_buffers = BUFFERS;
   RDMAFabric *clientFabric = new RDMAFabric(clientOptions);
   clientFabric->Init();
 
@@ -65,7 +65,7 @@ int connect3() {
 int exchange3() {
   sleep(2);
   timer.reset();
-  for (int i = -1; i < 1000000; i++) {
+  for (int i = -1; i < 10000000; i++) {
     char *name = new char[100];
     // LOG(INFO) << "Sending message";
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -95,20 +95,20 @@ void  INThandler(int sig) {
 
   signal(sig, SIG_IGN);
 
-  client->Quit();
-  delete client;
-  server->Stop();
-  delete server;
-
-  eventLoop->Stop();
-  delete eventLoop;
+//  client->Quit();
+//  delete client;
+//  server->Stop();
+//  delete server;
+//
+//  eventLoop->Stop();
+//  delete eventLoop;
   exit(0);
 }
 
 int main(int argc, char **argv) {
   int op;
-  options.buf_size = 1024 * 64;
-  options.no_buffers = 10;
+  options.buf_size = BUFFER_SIZE;
+  options.no_buffers = BUFFERS;
   signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {

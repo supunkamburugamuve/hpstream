@@ -16,8 +16,6 @@ int RDMAFabric::Init() {
   info_hints->ep_attr->type = FI_EP_MSG;
   info_hints->caps = FI_MSG | FI_RMA;
   info_hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
-  // LOG(INFO) << "Print info";
-  // print_info(info_hints);
 
   ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
   if (ret) {

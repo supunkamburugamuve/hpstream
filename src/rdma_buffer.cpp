@@ -18,7 +18,6 @@ RDMABuffer::RDMABuffer(uint8_t *buf, uint32_t total_buffer_size, uint32_t no_buf
   this->submitted_buffs = 0;
   this->filled_buffs = 0;
 
-  pthread_mutex_init(&lock, NULL);
   Init();
 }
 
