@@ -33,7 +33,7 @@ int connect() {
   serverOptions->no_buffers = BUFFERS;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, clientOptions, &timer);
+  server = new RDMAStMgrServer(eventLoop, serverOptions, serverFabric, clientOptions, &timer);
   server->Start();
   server->origin = false;
 
