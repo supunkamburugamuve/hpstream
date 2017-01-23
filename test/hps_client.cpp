@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
   int op;
   options.buf_size = BUFFER_SIZE;
   options.no_buffers = BUFFERS;
-  signal(SIGINT, INThandler);
+//  signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {
