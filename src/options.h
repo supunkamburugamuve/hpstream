@@ -5,6 +5,9 @@
 
 #include "hps.h"
 
+#define VERBS_PROVIDER_TYPE 0
+#define PSM2_PROVIDER_TYPE 1
+
 class RDMAOptions {
 public:
   char *src_port;
@@ -12,6 +15,7 @@ public:
   char *src_addr;
   char *dst_addr;
   int options;
+  int provider = VERBS_PROVIDER_TYPE;
   uint32_t max_packet_size_;
 
   // buffer size of a individual buffer, if it is
