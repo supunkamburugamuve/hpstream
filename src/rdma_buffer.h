@@ -69,6 +69,8 @@ private:
   uint32_t filled_buffs;
   // the cq tag we received for each buffer
   struct fi_cq_tagged_entry *cq_tagged_entries;
+  // array holding the connection index number which filled a buffer
+  uint32_t *filled_connections;
   // private methods
   int Init();
 };

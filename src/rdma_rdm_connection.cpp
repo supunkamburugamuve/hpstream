@@ -1,3 +1,6 @@
+
+#include "rdma_rdm_connection.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -10,7 +13,7 @@
 #include <arpa/inet.h>
 #include <glog/logging.h>
 
-#include "rdma_rdm.h"
+#include "rdma_connection.h"
 
 #define HPS_EP_BIND(ep, fd, flags)					\
 	do {								\
@@ -25,9 +28,9 @@
 	} while (0)
 
 
-Datagram::Datagram(RDMAOptions *opts, struct fi_info *info,
-                                       struct fid_fabric *fabric, struct fid_domain *domain,
-                                       RDMAEventLoop *loop) {
+DatagramConnection::DatagramConnection(RDMAOptions *opts, struct fi_info *info,
+                               struct fid_fabric *fabric, struct fid_domain *domain,
+                               RDMAEventLoop *loop) {
   this->options = opts;
   this->info = info;
   this->info_hints = info_hints;
@@ -77,7 +80,7 @@ Datagram::Datagram(RDMAOptions *opts, struct fi_info *info,
   this->credit_used_checkpoint = 0;
 }
 
-void Datagram::Free() {
+void DatagramConnection::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
   HPS_CLOSE_FID(alias_ep);
@@ -104,7 +107,7 @@ void Datagram::Free() {
   }
 }
 
-int Datagram::start() {
+int DatagramConnection::start() {
   LOG(INFO) << "Starting rdma connection";
   int ret = PostBuffers();
   if (ret) {
@@ -128,22 +131,22 @@ int Datagram::start() {
   return 0;
 }
 
-int Datagram::registerWrite(VCallback<int> onWrite) {
+int DatagramConnection::registerWrite(VCallback<int> onWrite) {
   this->onWriteReady = std::move(onWrite);
   return 0;
 }
 
-int Datagram::registerRead(VCallback<int> onRead) {
+int DatagramConnection::registerRead(VCallback<int> onRead) {
   this->onReadReady = std::move(onRead);
   return 0;
 }
 
-int Datagram::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
+int DatagramConnection::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
   this->onWriteComplete = std::move(onWriteComplete);
   return 0;
 }
 
-int Datagram::SetupQueues() {
+int DatagramConnection::SetupQueues() {
   int ret;
   ret = AllocateBuffers();
   if (ret) {
@@ -187,7 +190,7 @@ int Datagram::SetupQueues() {
   return 0;
 }
 
-int Datagram::AllocateBuffers(void) {
+int DatagramConnection::AllocateBuffers(void) {
   int ret = 0;
   RDMAOptions *opts = this->options;
   uint8_t *tx_buf, *rx_buf;
@@ -241,7 +244,7 @@ int Datagram::AllocateBuffers(void) {
   return 0;
 }
 
-int Datagram::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
+int DatagramConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   int ret;
   this->ep = ep;
 
@@ -277,7 +280,7 @@ int Datagram::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   return 0;
 }
 
-int Datagram::PostBuffers() {
+int DatagramConnection::PostBuffers() {
   this->rx_seq = 0;
   this->rx_cq_cntr = 0;
   this->tx_cq_cntr = 0;
@@ -306,7 +309,7 @@ int Datagram::PostBuffers() {
   return 0;
 }
 
-ssize_t Datagram::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+ssize_t DatagramConnection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   ssize_t ret = 0;
 
   ret = fi_send(this->ep, buf, size, fi_mr_desc(w_mr),	0, ctx);
@@ -317,7 +320,7 @@ ssize_t Datagram::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   return 0;
 }
 
-ssize_t Datagram::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+ssize_t DatagramConnection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   ssize_t ret;
 
   ret = fi_recv(this->ep, buf, size, fi_mr_desc(mr),	0, ctx);
@@ -327,8 +330,8 @@ ssize_t Datagram::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
   return 0;
 }
 
-int Datagram::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
-                                 uint64_t flags, void *context) {
+int DatagramConnection::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
+                 uint64_t flags, void *context) {
   int ret;
 
   ret = fi_av_insert(this->av, addr, count, fi_addr, flags, context);
@@ -343,7 +346,254 @@ int Datagram::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
   return 0;
 }
 
-int Datagram::TransmitComplete() {
+bool DatagramConnection::DataAvailableForRead() {
+  RDMABuffer *sbuf = this->recv_buf;
+  return sbuf->GetFilledBuffers() > 0;
+}
+
+int DatagramConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read, uint64_t tag) {
+  ssize_t ret = 0;
+  uint32_t base;
+  uint32_t submittedBuffers;
+  uint32_t noOfBuffers;
+  uint32_t index = 0;
+  // go through the buffers
+  RDMABuffer *rbuf = this->recv_buf;
+  // now lock the buffer
+  if (rbuf->GetFilledBuffers() == 0) {
+    *read = 0;
+    return 0;
+  }
+  uint32_t tail = rbuf->GetBase();
+  uint32_t buffers_filled = rbuf->GetFilledBuffers();
+  uint32_t current_read_indx = rbuf->GetCurrentReadIndex();
+  // need to copy
+  uint32_t need_copy = 0;
+  // number of bytes copied
+  uint32_t read_size = 0;
+  while (read_size < size &&  buffers_filled > 0) {
+    uint8_t *b = rbuf->GetBuffer(tail);
+    uint32_t *length;
+    // first read the amount of data in the buffer
+    length = (uint32_t *) b;
+    int32_t *credit = (int32_t *) (b + sizeof(uint32_t));
+    // update the peer credit with the latest
+    // LOG(INFO) << "Received credit: " << *credit << " peer credit: " << peer_credit;
+    if (*credit > 0) {
+      this->peer_credit += *credit;
+      if (this->peer_credit > rbuf->GetNoOfBuffers() - 1) {
+        this->peer_credit = rbuf->GetNoOfBuffers() - 1;
+      }
+      if (waiting_for_credit) {
+        onWriteReady(0);
+      }
+      // lets mark it zero in case we are not moving to next buffer
+      *credit = 0;
+    }
+
+    // now lets see how much data we need to copy from this buffer
+    need_copy = (*length) - current_read_indx;
+    // now lets see how much we can copy
+    uint32_t can_copy = 0;
+    uint32_t tmp_index = current_read_indx;
+    // we can copy everything from this buffer
+    if (size - read_size >= need_copy) {
+      can_copy = need_copy;
+      current_read_indx = 0;
+      credit_messages_[tail] = length <= 0;
+      // advance the base pointer
+      rbuf->IncrementBase(1);
+
+      // this->self_credit--;
+      buffers_filled--;
+      tail = rbuf->GetBase();
+    } else {
+      // we cannot copy everything from this buffer
+      can_copy = size - read_size;
+      current_read_indx += can_copy;
+    }
+    rbuf->setCurrentReadIndex(current_read_indx);
+    // next copy the buffer
+    memcpy(buf + read_size, b + sizeof(uint32_t) + sizeof(uint32_t) + tmp_index, can_copy);
+    // now update
+    read_size += can_copy;
+  }
+
+  *read = read_size;
+
+  base = rbuf->GetBase();
+  submittedBuffers = rbuf->GetSubmittedBuffers();
+  noOfBuffers = rbuf->GetNoOfBuffers();
+  while (submittedBuffers < noOfBuffers) {
+    index = (base + submittedBuffers) % noOfBuffers;
+//    LOG(INFO) << "Posting buffer: " << index;
+    uint8_t *send_buf = rbuf->GetBuffer(index);
+    // LOG(INFO) << "Posting receive buffer of size: " << rbuf->GetBufferSize();
+    ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
+    if (ret && ret != -FI_EAGAIN) {
+      LOG(ERROR) << "Failed to post the receive buffer: " << ret;
+      return (int) ret;
+    }
+    this->total_used_credit++;
+    rbuf->IncrementSubmitted(1);
+    int32_t available_credit = total_used_credit - credit_used_checkpoint;
+    if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
+      if (available_credit > noOfBuffers - 1) {
+        LOG(ERROR) << "Credit should never be greater than no of buffers available: "
+                   << available_credit << " > " << noOfBuffers;
+      }
+      postCredit();
+    }
+//    LOG(ERROR) << "Read self: " << self_credit << " peer: " << peer_credit << " sent_credit: " << total_sent_credit << " used_credit: " << total_used_credit << " checkout: " << credit_used_checkpoint;
+    submittedBuffers++;
+  }
+
+  return 0;
+}
+
+int DatagramConnection::postCredit() {
+  // first lets get the available buffer
+  RDMABuffer *sbuf = this->send_buf;
+  // now determine the buffer no to use
+  uint32_t head = 0;
+  uint32_t error_count = 0;
+  // we need to send everything by using the buffers available
+  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  if (free_space > 0) {
+    // we have space in the buffers
+    head = sbuf->NextWriteIndex();
+    uint8_t *current_buf = sbuf->GetBuffer(head);
+    // now lets copy from send buffer to current buffer chosen
+    uint32_t *length = (uint32_t *) current_buf;
+    // set the first 4 bytes as the content length
+    *length = 0;
+    // send the credit with the write
+    int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
+    int32_t available_credit = total_used_credit - credit_used_checkpoint;
+    if (available_credit > sbuf->GetNoOfBuffers() - 1) {
+      LOG(ERROR) << "Available credit > no of buffers, something is wrong: "
+                 << available_credit << " > " << sbuf->GetNoOfBuffers();
+      available_credit = sbuf->GetNoOfBuffers() - 1;
+    }
+//    LOG(INFO) << "Posting credit: " << available_credit;
+    *sent_credit = available_credit;
+    // set the data size in the buffer
+    sbuf->setBufferContentSize(head, 0);
+    // send the current buffer
+    ssize_t ret = PostTX(sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx);
+    if (!ret) {
+      total_sent_credit += available_credit;
+      credit_used_checkpoint += available_credit;
+      sbuf->IncrementFilled(1);
+      // increment the head
+      sbuf->IncrementSubmitted(1);
+//      LOG(ERROR) << "Post self: " << self_credit << " peer: "
+//                 << peer_credit << " sent_credit: " << total_sent_credit
+//                 << " used_credit: " << total_used_credit
+//                 << " checkout: " << credit_used_checkpoint;
+    } else {
+      if (ret != -FI_EAGAIN) {
+        LOG(ERROR) << "Failed to transmit the buffer";
+        error_count++;
+        if (error_count > MAX_ERRORS) {
+          LOG(ERROR) << "Failed to send the buffer completely. sent ";
+          goto err;
+        }
+      }
+    }
+  } else {
+    LOG(ERROR) << "Free space not available to post credit "
+               << " self: " << self_credit << " peer: " << peer_credit;
+  }
+
+  return 0;
+
+  err:
+  return 1;
+}
+
+int DatagramConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write, uint64_t tag) {
+  // first lets get the available buffer
+  RDMABuffer *sbuf = this->send_buf;
+  // now determine the buffer no to use
+  uint32_t sent_size = 0;
+  uint32_t current_size = 0;
+  uint32_t head = 0;
+  uint32_t error_count = 0;
+  bool credit_set;
+  // int32_t no_buffers = sbuf->GetNoOfBuffers();
+  uint32_t buf_size = sbuf->GetBufferSize() - 8;
+//  LOG(INFO) << "Peer credit: " << this->peer_credit;
+  // we need to send everything by using the buffers available
+  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+  uint32_t free_buffs = sbuf->GetNoOfBuffers() - sbuf->GetFilledBuffers();
+  while (sent_size < size && free_space > 0 && this->peer_credit > 0 && free_buffs > 1) {
+    credit_set = false;
+    // we have space in the buffers
+    head = sbuf->NextWriteIndex();
+    // LOG(INFO) << "Next write index: " << head;
+    uint8_t *current_buf = sbuf->GetBuffer(head);
+    // now lets copy from send buffer to current buffer chosen
+    current_size = (size - sent_size) < buf_size ? size - sent_size : buf_size;
+    uint32_t *length = (uint32_t *) current_buf;
+    // set the first 4 bytes as the content length
+    *length = current_size;
+    // send the credit with the write
+    int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
+    int32_t available_credit = total_used_credit - credit_used_checkpoint;
+    if (available_credit > 0  && self_credit > 0) {
+//      LOG(INFO) << "Sending credit: " << available_credit;
+      *sent_credit =  available_credit;
+      credit_set = true;
+    } else {
+      *sent_credit = -1;
+    }
+
+    memcpy(current_buf + sizeof(uint32_t) + sizeof(int32_t), buf + sent_size, current_size);
+    // set the data size in the buffer
+    sbuf->setBufferContentSize(head, current_size);
+    // send the current buffer
+//    LOG(INFO) << "Writing message of size: " << current_size + sizeof(uint32_t) + sizeof(int32_t);
+    ssize_t ret = PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx);
+    if (!ret) {
+      if (credit_set) {
+        total_sent_credit += available_credit;
+        credit_used_checkpoint += available_credit;
+      }
+
+      sent_size += current_size;
+      sbuf->IncrementFilled(1);
+      // increment the head
+      sbuf->IncrementSubmitted(1);
+      this->peer_credit--;
+//      LOG(ERROR) << "Write self: " << self_credit << " peer: " << peer_credit
+//                 << " sent_credit: " << total_sent_credit << " used_credit: "
+//                 << total_used_credit << " checkout: " << credit_used_checkpoint;
+    } else {
+      if (ret != -FI_EAGAIN) {
+        LOG(ERROR) << "Failed to transmit the buffer";
+        error_count++;
+        if (error_count > MAX_ERRORS) {
+          LOG(ERROR) << "Failed to send the buffer completely. sent " << sent_size;
+          goto err;
+        }
+      }
+    }
+    free_space = sbuf->GetAvailableWriteSpace();
+    waiting_for_credit = false;
+  }
+  if (peer_credit <= 0 && sent_size < size) {
+    waiting_for_credit = true;
+  }
+
+  *write = sent_size;
+  return 0;
+
+  err:
+  return -1;
+}
+
+int DatagramConnection::TransmitComplete() {
   struct fi_cq_err_entry comp;
   ssize_t cq_ret;
   uint32_t completed_bytes = 0;
@@ -403,7 +653,7 @@ int Datagram::TransmitComplete() {
   return 0;
 }
 
-int Datagram::ReceiveComplete() {
+int DatagramConnection::ReceiveComplete() {
   ssize_t cq_ret;
   struct fi_cq_tagged_entry comp;
   RDMABuffer *sbuf = this->recv_buf;
@@ -449,17 +699,17 @@ int Datagram::ReceiveComplete() {
   return 0;
 }
 
-Datagram::~Datagram() {}
+DatagramConnection::~DatagramConnection() {}
 
-void Datagram::OnWrite(enum rdma_loop_status state) {
+void DatagramConnection::OnWrite(enum rdma_loop_status state) {
   TransmitComplete();
 }
 
-void Datagram::OnRead(enum rdma_loop_status state) {
+void DatagramConnection::OnRead(enum rdma_loop_status state) {
   ReceiveComplete();
 }
 
-int Datagram::ConnectionClosed() {
+int DatagramConnection::ConnectionClosed() {
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
@@ -472,7 +722,7 @@ int Datagram::ConnectionClosed() {
   return 0;
 }
 
-int Datagram::closeConnection() {
+int DatagramConnection::closeConnection() {
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
@@ -490,7 +740,7 @@ int Datagram::closeConnection() {
   return 0;
 }
 
-char* Datagram::getIPAddress() {
+char* DatagramConnection::getIPAddress() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;
@@ -510,7 +760,7 @@ char* Datagram::getIPAddress() {
   return addr_str;
 }
 
-uint32_t Datagram::getPort() {
+uint32_t DatagramConnection::getPort() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;

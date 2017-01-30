@@ -19,14 +19,15 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
-class Datagram {
+class DatagramConnection {
 public:
-  Datagram(RDMAOptions *opts,
-  struct fi_info *info, struct fid_fabric *fabric,
-  struct fid_domain *domain, RDMAEventLoop *loop);
+
+  DatagramConnection(RDMAOptions *opts,
+                 struct fi_info *info, struct fid_fabric *fabric,
+                 struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
-  virtual ~Datagram();
+  virtual ~DatagramConnection();
 
   int start();
 
@@ -170,5 +171,6 @@ private:
   // remote addresses
   std::unordered_map<uint32_t, fi_addr_t> remote_addresses;
 };
+
 
 #endif
