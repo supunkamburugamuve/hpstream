@@ -92,6 +92,11 @@ private:
    * The connection has being fully established
    */
   int Connected(struct fi_eq_cm_entry *entry);
+
+  /**
+   * Start accepting connections
+   */
+  int StartAcceptingConnections();
 };
 
 #endif /* SSERVER_H_ */

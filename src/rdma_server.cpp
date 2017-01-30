@@ -42,8 +42,19 @@ int RDMABaseServer::Start_Base(void) {
     return ret;
   }
 
+  if (options->provider == VERBS_PROVIDER_TYPE) {
+    ret = StartAcceptingConnections();
+    if (ret) {
+      LOG(INFO) << "Failed to start accepting connections";
+      return ret;
+    }
+  }
+  return 0;
+}
+
+int RDMABaseServer::StartAcceptingConnections() {
   // open the event queue for passive end-point
-  ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
+  int ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
   if (ret) {
     LOG(INFO) << "fi_eq_open " << ret;
     return ret;

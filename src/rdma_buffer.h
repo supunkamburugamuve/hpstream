@@ -67,6 +67,8 @@ private:
   uint32_t submitted_buffs;
   // number of buffers filled by RDMA
   uint32_t filled_buffs;
+  // the cq tag we received for each buffer
+  struct fi_cq_tagged_entry *cq_tagged_entries;
   // private methods
   int Init();
 };

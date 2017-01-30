@@ -41,6 +41,7 @@ DatagramConnection::DatagramConnection(RDMAOptions *opts, struct fi_info *info,
 
   this->txcq = NULL;
   this->rxcq = NULL;
+  this->av = NULL;
 
   this->tx_loop.callback = [this](enum rdma_loop_status state) { return this->OnWrite(state); };
   this->rx_loop.callback = [this](enum rdma_loop_status state) { return this->OnRead(state); };
@@ -155,9 +156,9 @@ int DatagramConnection::SetupQueues() {
   }
 
   // we use the context, not the counter
-  cq_attr.format = FI_CQ_FORMAT_CONTEXT;
+  cq_attr.format = FI_CQ_FORMAT_TAGGED;
   // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_FD;
+  cq_attr.wait_obj = FI_WAIT_UNSPEC;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   cq_attr.size = send_buf->GetNoOfBuffers();
   ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
@@ -253,6 +254,7 @@ int DatagramConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   if (info->ep_attr->type == FI_EP_MSG) {
     HPS_EP_BIND(ep, eq, 0);
   }
+  HPS_EP_BIND(ep, av, 0);
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
 
@@ -327,6 +329,22 @@ ssize_t DatagramConnection::PostRX(size_t size, uint8_t *buf, struct fi_context*
   if (ret)
     return ret;
   rx_seq++;
+  return 0;
+}
+
+int DatagramConnection::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
+                 uint64_t flags, void *context) {
+  int ret;
+
+  ret = fi_av_insert(this->av, addr, count, fi_addr, flags, context);
+  if (ret < 0) {
+    LOG(ERROR) << "Address vector insert failed: " << ret;
+    return ret;
+  } else if (ret != count) {
+    LOG(ERROR) << "fi_av_insert: number of addresses inserted = %d;" << ret <<
+    " number of addresses given = %zd\n" << count;
+    return -EXIT_FAILURE;
+  }
   return 0;
 }
 

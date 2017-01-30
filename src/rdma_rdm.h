@@ -138,8 +138,18 @@ private:
   RDMAEventLoop *eventLoop;
 
   /** Private methods */
+  /**
+   * Transmit a buffer
+   */
   ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
+  /**
+   * Post a receive buffer
+   */
   ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
+  /**
+   * Av insert for RDM endpoints
+   */
+  int AvInsert(void *addr, size_t count, fi_addr_t *fi_addr, uint64_t flags, void *context);
 
   int AllocateBuffers(void);
   int TransmitComplete();
@@ -171,6 +181,8 @@ private:
   // an temporary array to hold weather we received a credit message or not
   bool * credit_messages_;
   int postCredit();
+  // remote addresses
+  std::unordered_map<uint32_t, fi_addr_t> remote_addresses;
 };
 
 
