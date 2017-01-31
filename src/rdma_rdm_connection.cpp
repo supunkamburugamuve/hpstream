@@ -28,7 +28,7 @@
 	} while (0)
 
 
-DatagramConnection::DatagramConnection(RDMAOptions *opts, struct fi_info *info,
+DatagraChannel::DatagraChannel(RDMAOptions *opts, struct fi_info *info,
                                struct fid_fabric *fabric, struct fid_domain *domain,
                                RDMAEventLoop *loop) {
   this->options = opts;
@@ -36,11 +36,9 @@ DatagramConnection::DatagramConnection(RDMAOptions *opts, struct fi_info *info,
   this->info_hints = info_hints;
   this->fabric = fabric;
   this->domain = domain;
-  this->eventLoop = loop;
 
   this->txcq = NULL;
   this->rxcq = NULL;
-  this->av = NULL;
 
   this->tx_loop.callback = [this](enum rdma_loop_status state) { return this->OnWrite(state); };
   this->rx_loop.callback = [this](enum rdma_loop_status state) { return this->OnRead(state); };
@@ -80,7 +78,7 @@ DatagramConnection::DatagramConnection(RDMAOptions *opts, struct fi_info *info,
   this->credit_used_checkpoint = 0;
 }
 
-void DatagramConnection::Free() {
+void DatagraChannel::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
   HPS_CLOSE_FID(alias_ep);
@@ -107,90 +105,22 @@ void DatagramConnection::Free() {
   }
 }
 
-int DatagramConnection::start() {
-  LOG(INFO) << "Starting rdma connection";
-  int ret = PostBuffers();
-  if (ret) {
-    LOG(ERROR) << "Failed to set up the buffers " << ret;
-    return ret;
-  }
-
-  // registe with the loop
-  ret = this->eventLoop->RegisterRead(&rx_loop);
-  if (ret) {
-    LOG(ERROR) << "Failed to register receive cq to event loop " << ret;
-    return ret;
-  }
-
-  ret = this->eventLoop->RegisterRead(&tx_loop);
-  if (ret) {
-    LOG(ERROR) << "Failed to register transmit cq to event loop " << ret;
-    return ret;
-  }
-
-  return 0;
-}
-
-int DatagramConnection::registerWrite(VCallback<int> onWrite) {
+int DatagraChannel::registerWrite(VCallback<int> onWrite) {
   this->onWriteReady = std::move(onWrite);
   return 0;
 }
 
-int DatagramConnection::registerRead(VCallback<int> onRead) {
+int DatagraChannel::registerRead(VCallback<int> onRead) {
   this->onReadReady = std::move(onRead);
   return 0;
 }
 
-int DatagramConnection::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
+int DatagraChannel::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
   this->onWriteComplete = std::move(onWriteComplete);
   return 0;
 }
 
-int DatagramConnection::SetupQueues() {
-  int ret;
-  ret = AllocateBuffers();
-  if (ret) {
-    return ret;
-  }
-
-  // we use the context, not the counter
-  cq_attr.format = FI_CQ_FORMAT_TAGGED;
-  // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_UNSPEC;
-  cq_attr.wait_cond = FI_CQ_COND_NONE;
-  cq_attr.size = send_buf->GetNoOfBuffers();
-  ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
-  if (ret) {
-    LOG(ERROR) << "fi_cq_open for send " << ret;
-    return ret;
-  }
-
-  // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_FD;
-  cq_attr.wait_cond = FI_CQ_COND_NONE;
-  LOG(INFO) << "RQ Attr size: " << info->rx_attr->size;
-  cq_attr.size = send_buf->GetNoOfBuffers();
-  ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);
-  if (ret) {
-    LOG(ERROR) << "fi_cq_open for receive " << ret;
-    return ret;
-  }
-
-  if (info->ep_attr->type == FI_EP_RDM || info->ep_attr->type == FI_EP_DGRAM) {
-    if (info->domain_attr->av_type != FI_AV_UNSPEC)
-      av_attr.type = info->domain_attr->av_type;
-
-    ret = fi_av_open(domain, &av_attr, &av, NULL);
-    if (ret) {
-      LOG(ERROR) << "fi_av_open: " << ret;
-      return ret;
-    }
-  }
-
-  return 0;
-}
-
-int DatagramConnection::AllocateBuffers(void) {
+int DatagraChannel::AllocateBuffers(void) {
   int ret = 0;
   RDMAOptions *opts = this->options;
   uint8_t *tx_buf, *rx_buf;
@@ -241,117 +171,65 @@ int DatagramConnection::AllocateBuffers(void) {
 
   this->send_buf = new RDMABuffer(tx_buf, (uint32_t) tx_size, opts->no_buffers);
   this->recv_buf = new RDMABuffer(rx_buf, (uint32_t) rx_size, opts->no_buffers);
+  this->io_vectors = new struct iovec[opts->no_buffers];
+  this->tag_messages = new struct fi_msg_tagged[opts->no_buffers];
   return 0;
 }
 
-int DatagramConnection::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
-  int ret;
-  this->ep = ep;
-
-  // only bind the connection oriented endpoints to eq
-  if (info->ep_attr->type == FI_EP_MSG) {
-    HPS_EP_BIND(ep, eq, 0);
-  }
-  HPS_EP_BIND(ep, av, 0);
-  HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
-  HPS_EP_BIND(ep, rxcq, FI_RECV);
-
-  ret = hps_utils_get_cq_fd(this->options, txcq, &tx_fd);
-  if (ret) {
-    LOG(ERROR) << "Failed to get cq fd for transmission";
-    return ret;
-  }
-  this->tx_loop.fid = tx_fd;
-  this->tx_loop.desc = &this->txcq->fid;
-
-  ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
-  if (ret) {
-    LOG(ERROR) << "Failed to get cq fd for receive";
-    return ret;
-  }
-  this->rx_loop.fid = rx_fd;
-  this->rx_loop.desc = &this->rxcq->fid;
-
-  ret = fi_enable(ep);
-  if (ret) {
-    LOG(ERROR) << "Failed to enable endpoint " << ret;
-    return ret;
-  }
-  return 0;
-}
-
-int DatagramConnection::PostBuffers() {
-  this->rx_seq = 0;
-  this->rx_cq_cntr = 0;
-  this->tx_cq_cntr = 0;
-  this->tx_seq = 0;
-  ssize_t ret = 0;
-  RDMABuffer *rBuf = this->recv_buf;
-  uint32_t noBufs = rBuf->GetNoOfBuffers();
-  for (uint32_t i = 0; i < noBufs; i++) {
-    uint8_t *buf = rBuf->GetBuffer(i);
-    // LOG(INFO) << "Posting receive buffer of size: " << rBuf->GetBufferSize();
-    ret = PostRX(rBuf->GetBufferSize(), buf, &rx_ctx);
-    if (ret) {
-      LOG(ERROR) << "Error posting receive buffer" << ret;
-      return (int) ret;
-    }
-    rBuf->IncrementSubmitted(1);
-  }
-  this->self_credit = rBuf->GetNoOfBuffers();
-  this->peer_credit = rBuf->GetNoOfBuffers()  - 1;
-  this->total_sent_credit = rBuf->GetNoOfBuffers() - 1;
-  this->total_used_credit = 0;
-  this->credit_used_checkpoint = 0;
-  this->credit_messages_ = new bool[noBufs];
-  this->waiting_for_credit = false;
-  memset(this->credit_messages_, 0, sizeof(bool) * noBufs);
-  return 0;
-}
-
-ssize_t DatagramConnection::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  ssize_t ret = 0;
-
-  ret = fi_send(this->ep, buf, size, fi_mr_desc(w_mr),	0, ctx);
-  if (ret)
-    return ret;
-
-  tx_seq++;
-  return 0;
-}
-
-ssize_t DatagramConnection::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
+ssize_t DatagraChannel::PostTX(size_t size, int index) {
   ssize_t ret;
+  struct fi_msg_tagged *msg = &(tag_messages[index]);
+  uint8_t *buf = recv_buf->GetBuffer(index);
+  struct iovec *io = &(io_vectors[index]);
 
-  ret = fi_recv(this->ep, buf, size, fi_mr_desc(mr),	0, ctx);
+  io->iov_len = size;
+  io->iov_base = buf;
+
+  msg->msg_iov = io;
+  msg->desc = (void **) fi_mr_desc(mr);
+  msg->iov_count = 1;
+  msg->addr = remote_addr;
+  msg->tag = send_tag;
+  msg->ignore = 0;
+  msg->context = NULL;
+
+  ret = fi_tsendmsg(this->ep, (const fi_msg *) msg, 0);
   if (ret)
     return ret;
   rx_seq++;
   return 0;
 }
 
-int DatagramConnection::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
-                 uint64_t flags, void *context) {
-  int ret;
+ssize_t DatagraChannel::PostRX(size_t size, int index) {
+  ssize_t ret;
+  struct fi_msg_tagged *msg = &(tag_messages[index]);
+  uint8_t *buf = recv_buf->GetBuffer(index);
+  struct iovec *io = &(io_vectors[index]);
 
-  ret = fi_av_insert(this->av, addr, count, fi_addr, flags, context);
-  if (ret < 0) {
-    LOG(ERROR) << "Address vector insert failed: " << ret;
+  io->iov_len = size;
+  io->iov_base = buf;
+
+  msg->msg_iov = io;
+  msg->desc = (void **) fi_mr_desc(mr);
+  msg->iov_count = 1;
+  msg->addr = remote_addr;
+  msg->tag = recv_tag;
+  msg->ignore = 0;
+  msg->context = NULL;
+
+  ret = fi_recvmsg(this->ep, (const fi_msg *) msg, 0);
+  if (ret)
     return ret;
-  } else if (ret != count) {
-    LOG(ERROR) << "fi_av_insert: number of addresses inserted = %d;" << ret <<
-    " number of addresses given = %zd\n" << count;
-    return -EXIT_FAILURE;
-  }
+  rx_seq++;
   return 0;
 }
 
-bool DatagramConnection::DataAvailableForRead() {
+bool DatagraChannel::DataAvailableForRead() {
   RDMABuffer *sbuf = this->recv_buf;
   return sbuf->GetFilledBuffers() > 0;
 }
 
-int DatagramConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read, uint64_t tag) {
+int DatagraChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   uint32_t base;
   uint32_t submittedBuffers;
@@ -427,9 +305,8 @@ int DatagramConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read, ui
   while (submittedBuffers < noOfBuffers) {
     index = (base + submittedBuffers) % noOfBuffers;
 //    LOG(INFO) << "Posting buffer: " << index;
-    uint8_t *send_buf = rbuf->GetBuffer(index);
     // LOG(INFO) << "Posting receive buffer of size: " << rbuf->GetBufferSize();
-    ret = PostRX(rbuf->GetBufferSize(), send_buf, &this->rx_ctx);
+    ret = PostRX(rbuf->GetBufferSize(), index);
     if (ret && ret != -FI_EAGAIN) {
       LOG(ERROR) << "Failed to post the receive buffer: " << ret;
       return (int) ret;
@@ -451,7 +328,7 @@ int DatagramConnection::ReadData(uint8_t *buf, uint32_t size, uint32_t *read, ui
   return 0;
 }
 
-int DatagramConnection::postCredit() {
+int DatagraChannel::postCredit() {
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -480,7 +357,7 @@ int DatagramConnection::postCredit() {
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
-    ssize_t ret = PostTX(sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx);
+    ssize_t ret = PostTX(sizeof(uint32_t) + sizeof(int32_t), head);
     if (!ret) {
       total_sent_credit += available_credit;
       credit_used_checkpoint += available_credit;
@@ -512,7 +389,7 @@ int DatagramConnection::postCredit() {
   return 1;
 }
 
-int DatagramConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write, uint64_t tag) {
+int DatagraChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -554,7 +431,7 @@ int DatagramConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write, 
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
 //    LOG(INFO) << "Writing message of size: " << current_size + sizeof(uint32_t) + sizeof(int32_t);
-    ssize_t ret = PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), current_buf, &this->tx_ctx);
+    ssize_t ret = PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), head);
     if (!ret) {
       if (credit_set) {
         total_sent_credit += available_credit;
@@ -593,154 +470,25 @@ int DatagramConnection::WriteData(uint8_t *buf, uint32_t size, uint32_t *write, 
   return -1;
 }
 
-int DatagramConnection::TransmitComplete() {
-  struct fi_cq_err_entry comp;
-  ssize_t cq_ret;
-  uint32_t completed_bytes = 0;
-  RDMABuffer *sbuf = this->send_buf;
-  // lets get the number of completions
-  size_t max_completions = tx_seq - tx_cq_cntr;
-  // we can expect up to this
-  //LOG(INFO) << "Transmit complete begin";
-  uint64_t free_space = sbuf->GetAvailableWriteSpace();
+DatagraChannel::~DatagraChannel() {}
 
-  if (free_space > 0) {
-//    LOG(INFO) << "Caling write ready";
-    onWriteReady(0);
-  }
-
-  cq_ret = fi_cq_read(txcq, &comp, max_completions);
-  if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-//    LOG(INFO) << "transmit complete: " << cq_ret << " expected: " << max_completions
-//    << "tx: " << tx_seq << " count: " << tx_cq_cntr;
-    return 0;
-  }
-
-//  LOG(INFO) << "transmit complete " << cq_ret;
-  // LOG(INFO) << "Lock";
-  if (cq_ret > 0) {
-    this->tx_cq_cntr += cq_ret;
-    for (int i = 0; i < cq_ret; i++) {
-      uint32_t base = this->send_buf->GetBase();
-      completed_bytes += this->send_buf->getContentSize(base);
-      if (this->send_buf->IncrementBase((uint32_t) 1)) {
-        LOG(ERROR) << "Failed to increment buffer data pointer";
-        return 1;
-      }
-    }
-  } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
-    // okay we have an error
-    if (cq_ret == -FI_EAVAIL) {
-      LOG(ERROR) << "Error receive " << cq_ret;
-      cq_ret = hps_utils_cq_readerr(txcq);
-      this->tx_cq_cntr++;
-    } else {
-      LOG(ERROR) << "Write completion queue error " << cq_ret;
-      return (int) cq_ret;
-    }
-  }
-  if (onWriteComplete != NULL && completed_bytes > 0) {
-    // call the calback with the completed bytes
-    onWriteComplete(completed_bytes);
-  }
-
-  free_space = sbuf->GetAvailableWriteSpace();
-  if (free_space > 0) {
-//    LOG(INFO) << "Caling write ready";
-    onWriteReady(0);
-  }
-
-  return 0;
+void DatagraChannel::OnWrite(enum rdma_loop_status state) {
 }
 
-int DatagramConnection::ReceiveComplete() {
-  ssize_t cq_ret;
-  struct fi_cq_tagged_entry comp;
-  RDMABuffer *sbuf = this->recv_buf;
-  // lets get the number of completions
-  size_t max_completions = rx_seq - rx_cq_cntr;
-  uint64_t read_available = sbuf->GetFilledBuffers();
-  size_t current_count = 0;
-  while (current_count < max_completions) {
-    // we can expect up to this
-    cq_ret = fi_cq_read(rxcq, &comp, 1);
-//  LOG(INFO) << "CQ Read " << cq_ret << " expected: " << max_completions << " rx_seq " << rx_seq << " rx_cq_cntr " << rx_cq_cntr;
-    if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-      if (read_available > 0) {
-        onReadReady(0);
-      }
-      return 0;
-    }
-
-    if (cq_ret > 0) {
-      this->rx_cq_cntr += cq_ret;
-      if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
-        LOG(ERROR) << "Failed to increment buffer data pointer";
-        return 1;
-      }
-    } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
-      // okay we have an error
-      if (cq_ret == -FI_EAVAIL) {
-        LOG(INFO) << "Error in receive completion" << cq_ret;
-        cq_ret = hps_utils_cq_readerr(rxcq);
-        this->rx_cq_cntr++;
-      } else {
-        LOG(ERROR) << "Receive completion queue error" << cq_ret;
-        return (int) cq_ret;
-      }
-    }
-
-    read_available = sbuf->GetFilledBuffers();
-    if (read_available > 0) {
-      onReadReady(0);
-    }
-    current_count++;
-  }
-  return 0;
+void DatagraChannel::OnRead(enum rdma_loop_status state) {
 }
 
-DatagramConnection::~DatagramConnection() {}
-
-void DatagramConnection::OnWrite(enum rdma_loop_status state) {
-  TransmitComplete();
-}
-
-void DatagramConnection::OnRead(enum rdma_loop_status state) {
-  ReceiveComplete();
-}
-
-int DatagramConnection::ConnectionClosed() {
-  if (eventLoop->UnRegister(&rx_loop)) {
-    LOG(ERROR) << "Failed to un-register read from loop";
-  }
-
-  if (eventLoop->UnRegister(&tx_loop)) {
-    LOG(ERROR) << "Failed to un-register transmit from loop";
-  }
-
+int DatagraChannel::ConnectionClosed() {
   Free();
   return 0;
 }
 
-int DatagramConnection::closeConnection() {
-  if (eventLoop->UnRegister(&rx_loop)) {
-    LOG(ERROR) << "Failed to un-register read from loop";
-  }
-
-  if (eventLoop->UnRegister(&tx_loop)) {
-    LOG(ERROR) << "Failed to un-register transmit from loop";
-  }
-
-  int ret = fi_shutdown(ep, 0);
-  if (ret) {
-    LOG(ERROR) << "Failed to shutdown connection";
-  }
-
+int DatagraChannel::closeConnection() {
   Free();
   return 0;
 }
 
-char* DatagramConnection::getIPAddress() {
+char* DatagraChannel::getIPAddress() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;
@@ -760,7 +508,7 @@ char* DatagramConnection::getIPAddress() {
   return addr_str;
 }
 
-uint32_t DatagramConnection::getPort() {
+uint32_t DatagraChannel::getPort() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;

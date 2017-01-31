@@ -344,60 +344,63 @@ int Datagram::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
 }
 
 int Datagram::TransmitComplete() {
-  struct fi_cq_err_entry comp;
+  struct fi_cq_tagged_entry comp;
   ssize_t cq_ret;
   uint32_t completed_bytes = 0;
   RDMABuffer *sbuf = this->send_buf;
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
+  size_t completions_count = 0;
   // we can expect up to this
   //LOG(INFO) << "Transmit complete begin";
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
-
   if (free_space > 0) {
 //    LOG(INFO) << "Caling write ready";
     onWriteReady(0);
   }
+  while (completions_count < max_completions) {
+    cq_ret = fi_cq_read(txcq, &comp, 1);
 
-  cq_ret = fi_cq_read(txcq, &comp, max_completions);
-  if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
+    if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
 //    LOG(INFO) << "transmit complete: " << cq_ret << " expected: " << max_completions
 //    << "tx: " << tx_seq << " count: " << tx_cq_cntr;
-    return 0;
-  }
+      return 0;
+    }
 
 //  LOG(INFO) << "transmit complete " << cq_ret;
-  // LOG(INFO) << "Lock";
-  if (cq_ret > 0) {
-    this->tx_cq_cntr += cq_ret;
-    for (int i = 0; i < cq_ret; i++) {
-      uint32_t base = this->send_buf->GetBase();
-      completed_bytes += this->send_buf->getContentSize(base);
-      if (this->send_buf->IncrementBase((uint32_t) 1)) {
-        LOG(ERROR) << "Failed to increment buffer data pointer";
-        return 1;
+    // LOG(INFO) << "Lock";
+    if (cq_ret > 0) {
+      this->tx_cq_cntr += cq_ret;
+      for (int i = 0; i < cq_ret; i++) {
+        uint32_t base = this->send_buf->GetBase();
+        completed_bytes += this->send_buf->getContentSize(base);
+        if (this->send_buf->IncrementBase((uint32_t) 1)) {
+          LOG(ERROR) << "Failed to increment buffer data pointer";
+          return 1;
+        }
+      }
+    } else if (cq_ret < 0) {
+      // okay we have an error
+      if (cq_ret == -FI_EAVAIL) {
+        LOG(ERROR) << "Error receive " << cq_ret;
+        cq_ret = hps_utils_cq_readerr(txcq);
+        this->tx_cq_cntr++;
+      } else {
+        LOG(ERROR) << "Write completion queue error " << cq_ret;
+        return (int) cq_ret;
       }
     }
-  } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
-    // okay we have an error
-    if (cq_ret == -FI_EAVAIL) {
-      LOG(ERROR) << "Error receive " << cq_ret;
-      cq_ret = hps_utils_cq_readerr(txcq);
-      this->tx_cq_cntr++;
-    } else {
-      LOG(ERROR) << "Write completion queue error " << cq_ret;
-      return (int) cq_ret;
+    if (onWriteComplete != NULL && completed_bytes > 0) {
+      // call the calback with the completed bytes
+      onWriteComplete(completed_bytes);
     }
-  }
-  if (onWriteComplete != NULL && completed_bytes > 0) {
-    // call the calback with the completed bytes
-    onWriteComplete(completed_bytes);
-  }
 
-  free_space = sbuf->GetAvailableWriteSpace();
-  if (free_space > 0) {
+    free_space = sbuf->GetAvailableWriteSpace();
+    if (free_space > 0) {
 //    LOG(INFO) << "Caling write ready";
-    onWriteReady(0);
+      onWriteReady(0);
+    }
+    completions_count++;
   }
 
   return 0;
@@ -428,7 +431,7 @@ int Datagram::ReceiveComplete() {
         LOG(ERROR) << "Failed to increment buffer data pointer";
         return 1;
       }
-    } else if (cq_ret < 0 && cq_ret != -FI_EAGAIN) {
+    } else if (cq_ret < 0) {
       // okay we have an error
       if (cq_ret == -FI_EAVAIL) {
         LOG(INFO) << "Error in receive completion" << cq_ret;

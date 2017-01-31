@@ -1,5 +1,5 @@
-#ifndef RDMA_RDM_H_
-#define RDMA_RDM_H_
+#ifndef RDMA_RDM_CONNECTION_H_
+#define RDMA_RDM_CONNECTION_H_
 
 #include <cstdint>
 #include <unistd.h>
@@ -19,24 +19,22 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
-class DatagramConnection {
+class DatagraChannel {
 public:
 
-  DatagramConnection(RDMAOptions *opts,
+  DatagraChannel(RDMAOptions *opts,
                  struct fi_info *info, struct fid_fabric *fabric,
                  struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
-  virtual ~DatagramConnection();
-
-  int start();
+  virtual ~DatagraChannel();
 
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
    */
-  int WriteData(uint8_t *buf, uint32_t size, uint32_t *writem, uint64_t tag);
+  int WriteData(uint8_t *buf, uint32_t size, uint32_t *writem);
 
-  int ReadData(uint8_t *buf, uint32_t size, uint32_t *read, uint64_t tag);
+  int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
 
   bool DataAvailableForRead();
 
@@ -58,16 +56,6 @@ public:
  * Allocate the resources for this connection
  */
   int SetupQueues();
-
-  /**
-   * Set and initialize the end point
-   */
-  int InitEndPoint(fid_ep *ep, fid_eq *eq);
-
-  /**
-   * Setup the read and write buffers
-   */
-  int PostBuffers();
 
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 
@@ -114,33 +102,19 @@ private:
   // receive completed
   uint64_t rx_cq_cntr;
 
-  // data structures for psm2
-  struct fid_av *av;
-  struct fi_av_attr av_attr = {
-      .type = FI_AV_MAP,
-      .count = 1
-  };
-  struct fid_wait *waitset;
-
-  RDMAEventLoop *eventLoop;
-
-  /** Private methods */
   /**
    * Transmit a buffer
    */
-  ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
+  ssize_t PostTX(size_t size, int index);
   /**
    * Post a receive buffer
    */
-  ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
-  /**
-   * Av insert for RDM endpoints
-   */
-  int AvInsert(void *addr, size_t count, fi_addr_t *fi_addr, uint64_t flags, void *context);
+  ssize_t PostRX(size_t size, int index);
 
+  /**
+   * Allocate the buffers for this communication
+   */
   int AllocateBuffers(void);
-  int TransmitComplete();
-  int ReceiveComplete();
 
   void OnRead(rdma_loop_status state);
 
@@ -168,8 +142,15 @@ private:
   // an temporary array to hold weather we received a credit message or not
   bool * credit_messages_;
   int postCredit();
-  // remote addresses
-  std::unordered_map<uint32_t, fi_addr_t> remote_addresses;
+  // array of io vectors
+  struct iovec *io_vectors;
+  // array of tag messages
+  struct fi_msg_tagged *tag_messages;
+  // the remote address
+  fi_addr_t	remote_addr;
+  // the tag used by this communications
+  uint64_t send_tag;
+  uint64_t recv_tag;
 };
 
 

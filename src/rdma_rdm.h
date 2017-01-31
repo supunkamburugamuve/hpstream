@@ -18,6 +18,7 @@
 #include "utils.h"
 #include "options.h"
 #include "rdma_event_loop.h"
+#include "rdma_rdm_connection.h"
 
 class Datagram {
 public:
@@ -29,15 +30,6 @@ public:
   virtual ~Datagram();
 
   int start();
-
-  /**
-   * Send the content in the buffer. Use multiple buffers if needed to send
-   */
-  int WriteData(uint8_t *buf, uint32_t size, uint32_t *writem, uint64_t tag);
-
-  int ReadData(uint8_t *buf, uint32_t size, uint32_t *read, uint64_t tag);
-
-  bool DataAvailableForRead();
 
   struct fid_ep *GetEp() {
     return ep;
@@ -166,9 +158,8 @@ private:
   bool waiting_for_credit;
   // an temporary array to hold weather we received a credit message or not
   bool * credit_messages_;
-  int postCredit();
-  // remote addresses
-  std::unordered_map<uint32_t, fi_addr_t> remote_addresses;
+  // remote rdm channels
+  std::unordered_map<uint32_t, DatagraChannel *> remote_addresses;
 };
 
 #endif
