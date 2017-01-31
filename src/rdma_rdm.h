@@ -18,7 +18,7 @@
 #include "utils.h"
 #include "options.h"
 #include "rdma_event_loop.h"
-#include "rdma_rdm_connection.h"
+#include "rdma_rdm_channel.h"
 
 class Datagram {
 public:
@@ -54,11 +54,6 @@ public:
    * Set and initialize the end point
    */
   int InitEndPoint(fid_ep *ep, fid_eq *eq);
-
-  /**
-   * Setup the read and write buffers
-   */
-  int PostBuffers();
 
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 
@@ -111,24 +106,10 @@ private:
       .type = FI_AV_MAP,
       .count = 1
   };
-  struct fid_wait *waitset;
 
   RDMAEventLoop *eventLoop;
 
   /** Private methods */
-  /**
-   * Transmit a buffer
-   */
-  ssize_t PostTX(size_t size, uint8_t *buf, struct fi_context* ctx);
-  /**
-   * Post a receive buffer
-   */
-  ssize_t PostRX(size_t size, uint8_t *buf, struct fi_context* ctx);
-  /**
-   * Av insert for RDM endpoints
-   */
-  int AvInsert(void *addr, size_t count, fi_addr_t *fi_addr, uint64_t flags, void *context);
-
   int AllocateBuffers(void);
   int TransmitComplete();
   int ReceiveComplete();
@@ -159,7 +140,7 @@ private:
   // an temporary array to hold weather we received a credit message or not
   bool * credit_messages_;
   // remote rdm channels
-  std::unordered_map<uint32_t, DatagraChannel *> remote_addresses;
+  std::unordered_map<uint32_t, RDMADatagramChannel *> channels;
 };
 
 #endif

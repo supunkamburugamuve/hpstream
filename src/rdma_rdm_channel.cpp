@@ -1,5 +1,5 @@
 
-#include "rdma_rdm_connection.h"
+#include "rdma_rdm_channel.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -28,7 +28,7 @@
 	} while (0)
 
 
-DatagraChannel::DatagraChannel(RDMAOptions *opts, struct fi_info *info,
+RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
                                struct fid_fabric *fabric, struct fid_domain *domain,
                                RDMAEventLoop *loop) {
   this->options = opts;
@@ -78,7 +78,7 @@ DatagraChannel::DatagraChannel(RDMAOptions *opts, struct fi_info *info,
   this->credit_used_checkpoint = 0;
 }
 
-void DatagraChannel::Free() {
+void RDMADatagramChannel::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
   HPS_CLOSE_FID(alias_ep);
@@ -105,22 +105,22 @@ void DatagraChannel::Free() {
   }
 }
 
-int DatagraChannel::registerWrite(VCallback<int> onWrite) {
+int RDMADatagramChannel::registerWrite(VCallback<int> onWrite) {
   this->onWriteReady = std::move(onWrite);
   return 0;
 }
 
-int DatagraChannel::registerRead(VCallback<int> onRead) {
+int RDMADatagramChannel::registerRead(VCallback<int> onRead) {
   this->onReadReady = std::move(onRead);
   return 0;
 }
 
-int DatagraChannel::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
+int RDMADatagramChannel::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
   this->onWriteComplete = std::move(onWriteComplete);
   return 0;
 }
 
-int DatagraChannel::AllocateBuffers(void) {
+int RDMADatagramChannel::AllocateBuffers(void) {
   int ret = 0;
   RDMAOptions *opts = this->options;
   uint8_t *tx_buf, *rx_buf;
@@ -176,7 +176,7 @@ int DatagraChannel::AllocateBuffers(void) {
   return 0;
 }
 
-ssize_t DatagraChannel::PostTX(size_t size, int index) {
+ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   uint8_t *buf = recv_buf->GetBuffer(index);
@@ -200,7 +200,7 @@ ssize_t DatagraChannel::PostTX(size_t size, int index) {
   return 0;
 }
 
-ssize_t DatagraChannel::PostRX(size_t size, int index) {
+ssize_t RDMADatagramChannel::PostRX(size_t size, int index) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   uint8_t *buf = recv_buf->GetBuffer(index);
@@ -224,12 +224,12 @@ ssize_t DatagraChannel::PostRX(size_t size, int index) {
   return 0;
 }
 
-bool DatagraChannel::DataAvailableForRead() {
+bool RDMADatagramChannel::DataAvailableForRead() {
   RDMABuffer *sbuf = this->recv_buf;
   return sbuf->GetFilledBuffers() > 0;
 }
 
-int DatagraChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
+int RDMADatagramChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   ssize_t ret = 0;
   uint32_t base;
   uint32_t submittedBuffers;
@@ -328,7 +328,7 @@ int DatagraChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
   return 0;
 }
 
-int DatagraChannel::postCredit() {
+int RDMADatagramChannel::postCredit() {
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -389,7 +389,7 @@ int DatagraChannel::postCredit() {
   return 1;
 }
 
-int DatagraChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
+int RDMADatagramChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   // first lets get the available buffer
   RDMABuffer *sbuf = this->send_buf;
   // now determine the buffer no to use
@@ -470,25 +470,25 @@ int DatagraChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write) {
   return -1;
 }
 
-DatagraChannel::~DatagraChannel() {}
+RDMADatagramChannel::~RDMADatagramChannel() {}
 
-void DatagraChannel::OnWrite(enum rdma_loop_status state) {
+void RDMADatagramChannel::OnWrite(enum rdma_loop_status state) {
 }
 
-void DatagraChannel::OnRead(enum rdma_loop_status state) {
+void RDMADatagramChannel::OnRead(enum rdma_loop_status state) {
 }
 
-int DatagraChannel::ConnectionClosed() {
+int RDMADatagramChannel::ConnectionClosed() {
   Free();
   return 0;
 }
 
-int DatagraChannel::closeConnection() {
+int RDMADatagramChannel::closeConnection() {
   Free();
   return 0;
 }
 
-char* DatagraChannel::getIPAddress() {
+char* RDMADatagramChannel::getIPAddress() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;
@@ -508,7 +508,7 @@ char* DatagraChannel::getIPAddress() {
   return addr_str;
 }
 
-uint32_t DatagraChannel::getPort() {
+uint32_t RDMADatagramChannel::getPort() {
   struct sockaddr_storage addr;
   size_t size;
   int ret;

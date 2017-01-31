@@ -7,6 +7,7 @@
 #include "rdma_event_loop.h"
 #include "rdma_connection.h"
 #include "network_error.h"
+#include "rdma_rdm_channel.h"
 
 using namespace std;
 /*
@@ -121,6 +122,8 @@ protected:
 
   // underlying rdma connection
   RDMAConnection *mRdmaConnection;
+
+  RDMADatagramChannel *mRdmaDatagramChannel;
 
   RDMAOptions *mRdmaOptions;
 

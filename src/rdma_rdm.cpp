@@ -106,12 +106,7 @@ void Datagram::Free() {
 
 int Datagram::start() {
   LOG(INFO) << "Starting rdma connection";
-  int ret = PostBuffers();
-  if (ret) {
-    LOG(ERROR) << "Failed to set up the buffers " << ret;
-    return ret;
-  }
-
+  int ret;
   // registe with the loop
   ret = this->eventLoop->RegisterRead(&rx_loop);
   if (ret) {
@@ -273,72 +268,6 @@ int Datagram::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   if (ret) {
     LOG(ERROR) << "Failed to enable endpoint " << ret;
     return ret;
-  }
-  return 0;
-}
-
-int Datagram::PostBuffers() {
-  this->rx_seq = 0;
-  this->rx_cq_cntr = 0;
-  this->tx_cq_cntr = 0;
-  this->tx_seq = 0;
-  ssize_t ret = 0;
-  RDMABuffer *rBuf = this->recv_buf;
-  uint32_t noBufs = rBuf->GetNoOfBuffers();
-  for (uint32_t i = 0; i < noBufs; i++) {
-    uint8_t *buf = rBuf->GetBuffer(i);
-    // LOG(INFO) << "Posting receive buffer of size: " << rBuf->GetBufferSize();
-    ret = PostRX(rBuf->GetBufferSize(), buf, &rx_ctx);
-    if (ret) {
-      LOG(ERROR) << "Error posting receive buffer" << ret;
-      return (int) ret;
-    }
-    rBuf->IncrementSubmitted(1);
-  }
-  this->self_credit = rBuf->GetNoOfBuffers();
-  this->peer_credit = rBuf->GetNoOfBuffers()  - 1;
-  this->total_sent_credit = rBuf->GetNoOfBuffers() - 1;
-  this->total_used_credit = 0;
-  this->credit_used_checkpoint = 0;
-  this->credit_messages_ = new bool[noBufs];
-  this->waiting_for_credit = false;
-  memset(this->credit_messages_, 0, sizeof(bool) * noBufs);
-  return 0;
-}
-
-ssize_t Datagram::PostTX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  ssize_t ret = 0;
-
-  ret = fi_send(this->ep, buf, size, fi_mr_desc(w_mr),	0, ctx);
-  if (ret)
-    return ret;
-
-  tx_seq++;
-  return 0;
-}
-
-ssize_t Datagram::PostRX(size_t size, uint8_t *buf, struct fi_context* ctx) {
-  ssize_t ret;
-
-  ret = fi_recv(this->ep, buf, size, fi_mr_desc(mr),	0, ctx);
-  if (ret)
-    return ret;
-  rx_seq++;
-  return 0;
-}
-
-int Datagram::AvInsert(void *addr, size_t count, fi_addr_t *fi_addr,
-                                 uint64_t flags, void *context) {
-  int ret;
-
-  ret = fi_av_insert(this->av, addr, count, fi_addr, flags, context);
-  if (ret < 0) {
-    LOG(ERROR) << "Address vector insert failed: " << ret;
-    return ret;
-  } else if (ret != count) {
-    LOG(ERROR) << "fi_av_insert: number of addresses inserted = %d;" << ret <<
-    " number of addresses given = %zd\n" << count;
-    return -EXIT_FAILURE;
   }
   return 0;
 }

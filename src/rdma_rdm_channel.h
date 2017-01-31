@@ -19,15 +19,15 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
-class DatagraChannel {
+class RDMADatagramChannel {
 public:
 
-  DatagraChannel(RDMAOptions *opts,
+  RDMADatagramChannel(RDMAOptions *opts,
                  struct fi_info *info, struct fid_fabric *fabric,
                  struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
-  virtual ~DatagraChannel();
+  virtual ~RDMADatagramChannel();
 
   /**
    * Send the content in the buffer. Use multiple buffers if needed to send
@@ -51,11 +51,6 @@ public:
   uint32_t getPort();
 
   char *getIPAddress();
-
-  /**
- * Allocate the resources for this connection
- */
-  int SetupQueues();
 
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 

@@ -62,6 +62,8 @@ private:
 
 
   int Connected(fi_eq_cm_entry *entry);
+
+  int CreateConnection(struct fid_domain *domain);
 };
 
 #endif /* SCLIENT_H_ */

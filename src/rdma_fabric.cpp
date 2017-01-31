@@ -2,9 +2,6 @@
 #include <glog/logging.h>
 #include "rdma_fabric.h"
 
-#define VERBS_PROVIDER "verbs"
-#define PSM2_PROVIDER "psm2"
-
 RDMAFabric::RDMAFabric(RDMAOptions *options) {
   this->options = options;
 }

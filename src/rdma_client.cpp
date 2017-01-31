@@ -101,26 +101,10 @@ int RDMABaseClient::Stop_base() {
   return 0;
 }
 
-int RDMABaseClient::Start_base(void) {
-  int ret;
-  struct fid_ep *ep = NULL;
-  struct fid_domain *domain = NULL;
+int RDMABaseClient::CreateConnection(struct fid_domain *domain) {
   RDMAConnection *con = NULL;
-  if (state_ != INIT) {
-    LOG(ERROR) << "Failed to start connection not in INIT state";
-    return -1;
-  }
-
-  ret = hps_utils_get_info_client(options, info_hints, &info);
-  if (ret) {
-    LOG(ERROR) << "Failed to get server information";
-    return ret;
-  }
-
-  LOG(INFO) << "Client info";
-  print_info(info);
-
-  ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
+  struct fid_ep *ep = NULL;
+  int ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
   if (ret) {
     LOG(ERROR) << "fi_eq_open %d" << ret;
     return ret;
@@ -134,12 +118,6 @@ int RDMABaseClient::Start_base(void) {
   LOG(INFO) << "EQ FID: " << eq_fid;
   this->eq_loop.fid = eq_fid;
   this->eq_loop.desc = &this->eq->fid;
-
-  ret = fi_domain(this->fabric, this->info, &domain, NULL);
-  if (ret) {
-    LOG(ERROR) << "fi_domain " << ret;
-    return ret;
-  }
 
   // create the connection
   con = new RDMAConnection(this->options, this->info, this->fabric, domain, this->eventLoop_);
@@ -180,6 +158,39 @@ int RDMABaseClient::Start_base(void) {
   this->conn_ = CreateConnection(con, options, this->eventLoop_);
   this->connection_ = con;
   LOG(INFO) << "Wating for connection completion";
+  return 0;
+}
+
+int RDMABaseClient::Start_base(void) {
+  int ret;
+  struct fid_domain *domain = NULL;
+  if (state_ != INIT) {
+    LOG(ERROR) << "Failed to start connection not in INIT state";
+    return -1;
+  }
+
+  ret = hps_utils_get_info_client(options, info_hints, &info);
+  if (ret) {
+    LOG(ERROR) << "Failed to get server information";
+    return ret;
+  }
+
+  ret = fi_domain(this->fabric, this->info, &domain, NULL);
+  if (ret) {
+    LOG(ERROR) << "fi_domain " << ret;
+    return ret;
+  }
+
+  if (options->provider == VERBS_PROVIDER_TYPE) {
+    ret = CreateConnection(domain);
+    if (ret) {
+      LOG(ERROR) << "Failed to create connection " << ret;
+      return ret;
+    }
+  } else if (options->provider == PSM2_PROVIDER_TYPE ) {
+
+  }
+
   return 0;
 }
 

@@ -76,11 +76,21 @@ void RDMABaseConnection::registerForClose(VCallback<NetworkErrorCode> cb) {
 }
 
 int RDMABaseConnection::readData(uint8_t *buf, uint32_t size, uint32_t *read) {
-  return mRdmaConnection->ReadData(buf, size, read);
+  if (mRdmaOptions->provider == VERBS_PROVIDER_TYPE) {
+    return mRdmaConnection->ReadData(buf, size, read);
+  } else if (mRdmaOptions->provider == PSM2_PROVIDER_TYPE) {
+    return mRdmaDatagramChannel->ReadData(buf, size, read);
+  }
+  return 0;
 }
 
 int RDMABaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
-  return mRdmaConnection->WriteData(buf, size, write);
+  if (mRdmaOptions->provider == VERBS_PROVIDER_TYPE) {
+    return mRdmaConnection->WriteData(buf, size, write);
+  } else if (mRdmaOptions->provider == PSM2_PROVIDER_TYPE) {
+    return mRdmaDatagramChannel->WriteData(buf, size, write);
+  }
+  return 0;
 }
 
 // Note that we hold the mutex when we come to this function
