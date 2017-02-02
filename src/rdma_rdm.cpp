@@ -236,14 +236,10 @@ int Datagram::AllocateBuffers(void) {
   return 0;
 }
 
-int Datagram::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
+int Datagram::InitEndPoint(struct fid_ep *ep) {
   int ret;
   this->ep = ep;
 
-  // only bind the connection oriented endpoints to eq
-  if (info->ep_attr->type == FI_EP_MSG) {
-    HPS_EP_BIND(ep, eq, 0);
-  }
   HPS_EP_BIND(ep, av, 0);
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
@@ -271,6 +267,8 @@ int Datagram::InitEndPoint(struct fid_ep *ep, struct fid_eq *eq) {
   }
   return 0;
 }
+
+
 
 int Datagram::TransmitComplete() {
   struct fi_cq_tagged_entry comp;
@@ -359,6 +357,21 @@ int Datagram::ReceiveComplete() {
       if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
         LOG(ERROR) << "Failed to increment buffer data pointer";
         return 1;
+      }
+      // extract the type of message
+      uint16_t type = (uint16_t) comp.tag;
+      uint32_t stream_id = ((uint32_t) (comp.tag >> 32));
+      if (type == 0) {       // control message
+        uint16_t control_type = (uint16_t) (comp.tag >> 16);
+        // initial contact
+        if (control_type == 0) {
+
+        } else if (control_type == 1) { // confirm
+
+        }
+      } else if (type == 1) {  // data message
+        // pick te correct channel
+        RDMADatagramChannel *channel = channels.find(stream_id);
       }
     } else if (cq_ret < 0) {
       // okay we have an error

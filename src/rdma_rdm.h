@@ -20,6 +20,12 @@
 #include "rdma_event_loop.h"
 #include "rdma_rdm_channel.h"
 
+/**
+ * We use tag messagging
+ * | 16                   | 16              | 32                 |
+ * | Type - control, data | stream id       |                    |
+ */
+
 class Datagram {
 public:
   Datagram(RDMAOptions *opts,
@@ -53,7 +59,7 @@ public:
   /**
    * Set and initialize the end point
    */
-  int InitEndPoint(fid_ep *ep, fid_eq *eq);
+  int InitEndPoint(fid_ep *ep);
 
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 
@@ -141,6 +147,8 @@ private:
   bool * credit_messages_;
   // remote rdm channels
   std::unordered_map<uint32_t, RDMADatagramChannel *> channels;
+  // the tag used by control messages
+  int64_t control_tag;
 };
 
 #endif
