@@ -11,7 +11,7 @@ sp_int64 HeronRDMAConnection::systemHWMOutstandingBytes = 1024 * 1024 * 100;  //
 // This is the low water mark on the num of bytes that can be left outstanding on a connection
 sp_int64 HeronRDMAConnection::systemLWMOutstandingBytes = 1024 * 1024 * 50;  // 50M
 
-HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAConnection *con,
+HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
                                          RDMAEventLoop *loop)
     : RDMABaseConnection(options, con, loop),
       mNumOutstandingPackets(0),

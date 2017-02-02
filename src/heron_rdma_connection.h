@@ -7,7 +7,7 @@
 class HeronRDMAConnection : public RDMABaseConnection {
 public:
 
-  HeronRDMAConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoop *loop);
+  HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con, RDMAEventLoop *loop);
 
   /**
    * `endpoint` is created by the caller, but now the Connection owns it.
@@ -58,10 +58,6 @@ public:
   void unsetCausedBackPressure() { mCausedBackPressure = false; }
   bool hasCausedBackPressure() const { return mCausedBackPressure; }
   bool isUnderBackPressure() const { return mUnderBackPressure; }
-
-  int32_t putBackPressure();
-  int32_t removeBackPressure();
-
 public:
   // This is the high water mark on the num of bytes that can be left outstanding on a connection
   static int64_t systemHWMOutstandingBytes;
@@ -80,8 +76,6 @@ private:
   virtual void handleDataRead();
 
   int32_t ReadPacket();
-
-  int32_t InternalPacketRead(char* _buffer, uint32_t _size, uint32_t *position_);
 
   // The list of outstanding packets that need to be sent.
   std::list<std::pair<RDMAOutgoingPacket*, VCallback<NetworkErrorCode>>> mOutstandingPackets;

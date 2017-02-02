@@ -48,6 +48,8 @@ int RDMABaseServer::Start_Base(void) {
       LOG(INFO) << "Failed to start accepting connections";
       return ret;
     }
+  } else if (options->provider == PSM2_PROVIDER_TYPE) {
+
   }
   return 0;
 }
@@ -164,7 +166,7 @@ void RDMABaseServer::OnConnect(enum rdma_loop_status state) {
     std::set<RDMABaseConnection *>::iterator it = active_connections_.begin();
     // remove the connection from the list
     while (it != active_connections_.end()) {
-      RDMAConnection *rdmaConnection = (*it)->getEndpointConnection();
+      RDMAConnection *rdmaConnection = (RDMAConnection *) (*it)->getEndpointConnection();
       if (&rdmaConnection->GetEp()->fid == entry.fid) {
         HandleConnectionClose_Base(*it, OK);
         rdmaConnection->ConnectionClosed();
@@ -223,8 +225,6 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-  con->SetState(WAIT_CONNECT_CONFIRM);
-
   baseConnection = CreateConnection(con, options, this->eventLoop_);
   // add the connection to pending and wait for confirmation
   pending_connections_.insert(baseConnection);
@@ -241,7 +241,7 @@ int RDMABaseServer::Connected(struct fi_eq_cm_entry *entry) {
   std::set<RDMABaseConnection *>::iterator it = pending_connections_.begin();
   while (it != pending_connections_.end()) {
     RDMABaseConnection *temp = *it;
-    RDMAConnection *rdmaConnection = temp->getEndpointConnection();
+    RDMAConnection *rdmaConnection = (RDMAConnection *) temp->getEndpointConnection();
     if (&rdmaConnection->GetEp()->fid == entry->fid) {
       con = temp;
       LOG(INFO) << "Remove from pending " << pending_connections_.size();

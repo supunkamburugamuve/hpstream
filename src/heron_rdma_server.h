@@ -121,7 +121,7 @@ public:
   // The interfaces implemented of the BaseServer
 
   // Create the connection
-  RDMABaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+  RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
                                        RDMAEventLoop* ss);
 
   // Called when connection is accepted

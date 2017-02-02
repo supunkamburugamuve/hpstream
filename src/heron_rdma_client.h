@@ -161,9 +161,6 @@ protected:
   // in the connection. Derived classes can do any cleanups in this method.
   virtual void HandleClose(NetworkErrorCode status) = 0;
 
-  // friend classes that can access the protected functions
-  friend void CallHandleSentRequestAndDelete(RDMAClient*, google::protobuf::Message*, void* ctx,
-                                             NetworkErrorCode);
   // Backpressure handler
   virtual void StartBackPressureConnectionCb(HeronRDMAConnection* connection);
   // Backpressure Reliever
@@ -171,7 +168,7 @@ protected:
 
 private:
   //! Imlement methods of BaseClient
-  virtual RDMABaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+  virtual RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
                                                RDMAEventLoop* ss);
   virtual void HandleConnect_Base(NetworkErrorCode status);
   virtual void HandleClose_Base(NetworkErrorCode status);

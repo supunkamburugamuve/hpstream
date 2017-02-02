@@ -14,14 +14,13 @@
 #include <rdma/fi_errno.h>
 #include <glog/logging.h>
 
+#include "rdma_channel.h"
 #include "rdma_buffer.h"
 #include "utils.h"
 #include "options.h"
 #include "rdma_event_loop.h"
 
-enum ConnectionState { INIT = 0, WAIT_CONNECT_CONFIRM, CONNECTED, DISCONNECTED, TO_BE_DISCONNECTED };
-
-class RDMAConnection {
+class RDMAConnection : public RDMAChannel {
 public:
 
   RDMAConnection(RDMAOptions *opts,
@@ -44,15 +43,6 @@ public:
 
   struct fid_ep *GetEp() {
     return ep;
-  }
-
-  bool isConnected() {
-    return mState == CONNECTED;
-  }
-
-  void SetState(ConnectionState st) {
-    LOG(INFO) << "Connection state changed to: " << st;
-    this->mState = st;
   }
 
   // disconnect
@@ -87,8 +77,6 @@ public:
 private:
   // options for initialization
   RDMAOptions *options;
-  // status of the connection
-  ConnectionState mState;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information

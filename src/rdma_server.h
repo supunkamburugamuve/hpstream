@@ -40,7 +40,7 @@ public:
   void CloseConnection_Base(RDMABaseConnection* connection);
 protected:
   // Instantiate a new Connection
-  virtual RDMABaseConnection* CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+  virtual RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
                                                RDMAEventLoop* ss) = 0;
 
   // Called when a new connection is accepted.

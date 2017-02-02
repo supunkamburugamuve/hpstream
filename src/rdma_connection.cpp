@@ -33,7 +33,6 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
   this->info_hints = info_hints;
   this->fabric = fabric;
   this->domain = domain;
-  this->mState = INIT;
   this->eventLoop = loop;
 
   this->txcq = NULL;
@@ -125,7 +124,6 @@ int RDMAConnection::start() {
     return ret;
   }
 
-  mState = CONNECTED;
   return 0;
 }
 
@@ -674,10 +672,6 @@ void RDMAConnection::OnRead(enum rdma_loop_status state) {
 }
 
 int RDMAConnection::ConnectionClosed() {
-  if (mState != CONNECTED) {
-    LOG(ERROR) << "Connection not in CONNECTED state, cannot disconnect";
-  }
-
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
@@ -687,15 +681,10 @@ int RDMAConnection::ConnectionClosed() {
   }
 
   Free();
-  mState = DISCONNECTED;
   return 0;
 }
 
 int RDMAConnection::closeConnection() {
-  if (mState != CONNECTED) {
-    LOG(ERROR) << "Connection not in CONNECTED state, cannot disconnect";
-  }
-
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
@@ -710,7 +699,6 @@ int RDMAConnection::closeConnection() {
   }
 
   Free();
-  mState = DISCONNECTED;
   return 0;
 }
 

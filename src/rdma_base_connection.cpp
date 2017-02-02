@@ -1,7 +1,7 @@
 #include <glog/logging.h>
 #include "rdma_base_connection.h"
 
-RDMABaseConnection::RDMABaseConnection(RDMAOptions *options, RDMAConnection *con,
+RDMABaseConnection::RDMABaseConnection(RDMAOptions *options, RDMAChannel *con,
                                        RDMAEventLoop *loop)
     : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop){
   mState = INIT;
@@ -26,7 +26,6 @@ int32_t RDMABaseConnection::start() {
     LOG(ERROR) << "Could not start the rdma connection";
     return -1;
   }
-  mRdmaConnection->SetState(ConnectionState::CONNECTED);
   LOG(INFO) << "Connection started";
   mState = CONNECTED;
   return 0;
@@ -76,21 +75,11 @@ void RDMABaseConnection::registerForClose(VCallback<NetworkErrorCode> cb) {
 }
 
 int RDMABaseConnection::readData(uint8_t *buf, uint32_t size, uint32_t *read) {
-  if (mRdmaOptions->provider == VERBS_PROVIDER_TYPE) {
-    return mRdmaConnection->ReadData(buf, size, read);
-  } else if (mRdmaOptions->provider == PSM2_PROVIDER_TYPE) {
-    return mRdmaDatagramChannel->ReadData(buf, size, read);
-  }
-  return 0;
+  return mRdmaConnection->ReadData(buf, size, read);
 }
 
 int RDMABaseConnection::writeData(uint8_t *buf, uint32_t size, uint32_t *write) {
-  if (mRdmaOptions->provider == VERBS_PROVIDER_TYPE) {
-    return mRdmaConnection->WriteData(buf, size, write);
-  } else if (mRdmaOptions->provider == PSM2_PROVIDER_TYPE) {
-    return mRdmaDatagramChannel->WriteData(buf, size, write);
-  }
-  return 0;
+  return mRdmaConnection->WriteData(buf, size, write);
 }
 
 // Note that we hold the mutex when we come to this function

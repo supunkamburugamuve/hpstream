@@ -219,7 +219,10 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 }
 
 bool RDMABaseClient::IsConnected() {
-  return conn_ != NULL && connection_->isConnected();
+  if (options->provider == VERBS_PROVIDER_TYPE) {
+    return conn_ != NULL && connection_->isConnected();
+  }
+  return false;
 }
 
 

@@ -31,7 +31,7 @@ public:
   // Whether a read/write would block?
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
-  RDMABaseConnection(RDMAOptions *options, RDMAConnection *con, RDMAEventLoop *loop);
+  RDMABaseConnection(RDMAOptions *options, RDMAChannel *con, RDMAEventLoop *loop);
 
   virtual ~RDMABaseConnection();
 
@@ -70,7 +70,7 @@ public:
 
   int32_t getPort();
 
-  RDMAConnection *getEndpointConnection() { return mRdmaConnection;};
+  RDMAChannel *getEndpointConnection() { return mRdmaConnection;};
 
 protected:
   /**
@@ -107,23 +107,8 @@ protected:
    */
   virtual void handleDataRead() = 0;
 
-  /*
-   * Derived class calls this method when there is data to be sent over the connection.
-   * Base class will registerForWrite on the connection fd to be notified when it is writable.
-   */
-  int32_t registerForWrite();
-
-  // Get the fd
-  //int32_t getConnectionFd();
-
-  // Endpoint read registration
-  //int32_t unregisterEndpointForRead();
-  // int32_t registerEndpointForRead();
-
   // underlying rdma connection
-  RDMAConnection *mRdmaConnection;
-
-  RDMADatagramChannel *mRdmaDatagramChannel;
+  RDMAChannel *mRdmaConnection;
 
   RDMAOptions *mRdmaOptions;
 

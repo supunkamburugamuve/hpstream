@@ -49,7 +49,7 @@ void RDMAServer::SendRequest(HeronRDMAConnection* _conn, google::protobuf::Messa
 }
 
 // The interfaces of BaseServer being implemented
-RDMABaseConnection* RDMAServer::CreateConnection(RDMAConnection* endpoint, RDMAOptions* options,
+RDMABaseConnection* RDMAServer::CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
                                                  RDMAEventLoop* ss) {
   // Create the connection object and register our callbacks on various events.
   HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss);
