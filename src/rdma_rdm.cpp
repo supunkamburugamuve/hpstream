@@ -123,21 +123,6 @@ int Datagram::start() {
   return 0;
 }
 
-int Datagram::registerWrite(VCallback<int> onWrite) {
-  this->onWriteReady = std::move(onWrite);
-  return 0;
-}
-
-int Datagram::registerRead(VCallback<int> onRead) {
-  this->onReadReady = std::move(onRead);
-  return 0;
-}
-
-int Datagram::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
-  this->onWriteComplete = std::move(onWriteComplete);
-  return 0;
-}
-
 int Datagram::SetupQueues() {
   int ret;
   ret = AllocateBuffers();
@@ -268,44 +253,56 @@ int Datagram::InitEndPoint(struct fid_ep *ep) {
   return 0;
 }
 
-
-
 int Datagram::TransmitComplete() {
   struct fi_cq_tagged_entry comp;
   ssize_t cq_ret;
-  uint32_t completed_bytes = 0;
   RDMABuffer *sbuf = this->send_buf;
   // lets get the number of completions
   size_t max_completions = tx_seq - tx_cq_cntr;
   size_t completions_count = 0;
-  // we can expect up to this
-  //LOG(INFO) << "Transmit complete begin";
-  uint64_t free_space = sbuf->GetAvailableWriteSpace();
-  if (free_space > 0) {
-//    LOG(INFO) << "Caling write ready";
-    onWriteReady(0);
-  }
+
   while (completions_count < max_completions) {
     cq_ret = fi_cq_read(txcq, &comp, 1);
 
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-//    LOG(INFO) << "transmit complete: " << cq_ret << " expected: " << max_completions
-//    << "tx: " << tx_seq << " count: " << tx_cq_cntr;
       return 0;
     }
 
-//  LOG(INFO) << "transmit complete " << cq_ret;
-    // LOG(INFO) << "Lock";
     if (cq_ret > 0) {
-      this->tx_cq_cntr += cq_ret;
-      for (int i = 0; i < cq_ret; i++) {
-        uint32_t base = this->send_buf->GetBase();
-        completed_bytes += this->send_buf->getContentSize(base);
-        if (this->send_buf->IncrementBase((uint32_t) 1)) {
-          LOG(ERROR) << "Failed to increment buffer data pointer";
-          return 1;
+      // extract the type of message
+      uint16_t type = (uint16_t) comp.tag;
+      uint32_t stream_id = ((uint32_t) (comp.tag >> 32));
+      if (type == 0) {       // control message
+        this->tx_cq_cntr += cq_ret;
+        for (int i = 0; i < cq_ret; i++) {
+          if (this->send_buf->IncrementBase((uint32_t) cq_ret)) {
+            LOG(ERROR) << "Failed to increment buffer data pointer";
+            return 1;
+          }
+        }
+        uint16_t control_type = (uint16_t) (comp.tag >> 16);
+        // initial contact
+        if (control_type == 0) {
+
+        } else if (control_type == 1) { // confirm
+
+        }
+      } else if (type == 1) {  // data message
+        // pick te correct channel
+        std::unordered_map<uint32_t, RDMADatagramChannel *>::const_iterator it
+            = channels.find(stream_id);
+        if (it == channels.end()) {
+          LOG(ERROR) << "Un-expected stream id in tag: " << stream_id;
+          return -1;
+        } else {
+          RDMADatagramChannel *channel = it->second;
+          if (channel->WriteReady(cq_ret)) {
+            LOG(ERROR) << "Failed to read";
+            return -1;
+          }
         }
       }
+
     } else if (cq_ret < 0) {
       // okay we have an error
       if (cq_ret == -FI_EAVAIL) {
@@ -317,17 +314,17 @@ int Datagram::TransmitComplete() {
         return (int) cq_ret;
       }
     }
-    if (onWriteComplete != NULL && completed_bytes > 0) {
-      // call the calback with the completed bytes
-      onWriteComplete(completed_bytes);
-    }
 
-    free_space = sbuf->GetAvailableWriteSpace();
-    if (free_space > 0) {
-//    LOG(INFO) << "Caling write ready";
-      onWriteReady(0);
-    }
     completions_count++;
+  }
+
+  // go through the channels and figure out the number of expected completions
+  for (auto it = channels.begin(); it != channels.end(); ++it) {
+    RDMADatagramChannel *channel = it->second;
+    // we call ready in case we haven't read all the data from the buffers
+    channel->WriteReady(0);
+    tx_seq += channel->WritePostCount();
+    tx_cq_cntr += channel->WriteCompleteCount();
   }
 
   return 0;
@@ -336,32 +333,29 @@ int Datagram::TransmitComplete() {
 int Datagram::ReceiveComplete() {
   ssize_t cq_ret;
   struct fi_cq_tagged_entry comp;
-  RDMABuffer *sbuf = this->recv_buf;
+  RDMABuffer *recvBuf = this->recv_buf;
   // lets get the number of completions
   size_t max_completions = rx_seq - rx_cq_cntr;
-  uint64_t read_available = sbuf->GetFilledBuffers();
+  uint64_t read_available = recvBuf->GetFilledBuffers();
   size_t current_count = 0;
   while (current_count < max_completions) {
     // we can expect up to this
     cq_ret = fi_cq_read(rxcq, &comp, 1);
-//  LOG(INFO) << "CQ Read " << cq_ret << " expected: " << max_completions << " rx_seq " << rx_seq << " rx_cq_cntr " << rx_cq_cntr;
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
-      if (read_available > 0) {
-        onReadReady(0);
-      }
-      return 0;
+      break;
     }
 
     if (cq_ret > 0) {
-      this->rx_cq_cntr += cq_ret;
-      if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
-        LOG(ERROR) << "Failed to increment buffer data pointer";
-        return 1;
-      }
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
       uint32_t stream_id = ((uint32_t) (comp.tag >> 32));
       if (type == 0) {       // control message
+        this->rx_cq_cntr += cq_ret;
+        if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
+          LOG(ERROR) << "Failed to increment buffer data pointer";
+          return 1;
+        }
+
         uint16_t control_type = (uint16_t) (comp.tag >> 16);
         // initial contact
         if (control_type == 0) {
@@ -371,7 +365,18 @@ int Datagram::ReceiveComplete() {
         }
       } else if (type == 1) {  // data message
         // pick te correct channel
-        RDMADatagramChannel *channel = channels.find(stream_id);
+        std::unordered_map<uint32_t, RDMADatagramChannel *>::const_iterator it
+            = channels.find(stream_id);
+        if (it == channels.end()) {
+          LOG(ERROR) << "Un-expected stream id in tag: " << stream_id;
+          return -1;
+        } else {
+          RDMADatagramChannel *channel = it->second;
+          if (channel->ReadReady(cq_ret)) {
+            LOG(ERROR) << "Failed to read";
+            return -1;
+          }
+        }
       }
     } else if (cq_ret < 0) {
       // okay we have an error
@@ -384,13 +389,18 @@ int Datagram::ReceiveComplete() {
         return (int) cq_ret;
       }
     }
-
-    read_available = sbuf->GetFilledBuffers();
-    if (read_available > 0) {
-      onReadReady(0);
-    }
     current_count++;
   }
+
+  // go through the channels and figure out the number of expected completions
+  for (auto it = channels.begin(); it != channels.end(); ++it) {
+    RDMADatagramChannel *channel = it->second;
+    // we call ready in case we haven't read all the data from the buffers
+    channel->ReadReady(0);
+    rx_seq += channel->ReadPostCount();
+    rx_cq_cntr += channel->ReadCompleteCount();
+  }
+
   return 0;
 }
 
@@ -433,41 +443,4 @@ int Datagram::closeConnection() {
 
   Free();
   return 0;
-}
-
-char* Datagram::getIPAddress() {
-  struct sockaddr_storage addr;
-  size_t size;
-  int ret;
-
-  ret = fi_getpeer(ep, &addr, &size);
-  if (ret) {
-    if (ret == -FI_ETOOSMALL) {
-      LOG(ERROR) << "FI_ETOOSMALL, we shouln't get this";
-    } else {
-      LOG(ERROR) << "Failed to get peer address";
-    }
-  }
-
-  char *addr_str = new char[INET_ADDRSTRLEN];
-  struct sockaddr_in* addr_in = (struct sockaddr_in*)(&addr);
-  inet_ntop(addr_in->sin_family, &(addr_in->sin_addr), addr_str, INET_ADDRSTRLEN);
-  return addr_str;
-}
-
-uint32_t Datagram::getPort() {
-  struct sockaddr_storage addr;
-  size_t size;
-  int ret;
-
-  ret = fi_getpeer(ep, &addr, &size);
-  if (ret) {
-    if (ret == -FI_ETOOSMALL) {
-      LOG(ERROR) << "FI_ETOOSMALL, we shouln't get this";
-    } else {
-      LOG(ERROR) << "Failed to get peer address";
-    }
-  }
-  uint32_t port = ntohs(((struct sockaddr_in*)(&addr))->sin_port);
-  return port;
 }

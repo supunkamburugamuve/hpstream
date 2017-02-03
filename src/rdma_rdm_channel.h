@@ -56,6 +56,13 @@ public:
 
   int registerRead(VCallback<int> onWrite);
   int registerWrite(VCallback<int> onWrite);
+  int WriteReady(ssize_t cq_write);
+  int ReadReady(ssize_t cq_read);
+
+  uint64_t ReadPostCount() { return rx_seq; }
+  uint64_t ReadCompleteCount() { return rx_cq_cntr; };
+  uint64_t WritePostCount() { return tx_seq; }
+  uint64_t WriteCompleteCount() { return tx_cq_cntr; };
 private:
   // options for initialization
   RDMAOptions *options;
@@ -110,10 +117,6 @@ private:
    * Allocate the buffers for this communication
    */
   int AllocateBuffers(void);
-
-  void OnRead(rdma_loop_status state);
-
-  void OnWrite(rdma_loop_status state);
 
   VCallback<uint32_t> onWriteComplete;
   VCallback<int> onWriteReady;

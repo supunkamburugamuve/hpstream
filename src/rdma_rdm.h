@@ -60,11 +60,6 @@ public:
    * Set and initialize the end point
    */
   int InitEndPoint(fid_ep *ep);
-
-  int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
-
-  int registerRead(VCallback<int> onWrite);
-  int registerWrite(VCallback<int> onWrite);
 private:
   // options for initialization
   RDMAOptions *options;
@@ -123,10 +118,6 @@ private:
   void OnRead(rdma_loop_status state);
 
   void OnWrite(rdma_loop_status state);
-
-  VCallback<uint32_t> onWriteComplete;
-  VCallback<int> onWriteReady;
-  VCallback<int> onReadReady;
 
   // credits for the flow control of messages
   // credit for this side, we have posted this many buffers
