@@ -7,6 +7,8 @@
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
 #include "rdma_base_connection.h"
+#include "rdma_rdm.h"
+#include "rdma_rdm_channel.h"
 
 class RDMABaseClient {
 public:
@@ -40,6 +42,7 @@ protected:
   RDMABaseConnection *conn_;
   // the connection
   RDMAConnection *connection_;
+  RDMALDatagram *datagram_;
   RDMAEventLoop *eventLoop_;
   ClientState state_;
 private:
@@ -59,11 +62,14 @@ private:
   struct fi_eq_attr eq_attr;
   // the fabric
   struct fid_fabric *fabric;
+  struct fid_domain *domain;
 
 
   int Connected(fi_eq_cm_entry *entry);
 
-  int CreateConnection(struct fid_domain *domain);
+  int CreateConnection();
+
+  int CreateChannel();
 };
 
 #endif /* SCLIENT_H_ */

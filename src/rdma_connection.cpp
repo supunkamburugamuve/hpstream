@@ -46,7 +46,6 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
   this->rx_loop.event = CQ_READ;
 
   this->ep = NULL;
-  this->alias_ep = NULL;
   this->mr = NULL;
   this->w_mr = NULL;
 
@@ -79,7 +78,6 @@ RDMAConnection::RDMAConnection(RDMAOptions *opts, struct fi_info *info,
 void RDMAConnection::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
-  HPS_CLOSE_FID(alias_ep);
   HPS_CLOSE_FID(ep);
   HPS_CLOSE_FID(rxcq);
   HPS_CLOSE_FID(txcq);

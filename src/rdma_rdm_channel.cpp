@@ -33,36 +33,21 @@ RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info
                                RDMAEventLoop *loop) {
   this->options = opts;
   this->info = info;
-  this->info_hints = info_hints;
-  this->fabric = fabric;
   this->domain = domain;
 
-  this->txcq = NULL;
-  this->rxcq = NULL;
-
   this->ep = NULL;
-  this->alias_ep = NULL;
   this->mr = NULL;
   this->w_mr = NULL;
-
-  this->rx_fd = 0;
-  this->tx_fd = 0;
 
   this->buf = NULL;
   this->w_buf = NULL;
   this->recv_buf = NULL;
   this->send_buf = NULL;
 
-  this->cq_attr = {};
-  this->tx_ctx = {};
-  this->rx_ctx = {};
-
   this->tx_seq = 0;
   this->rx_seq = 0;
   this->tx_cq_cntr = 0;
   this->rx_cq_cntr = 0;
-
-  this->cq_attr.wait_obj = FI_WAIT_NONE;
 
   this->self_credit = 0;
   this->total_sent_credit = 0;
@@ -74,10 +59,7 @@ RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info
 void RDMADatagramChannel::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
-  HPS_CLOSE_FID(alias_ep);
   HPS_CLOSE_FID(ep);
-  HPS_CLOSE_FID(rxcq);
-  HPS_CLOSE_FID(txcq);
 
   if (buf) {
     free(buf);
@@ -111,6 +93,10 @@ int RDMADatagramChannel::registerRead(VCallback<int> onRead) {
 int RDMADatagramChannel::setOnWriteComplete(VCallback<uint32_t> onWriteComplete) {
   this->onWriteComplete = std::move(onWriteComplete);
   return 0;
+}
+
+int RDMADatagramChannel::start() {
+  AllocateBuffers();
 }
 
 int RDMADatagramChannel::AllocateBuffers(void) {

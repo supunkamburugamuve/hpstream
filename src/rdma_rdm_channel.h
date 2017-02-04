@@ -19,7 +19,7 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 
-class RDMADatagramChannel {
+class RDMADatagramChannel : public RDMAChannel {
 public:
 
   RDMADatagramChannel(RDMAOptions *opts,
@@ -29,9 +29,8 @@ public:
 
   virtual ~RDMADatagramChannel();
 
-  /**
-   * Send the content in the buffer. Use multiple buffers if needed to send
-   */
+  int start();
+
   int WriteData(uint8_t *buf, uint32_t size, uint32_t *writem);
 
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
@@ -68,23 +67,12 @@ private:
   RDMAOptions *options;
   // fabric information obtained
   struct fi_info *info;
-  // hints to be used to obtain fabric information
-  struct fi_info *info_hints;
   // the fabric
-  struct fid_fabric *fabric;
   // fabric domain we are working with
   struct fid_domain *domain;
   // end point
-  struct fid_ep *ep, *alias_ep;
+  struct fid_ep *ep;
   // cq attribute for getting completion notifications
-  struct fi_cq_attr cq_attr;
-  // transfer cq and receive cq
-  struct fid_cq *txcq, *rxcq;
-  // receive cq fd and transmit cq fd
-  int rx_fd, tx_fd;
-  // send and receive contexts
-  struct fi_context tx_ctx, rx_ctx;
-  // loop info for transmit and recv
   struct rdma_loop_info tx_loop, rx_loop;
   // buffer used for communication
   uint8_t *buf;

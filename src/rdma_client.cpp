@@ -101,7 +101,7 @@ int RDMABaseClient::Stop_base() {
   return 0;
 }
 
-int RDMABaseClient::CreateConnection(struct fid_domain *domain) {
+int RDMABaseClient::CreateConnection() {
   RDMAConnection *con = NULL;
   struct fid_ep *ep = NULL;
   int ret = fi_eq_open(this->fabric, &this->eq_attr, &this->eq, NULL);
@@ -120,7 +120,7 @@ int RDMABaseClient::CreateConnection(struct fid_domain *domain) {
   this->eq_loop.desc = &this->eq->fid;
 
   // create the connection
-  con = new RDMAConnection(this->options, this->info, this->fabric, domain, this->eventLoop_);
+  con = new RDMAConnection(this->options, this->info, this->fabric, this->domain, this->eventLoop_);
 
   // allocate the resources
   ret = con->SetupQueues();
@@ -161,9 +161,12 @@ int RDMABaseClient::CreateConnection(struct fid_domain *domain) {
   return 0;
 }
 
+int RDMABaseClient::CreateChannel() {
+//  datagram_->
+}
+
 int RDMABaseClient::Start_base(void) {
   int ret;
-  struct fid_domain *domain = NULL;
   if (state_ != INIT) {
     LOG(ERROR) << "Failed to start connection not in INIT state";
     return -1;
@@ -175,14 +178,14 @@ int RDMABaseClient::Start_base(void) {
     return ret;
   }
 
-  ret = fi_domain(this->fabric, this->info, &domain, NULL);
+  ret = fi_domain(this->fabric, this->info, &this->domain, NULL);
   if (ret) {
     LOG(ERROR) << "fi_domain " << ret;
     return ret;
   }
 
   if (options->provider == VERBS_PROVIDER_TYPE) {
-    ret = CreateConnection(domain);
+    ret = CreateConnection();
     if (ret) {
       LOG(ERROR) << "Failed to create connection " << ret;
       return ret;

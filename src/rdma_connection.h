@@ -86,7 +86,7 @@ private:
   // fabric domain we are working with
   struct fid_domain *domain;
   // end point
-  struct fid_ep *ep, *alias_ep;
+  struct fid_ep *ep;
   // cq attribute for getting completion notifications
   struct fi_cq_attr cq_attr;
   // transfer cq and receive cq

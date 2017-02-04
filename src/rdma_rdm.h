@@ -26,14 +26,14 @@
  * | Type - control, data | stream id       |                    |
  */
 
-class Datagram {
+class RDMALDatagram {
 public:
-  Datagram(RDMAOptions *opts,
+  RDMALDatagram(RDMAOptions *opts,
   struct fi_info *info, struct fid_fabric *fabric,
   struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
-  virtual ~Datagram();
+  virtual ~RDMALDatagram();
 
   int start();
 
@@ -47,15 +47,14 @@ public:
   // remove end has done a connection close
   int ConnectionClosed();
 
-  uint32_t getPort();
-
-  char *getIPAddress();
+  void Loop();
 
   /**
  * Allocate the resources for this connection
  */
   int SetupQueues();
 
+  int PostBuffers();
   /**
    * Set and initialize the end point
    */
@@ -119,27 +118,31 @@ private:
 
   void OnWrite(rdma_loop_status state);
 
-  // credits for the flow control of messages
-  // credit for this side, we have posted this many buffers
-  int32_t self_credit;
-  // this is the last sent credit to the peer
-  int32_t total_sent_credit;
-  // number of messages received after last sent credit
-  int32_t total_used_credit;
-  // at which total credit, we sent the credit to the other side
-  int32_t credit_used_checkpoint;
-  // credit of the peer as we know it
-  // when we transmit a message, we reduce the peer credit until
-  // the peer notifies us with its new credit
-  int32_t peer_credit;
-  // if a write is waiting for credit
-  bool waiting_for_credit;
-  // an temporary array to hold weather we received a credit message or not
-  bool * credit_messages_;
+  /**
+ * Transmit a buffer
+ */
+  ssize_t PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type);
+  /**
+   * Post a receive buffer
+   */
+  ssize_t PostRX(size_t size, int index);
+
+  int HandleConnect(uint16_t connect_type, int bufer_index);
+
   // remote rdm channels
   std::unordered_map<uint32_t, RDMADatagramChannel *> channels;
   // the tag used by control messages
-  int64_t control_tag;
+  uint64_t control_tag;
+  // the control ignore bits
+  uint64_t control_mask;
+
+  // array of io vectors
+  struct iovec *io_vectors;
+  // array of tag messages
+  struct fi_msg_tagged *tag_messages;
+
+  pthread_t loopThreadId;
+  bool run;
 };
 
 #endif

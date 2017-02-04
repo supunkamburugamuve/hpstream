@@ -24,8 +24,13 @@
 		}							\
 	} while (0)
 
+static void *startRDMLoopThread(void *param) {
+  RDMALDatagram *loop = static_cast<RDMALDatagram *>(param);
+  loop->Loop();
+  return NULL;
+}
 
-Datagram::Datagram(RDMAOptions *opts, struct fi_info *info,
+RDMALDatagram::RDMALDatagram(RDMAOptions *opts, struct fi_info *info,
                                        struct fid_fabric *fabric, struct fid_domain *domain,
                                        RDMAEventLoop *loop) {
   this->options = opts;
@@ -38,13 +43,6 @@ Datagram::Datagram(RDMAOptions *opts, struct fi_info *info,
   this->txcq = NULL;
   this->rxcq = NULL;
   this->av = NULL;
-
-  this->tx_loop.callback = [this](enum rdma_loop_status state) { return this->OnWrite(state); };
-  this->rx_loop.callback = [this](enum rdma_loop_status state) { return this->OnRead(state); };
-  this->tx_loop.valid = true;
-  this->rx_loop.valid = true;
-  this->tx_loop.event = CQ_TRANSMIT;
-  this->rx_loop.event = CQ_READ;
 
   this->ep = NULL;
   this->alias_ep = NULL;
@@ -69,15 +67,9 @@ Datagram::Datagram(RDMAOptions *opts, struct fi_info *info,
   this->rx_cq_cntr = 0;
 
   this->cq_attr.wait_obj = FI_WAIT_NONE;
-
-  this->self_credit = 0;
-  this->total_sent_credit = 0;
-  this->peer_credit = 0;
-  this->total_used_credit = 0;
-  this->credit_used_checkpoint = 0;
 }
 
-void Datagram::Free() {
+void RDMALDatagram::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
   HPS_CLOSE_FID(alias_ep);
@@ -104,26 +96,50 @@ void Datagram::Free() {
   }
 }
 
-int Datagram::start() {
+int RDMALDatagram::start() {
   LOG(INFO) << "Starting rdma connection";
   int ret;
-  // registe with the loop
-  ret = this->eventLoop->RegisterRead(&rx_loop);
-  if (ret) {
-    LOG(ERROR) << "Failed to register receive cq to event loop " << ret;
-    return ret;
-  }
 
-  ret = this->eventLoop->RegisterRead(&tx_loop);
+  //start the loop thread
+  ret = pthread_create(&loopThreadId, NULL, &startRDMLoopThread, (void *) this);
   if (ret) {
-    LOG(ERROR) << "Failed to register transmit cq to event loop " << ret;
+    LOG(ERROR) << "Failed to create thread " << ret;
     return ret;
   }
 
   return 0;
 }
 
-int Datagram::SetupQueues() {
+int RDMALDatagram::PostBuffers() {
+  this->rx_seq = 0;
+  this->rx_cq_cntr = 0;
+  this->tx_cq_cntr = 0;
+  this->tx_seq = 0;
+  ssize_t ret = 0;
+  RDMABuffer *rBuf = this->recv_buf;
+  uint32_t noBufs = rBuf->GetNoOfBuffers();
+  for (uint32_t i = 0; i < noBufs; i++) {
+    uint8_t *buf = rBuf->GetBuffer(i);
+    // LOG(INFO) << "Posting receive buffer of size: " << rBuf->GetBufferSize();
+    ret = PostRX(rBuf->GetBufferSize(), i);
+    if (ret) {
+      LOG(ERROR) << "Error posting receive buffer" << ret;
+      return (int) ret;
+    }
+    rBuf->IncrementSubmitted(1);
+  }
+
+  return 0;
+}
+
+void RDMALDatagram::Loop() {
+  while (run) {
+    TransmitComplete();
+    ReceiveComplete();
+  }
+}
+
+int RDMALDatagram::SetupQueues() {
   int ret;
   ret = AllocateBuffers();
   if (ret) {
@@ -167,7 +183,7 @@ int Datagram::SetupQueues() {
   return 0;
 }
 
-int Datagram::AllocateBuffers(void) {
+int RDMALDatagram::AllocateBuffers(void) {
   int ret = 0;
   RDMAOptions *opts = this->options;
   uint8_t *tx_buf, *rx_buf;
@@ -218,10 +234,12 @@ int Datagram::AllocateBuffers(void) {
 
   this->send_buf = new RDMABuffer(tx_buf, (uint32_t) tx_size, opts->no_buffers);
   this->recv_buf = new RDMABuffer(rx_buf, (uint32_t) rx_size, opts->no_buffers);
+  this->io_vectors = new struct iovec[opts->no_buffers];
+  this->tag_messages = new struct fi_msg_tagged[opts->no_buffers];
   return 0;
 }
 
-int Datagram::InitEndPoint(struct fid_ep *ep) {
+int RDMALDatagram::InitEndPoint(struct fid_ep *ep) {
   int ret;
   this->ep = ep;
 
@@ -253,7 +271,66 @@ int Datagram::InitEndPoint(struct fid_ep *ep) {
   return 0;
 }
 
-int Datagram::TransmitComplete() {
+ssize_t RDMALDatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
+  ssize_t ret;
+  uint64_t send_tag = (uint64_t)type << 16 | (uint64_t)send_id << 32;
+  struct fi_msg_tagged *msg = &(tag_messages[index]);
+  uint8_t *buf = recv_buf->GetBuffer(index);
+  struct iovec *io = &(io_vectors[index]);
+
+  io->iov_len = size;
+  io->iov_base = buf;
+
+  msg->msg_iov = io;
+  msg->desc = (void **) fi_mr_desc(mr);
+  msg->iov_count = 1;
+  msg->addr = addr;
+  msg->tag = send_tag;
+  msg->ignore = control_mask;
+  msg->context = NULL;
+
+  ret = fi_tsendmsg(this->ep, (const fi_msg *) msg, 0);
+  if (ret)
+    return ret;
+  rx_seq++;
+  return 0;
+}
+
+ssize_t RDMALDatagram::PostRX(size_t size, int index) {
+  ssize_t ret;
+  struct fi_msg_tagged *msg = &(tag_messages[index]);
+  uint8_t *buf = recv_buf->GetBuffer(index);
+  struct iovec *io = &(io_vectors[index]);
+
+  io->iov_len = size;
+  io->iov_base = buf;
+
+  msg->msg_iov = io;
+  msg->desc = (void **) fi_mr_desc(mr);
+  msg->iov_count = 1;
+  msg->addr = FI_ADDR_UNSPEC;
+  msg->tag = control_tag;
+  msg->ignore = control_mask;
+  msg->context = NULL;
+
+  ret = fi_recvmsg(this->ep, (const fi_msg *) msg, 0);
+  if (ret)
+    return ret;
+  rx_seq++;
+  return 0;
+}
+
+int RDMALDatagram::HandleConnect(uint16_t connect_type, int bufer_index) {
+  if (connect_type == 0) {
+
+  } else if (connect_type == 1) { // confirm
+
+  }
+  this->recv_buf->IncrementBase(1);
+  return 0;
+}
+
+int RDMALDatagram::TransmitComplete() {
   struct fi_cq_tagged_entry comp;
   ssize_t cq_ret;
   RDMABuffer *sbuf = this->send_buf;
@@ -330,7 +407,7 @@ int Datagram::TransmitComplete() {
   return 0;
 }
 
-int Datagram::ReceiveComplete() {
+int RDMALDatagram::ReceiveComplete() {
   ssize_t cq_ret;
   struct fi_cq_tagged_entry comp;
   RDMABuffer *recvBuf = this->recv_buf;
@@ -358,11 +435,8 @@ int Datagram::ReceiveComplete() {
 
         uint16_t control_type = (uint16_t) (comp.tag >> 16);
         // initial contact
-        if (control_type == 0) {
-
-        } else if (control_type == 1) { // confirm
-
-        }
+        uint32_t tail = recvBuf->GetBase();
+        HandleConnect(control_type, tail);
       } else if (type == 1) {  // data message
         // pick te correct channel
         std::unordered_map<uint32_t, RDMADatagramChannel *>::const_iterator it
@@ -404,17 +478,17 @@ int Datagram::ReceiveComplete() {
   return 0;
 }
 
-Datagram::~Datagram() {}
+RDMALDatagram::~RDMALDatagram() {}
 
-void Datagram::OnWrite(enum rdma_loop_status state) {
+void RDMALDatagram::OnWrite(enum rdma_loop_status state) {
   TransmitComplete();
 }
 
-void Datagram::OnRead(enum rdma_loop_status state) {
+void RDMALDatagram::OnRead(enum rdma_loop_status state) {
   ReceiveComplete();
 }
 
-int Datagram::ConnectionClosed() {
+int RDMALDatagram::ConnectionClosed() {
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
@@ -427,7 +501,7 @@ int Datagram::ConnectionClosed() {
   return 0;
 }
 
-int Datagram::closeConnection() {
+int RDMALDatagram::closeConnection() {
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
