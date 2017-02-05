@@ -42,7 +42,8 @@ protected:
   RDMABaseConnection *conn_;
   // the connection
   RDMAConnection *connection_;
-  RDMALDatagram *datagram_;
+  RDMADatagram *datagram_;
+  RDMADatagramChannel *channel_;
   RDMAEventLoop *eventLoop_;
   ClientState state_;
 private:
@@ -63,6 +64,7 @@ private:
   // the fabric
   struct fid_fabric *fabric;
   struct fid_domain *domain;
+  uint32_t target_id;
 
 
   int Connected(fi_eq_cm_entry *entry);

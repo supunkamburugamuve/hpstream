@@ -29,8 +29,9 @@
 
 
 RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
-                               struct fid_fabric *fabric, struct fid_domain *domain,
-                               RDMAEventLoop *loop) {
+                                         struct fid_domain *domain,
+                                         uint32_t stream_id, uint32_t recv_stream_id,
+                                         fi_addr_t	remote_addr) {
   this->options = opts;
   this->info = info;
   this->domain = domain;
@@ -54,6 +55,13 @@ RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info
   this->peer_credit = 0;
   this->total_used_credit = 0;
   this->credit_used_checkpoint = 0;
+  this->stream_id = stream_id;
+  this->receive_stream_id = recv_stream_id;
+  this->remote_addr = remote_addr;
+}
+
+RDMADatagramChannel::~RDMADatagramChannel() {
+
 }
 
 void RDMADatagramChannel::Free() {
@@ -96,7 +104,45 @@ int RDMADatagramChannel::setOnWriteComplete(VCallback<uint32_t> onWriteComplete)
 }
 
 int RDMADatagramChannel::start() {
-  AllocateBuffers();
+  int ret = 0;
+
+  uint16_t message_type = 1;
+  send_tag = 0;
+  // create the receive tag and send tag
+  send_tag = (uint64_t)stream_id << 32 | (uint64_t) message_type;
+  recv_tag = (uint64_t)receive_stream_id << 32 | (uint64_t) message_type;
+
+  ret = AllocateBuffers();
+  if (ret) {
+    LOG(ERROR) << "Failed to allocate the buffers: " << ret;
+    return ret;
+  }
+  ret = PostBuffers();
+  if (ret) {
+    LOG(ERROR) << "Failed to post the buffers: " << ret;
+    return ret;
+  }
+  return 0;
+}
+
+int RDMADatagramChannel::PostBuffers() {
+  this->rx_seq = 0;
+  this->rx_cq_cntr = 0;
+  this->tx_cq_cntr = 0;
+  this->tx_seq = 0;
+  ssize_t ret = 0;
+  RDMABuffer *rBuf = this->recv_buf;
+  uint32_t noBufs = rBuf->GetNoOfBuffers();
+  for (uint32_t i = 0; i < noBufs; i++) {
+    ret = PostRX(rBuf->GetBufferSize(), i);
+    if (ret) {
+      LOG(ERROR) << "Error posting receive buffer" << ret;
+      return (int) ret;
+    }
+    rBuf->IncrementSubmitted(1);
+  }
+
+  return 0;
 }
 
 int RDMADatagramChannel::AllocateBuffers(void) {

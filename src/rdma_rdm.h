@@ -26,14 +26,14 @@
  * | Type - control, data | stream id       |                    |
  */
 
-class RDMALDatagram {
+class RDMADatagram {
 public:
-  RDMALDatagram(RDMAOptions *opts,
+  RDMADatagram(RDMAOptions *opts,
   struct fi_info *info, struct fid_fabric *fabric,
   struct fid_domain *domain, RDMAEventLoop *loop);
   void Free();
 
-  virtual ~RDMALDatagram();
+  virtual ~RDMADatagram();
 
   int start();
 
@@ -59,9 +59,12 @@ public:
    * Set and initialize the end point
    */
   int InitEndPoint(fid_ep *ep);
+
+  RDMADatagramChannel* GetChannel(uint32_t target_id, struct fi_info *target);
 private:
   // options for initialization
   RDMAOptions *options;
+  uint32_t stream_id;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information
@@ -79,7 +82,6 @@ private:
   // receive cq fd and transmit cq fd
   int rx_fd, tx_fd;
   // send and receive contexts
-  struct fi_context tx_ctx, rx_ctx;
   // loop info for transmit and recv
   struct rdma_loop_info tx_loop, rx_loop;
   // buffer used for communication

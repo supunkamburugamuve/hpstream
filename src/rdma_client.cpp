@@ -162,7 +162,11 @@ int RDMABaseClient::CreateConnection() {
 }
 
 int RDMABaseClient::CreateChannel() {
-//  datagram_->
+  channel_ = datagram_->GetChannel(target_id);
+  this->conn_ = CreateConnection(channel_, options, this->eventLoop_);
+  LOG(INFO) << "Created channel to stream id: " << target_id;
+  this->state_ = CONNECTED;
+  return 0;
 }
 
 int RDMABaseClient::Start_base(void) {
@@ -191,7 +195,11 @@ int RDMABaseClient::Start_base(void) {
       return ret;
     }
   } else if (options->provider == PSM2_PROVIDER_TYPE ) {
-
+    ret = CreateChannel();
+    if (ret) {
+      LOG(ERROR) << "Failed to create channel " << ret;
+      return ret;
+     }
   }
 
   return 0;

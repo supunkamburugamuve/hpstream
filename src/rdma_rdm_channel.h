@@ -18,13 +18,16 @@
 #include "utils.h"
 #include "options.h"
 #include "rdma_event_loop.h"
+#include "rdma_channel.h"
+#include "rdma_rdm.h"
 
 class RDMADatagramChannel : public RDMAChannel {
 public:
 
-  RDMADatagramChannel(RDMAOptions *opts,
-                 struct fi_info *info, struct fid_fabric *fabric,
-                 struct fid_domain *domain, RDMAEventLoop *loop);
+  RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
+                      struct fid_domain *domain,
+                      uint32_t stream_id, uint32_t recv_stream_id,
+                      fi_addr_t	remote_addr);
   void Free();
 
   virtual ~RDMADatagramChannel();
@@ -65,6 +68,8 @@ public:
 private:
   // options for initialization
   RDMAOptions *options;
+  uint32_t stream_id;
+  uint32_t receive_stream_id;
   // fabric information obtained
   struct fi_info *info;
   // the fabric
@@ -105,6 +110,7 @@ private:
    * Allocate the buffers for this communication
    */
   int AllocateBuffers(void);
+  int PostBuffers();
 
   VCallback<uint32_t> onWriteComplete;
   VCallback<int> onWriteReady;

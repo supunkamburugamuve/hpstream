@@ -25,12 +25,12 @@
 	} while (0)
 
 static void *startRDMLoopThread(void *param) {
-  RDMALDatagram *loop = static_cast<RDMALDatagram *>(param);
+  RDMADatagram *loop = static_cast<RDMADatagram *>(param);
   loop->Loop();
   return NULL;
 }
 
-RDMALDatagram::RDMALDatagram(RDMAOptions *opts, struct fi_info *info,
+RDMADatagram::RDMADatagram(RDMAOptions *opts, struct fi_info *info,
                                        struct fid_fabric *fabric, struct fid_domain *domain,
                                        RDMAEventLoop *loop) {
   this->options = opts;
@@ -58,8 +58,6 @@ RDMALDatagram::RDMALDatagram(RDMAOptions *opts, struct fi_info *info,
   this->send_buf = NULL;
 
   this->cq_attr = {};
-  this->tx_ctx = {};
-  this->rx_ctx = {};
 
   this->tx_seq = 0;
   this->rx_seq = 0;
@@ -69,7 +67,7 @@ RDMALDatagram::RDMALDatagram(RDMAOptions *opts, struct fi_info *info,
   this->cq_attr.wait_obj = FI_WAIT_NONE;
 }
 
-void RDMALDatagram::Free() {
+void RDMADatagram::Free() {
   HPS_CLOSE_FID(mr);
   HPS_CLOSE_FID(w_mr);
   HPS_CLOSE_FID(alias_ep);
@@ -96,7 +94,7 @@ void RDMALDatagram::Free() {
   }
 }
 
-int RDMALDatagram::start() {
+int RDMADatagram::start() {
   LOG(INFO) << "Starting rdma connection";
   int ret;
 
@@ -110,7 +108,7 @@ int RDMALDatagram::start() {
   return 0;
 }
 
-int RDMALDatagram::PostBuffers() {
+int RDMADatagram::PostBuffers() {
   this->rx_seq = 0;
   this->rx_cq_cntr = 0;
   this->tx_cq_cntr = 0;
@@ -132,14 +130,23 @@ int RDMALDatagram::PostBuffers() {
   return 0;
 }
 
-void RDMALDatagram::Loop() {
+void RDMADatagram::Loop() {
   while (run) {
     TransmitComplete();
     ReceiveComplete();
   }
 }
 
-int RDMALDatagram::SetupQueues() {
+RDMADatagramChannel* RDMADatagram::GetChannel(uint32_t target_id, struct fi_info *target) {
+
+  RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id);
+  channel->start();
+
+  channels[target_id] = channel;
+  return channel;
+}
+
+int RDMADatagram::SetupQueues() {
   int ret;
   ret = AllocateBuffers();
   if (ret) {
@@ -183,7 +190,7 @@ int RDMALDatagram::SetupQueues() {
   return 0;
 }
 
-int RDMALDatagram::AllocateBuffers(void) {
+int RDMADatagram::AllocateBuffers(void) {
   int ret = 0;
   RDMAOptions *opts = this->options;
   uint8_t *tx_buf, *rx_buf;
@@ -239,7 +246,7 @@ int RDMALDatagram::AllocateBuffers(void) {
   return 0;
 }
 
-int RDMALDatagram::InitEndPoint(struct fid_ep *ep) {
+int RDMADatagram::InitEndPoint(struct fid_ep *ep) {
   int ret;
   this->ep = ep;
 
@@ -271,7 +278,7 @@ int RDMALDatagram::InitEndPoint(struct fid_ep *ep) {
   return 0;
 }
 
-ssize_t RDMALDatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
+ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
   ssize_t ret;
   uint64_t send_tag = (uint64_t)type << 16 | (uint64_t)send_id << 32;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
@@ -296,7 +303,7 @@ ssize_t RDMALDatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t s
   return 0;
 }
 
-ssize_t RDMALDatagram::PostRX(size_t size, int index) {
+ssize_t RDMADatagram::PostRX(size_t size, int index) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   uint8_t *buf = recv_buf->GetBuffer(index);
@@ -320,7 +327,7 @@ ssize_t RDMALDatagram::PostRX(size_t size, int index) {
   return 0;
 }
 
-int RDMALDatagram::HandleConnect(uint16_t connect_type, int bufer_index) {
+int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index) {
   if (connect_type == 0) {
 
   } else if (connect_type == 1) { // confirm
@@ -330,7 +337,7 @@ int RDMALDatagram::HandleConnect(uint16_t connect_type, int bufer_index) {
   return 0;
 }
 
-int RDMALDatagram::TransmitComplete() {
+int RDMADatagram::TransmitComplete() {
   struct fi_cq_tagged_entry comp;
   ssize_t cq_ret;
   RDMABuffer *sbuf = this->send_buf;
@@ -407,7 +414,7 @@ int RDMALDatagram::TransmitComplete() {
   return 0;
 }
 
-int RDMALDatagram::ReceiveComplete() {
+int RDMADatagram::ReceiveComplete() {
   ssize_t cq_ret;
   struct fi_cq_tagged_entry comp;
   RDMABuffer *recvBuf = this->recv_buf;
@@ -478,17 +485,17 @@ int RDMALDatagram::ReceiveComplete() {
   return 0;
 }
 
-RDMALDatagram::~RDMALDatagram() {}
+RDMADatagram::~RDMADatagram() {}
 
-void RDMALDatagram::OnWrite(enum rdma_loop_status state) {
+void RDMADatagram::OnWrite(enum rdma_loop_status state) {
   TransmitComplete();
 }
 
-void RDMALDatagram::OnRead(enum rdma_loop_status state) {
+void RDMADatagram::OnRead(enum rdma_loop_status state) {
   ReceiveComplete();
 }
 
-int RDMALDatagram::ConnectionClosed() {
+int RDMADatagram::ConnectionClosed() {
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
@@ -501,7 +508,7 @@ int RDMALDatagram::ConnectionClosed() {
   return 0;
 }
 
-int RDMALDatagram::closeConnection() {
+int RDMADatagram::closeConnection() {
   if (eventLoop->UnRegister(&rx_loop)) {
     LOG(ERROR) << "Failed to un-register read from loop";
   }
