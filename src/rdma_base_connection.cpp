@@ -27,9 +27,12 @@ int32_t RDMABaseConnection::start() {
   mOnWrite = [this](int fd) { return this->handleWrite(fd); };
   mOnRead = [this](int fd) { return this->handleRead(fd); };
 
-  if (channel_type)
-  mRdmaConnection->registerRead(mOnRead);
-  mRdmaConnection->registerWrite(mOnWrite);
+  if (channel_type == READ_ONLY || channel_type == READ_WRITE) {
+    mRdmaConnection->registerRead(mOnRead);
+  }
+  if (channel_type == WRITE_ONLY || channel_type == READ_WRITE) {
+    mRdmaConnection->registerWrite(mOnWrite);
+  }
 
   if (mRdmaConnection->start()) {
     LOG(ERROR) << "Could not start the rdma connection";
