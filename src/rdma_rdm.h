@@ -120,6 +120,8 @@ private:
 
   void OnWrite(rdma_loop_status state);
 
+  int AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
+                             uint64_t flags, void *context);
   /**
  * Transmit a buffer
  */

@@ -138,9 +138,20 @@ void RDMADatagram::Loop() {
 }
 
 RDMADatagramChannel* RDMADatagram::GetChannel(uint32_t target_id, struct fi_info *target) {
+  fi_addr_t remote_addr;
+  int ret;
+  ret = AVInsert(target->dest_addr, 1, &remote_addr, 0, NULL);
+  if (ret) {
+    LOG(ERROR) << "Failed to get target address information: " << ret;
+    return NULL;
+  }
 
-  RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id);
-  channel->start();
+  RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id, remote_addr);
+  ret = channel->start();
+  if (ret) {
+    LOG(ERROR) << "Failed to start the channel: " << ret;
+    return NULL;
+  }
 
   channels[target_id] = channel;
   return channel;
@@ -275,6 +286,24 @@ int RDMADatagram::InitEndPoint(struct fid_ep *ep) {
     LOG(ERROR) << "Failed to enable endpoint " << ret;
     return ret;
   }
+  return 0;
+}
+
+int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
+                 uint64_t flags, void *context)
+{
+  int ret;
+
+  ret = fi_av_insert(av, addr, count, fi_addr, flags, context);
+  if (ret < 0) {
+    LOG(ERROR) << "fi_av_insert " << ret;
+    return ret;
+  } else if (ret != count) {
+    LOG(ERROR) << "fi_av_insert: number of addresses inserted = %d;"
+               " number of addresses given: " << count << "," << ret;
+    return -EXIT_FAILURE;
+  }
+
   return 0;
 }
 
