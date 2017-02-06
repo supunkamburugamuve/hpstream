@@ -52,7 +52,7 @@ sp_int64 RDMAClient::AddTimer(VCallback<> cb, sp_int64 _msecs) {
 sp_int32 RDMAClient::RemoveTimer(sp_int64 timer_id) { return 0;}
 
 RDMABaseConnection* RDMAClient::CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
-                                                 RDMAEventLoop* ss) {
+                                                 RDMAEventLoop* ss, ChannelType type) {
   HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss);
 
   conn->registerForNewPacket([this](RDMAIncomingPacket* pkt) { this->OnNewPacket(pkt); });

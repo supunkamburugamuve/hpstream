@@ -90,7 +90,7 @@ int RDMABaseServer::AddChannel(uint32_t target_id, char *node, char *service) {
   }
 
   RDMADatagramChannel *channel_ = datagram_->GetChannel(target_id, target);
-  RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_);
+  RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_, READ_ONLY);
   this->active_connections_.insert(con);
   LOG(INFO) << "Created channel to stream id: " << target_id;
   return 0;
@@ -267,7 +267,7 @@ int RDMABaseServer::Connect(struct fi_eq_cm_entry *entry) {
     goto err;
   }
 
-  baseConnection = CreateConnection(con, options, this->eventLoop_);
+  baseConnection = CreateConnection(con, options, this->eventLoop_, READ_WRITE);
   // add the connection to pending and wait for confirmation
   pending_connections_.insert(baseConnection);
   return 0;

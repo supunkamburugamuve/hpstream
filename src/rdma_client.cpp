@@ -174,7 +174,7 @@ int RDMABaseClient::CreateConnection() {
   }
 
   this->state_ = CONNECTING;
-  this->conn_ = CreateConnection(con, options, this->eventLoop_);
+  this->conn_ = CreateConnection(con, options, this->eventLoop_, READ_ONLY);
   this->connection_ = con;
   LOG(INFO) << "Wating for connection completion";
   return 0;
@@ -182,7 +182,7 @@ int RDMABaseClient::CreateConnection() {
 
 int RDMABaseClient::CreateChannel() {
   channel_ = datagram_->GetChannel(target_id, info);
-  this->conn_ = CreateConnection(channel_, options, this->eventLoop_);
+  this->conn_ = CreateConnection(channel_, options, this->eventLoop_, WRITE_ONLY);
   LOG(INFO) << "Created channel to stream id: " << target_id;
   this->state_ = CONNECTED;
   return 0;

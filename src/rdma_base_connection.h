@@ -10,6 +10,13 @@
 #include "rdma_rdm_channel.h"
 
 using namespace std;
+
+enum ChannelType {
+  READ_WRITE = 0,
+  READ_ONLY = 1,
+  WRITE_ONLY = 2,
+};
+
 /*
  * An abstract base class to represent a network connection between 2 endpoints.
  * Provides support for non-blocking reads and writes.
@@ -32,6 +39,7 @@ public:
   enum ReadWriteState { NOTREGISTERED, READY, NOTREADY, ERROR };
 
   RDMABaseConnection(RDMAOptions *options, RDMAChannel *con, RDMAEventLoop *loop);
+  RDMABaseConnection(RDMAOptions *options, RDMAChannel *con, RDMAEventLoop *loop, ChannelType type);
 
   virtual ~RDMABaseConnection();
 
@@ -144,6 +152,7 @@ private:
   VCallback<int> mOnWrite;
 
   bool mCanCloseConnection;
+  ChannelType channel_type;
 };
 
 #endif  // RDMA_BASE_CONNECTION_H_

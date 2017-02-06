@@ -25,6 +25,20 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
   pthread_mutex_init(&lock, NULL);
 }
 
+HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
+                                         RDMAEventLoop *loop, bool read_only)
+    : RDMABaseConnection(options, con, loop, read_only),
+      mNumOutstandingPackets(0),
+      mNumOutstandingBytes(0)
+    , mPendingWritePackets(0) {
+  this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
+    return this->writeComplete(complets); });
+  this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
+  mIncomingPacket = new RDMAIncomingPacket(1024*1024);
+  mCausedBackPressure = false;
+  pthread_mutex_init(&lock, NULL);
+}
+
 HeronRDMAConnection::~HeronRDMAConnection() { }
 
 int32_t HeronRDMAConnection::sendPacket(RDMAOutgoingPacket* packet) {

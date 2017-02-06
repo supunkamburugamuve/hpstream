@@ -124,6 +124,8 @@ public:
   // Create the connection
   RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
                                        RDMAEventLoop* ss);
+  RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
+                                       RDMAEventLoop* ss, ChannelType type);
 
   // Called when connection is accepted
   virtual void HandleNewConnection_Base(RDMABaseConnection* newConnection);

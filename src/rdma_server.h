@@ -44,7 +44,7 @@ public:
 protected:
   // Instantiate a new Connection
   virtual RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
-                                               RDMAEventLoop* ss) = 0;
+                                               RDMAEventLoop* ss, ChannelType type) = 0;
 
   // Called when a new connection is accepted.
   virtual void HandleNewConnection_Base(RDMABaseConnection* newConnection) = 0;

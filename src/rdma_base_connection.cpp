@@ -6,6 +6,14 @@ RDMABaseConnection::RDMABaseConnection(RDMAOptions *options, RDMAChannel *con,
     : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop){
   mState = INIT;
   mCanCloseConnection = true;
+  channel_type = READ_WRITE;
+}
+
+RDMABaseConnection::RDMABaseConnection(RDMAOptions *options, RDMAChannel *con,
+                                       RDMAEventLoop *loop, ChannelType type)
+    : mRdmaConnection(con), mRdmaOptions(options), mEventLoop(loop), channel_type(type){
+  mState = INIT;
+  mCanCloseConnection = true;
 }
 
 RDMABaseConnection::~RDMABaseConnection() { CHECK(mState == INIT || mState == DISCONNECTED); }
@@ -19,6 +27,7 @@ int32_t RDMABaseConnection::start() {
   mOnWrite = [this](int fd) { return this->handleWrite(fd); };
   mOnRead = [this](int fd) { return this->handleRead(fd); };
 
+  if (channel_type)
   mRdmaConnection->registerRead(mOnRead);
   mRdmaConnection->registerWrite(mOnWrite);
 

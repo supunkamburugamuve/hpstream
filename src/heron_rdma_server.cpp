@@ -76,6 +76,29 @@ RDMABaseConnection* RDMAServer::CreateConnection(RDMAChannel* endpoint, RDMAOpti
   return conn;
 }
 
+// The interfaces of BaseServer being implemented
+RDMABaseConnection* RDMAServer::CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
+                                                 RDMAEventLoop* ss, ChannelType type) {
+  // Create the connection object and register our callbacks on various events.
+  HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss, type);
+  auto npcb = [conn, this](RDMAIncomingPacket* packet) { this->OnNewPacket(conn, packet); };
+  conn->registerForNewPacket(npcb);
+
+  // Backpressure reliever - will point to the inheritor of this class in case the virtual function
+  // is implemented in the inheritor
+  auto backpressure_reliever_ = [this](HeronRDMAConnection* cn) {
+    this->StopBackPressureConnectionCb(cn);
+  };
+
+  auto backpressure_starter_ = [this](HeronRDMAConnection* cn) {
+    this->StartBackPressureConnectionCb(cn);
+  };
+
+  conn->registerForBackPressure(std::move(backpressure_starter_),
+                                std::move(backpressure_reliever_));
+  return conn;
+}
+
 void RDMAServer::HandleNewConnection_Base(RDMABaseConnection* _connection) {
   HandleNewConnection(static_cast<HeronRDMAConnection*>(_connection));
 }

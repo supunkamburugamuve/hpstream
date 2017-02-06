@@ -147,12 +147,6 @@ RDMADatagramChannel* RDMADatagram::GetChannel(uint32_t target_id, struct fi_info
   }
 
   RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id, remote_addr);
-  ret = channel->start();
-  if (ret) {
-    LOG(ERROR) << "Failed to start the channel: " << ret;
-    return NULL;
-  }
-
   channels[target_id] = channel;
   return channel;
 }

@@ -19,7 +19,7 @@ public:
   int Stop_base();
   // Instantiate a new connection
   virtual RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
-                                               RDMAEventLoop* ss) = 0;
+                                               RDMAEventLoop* ss, ChannelType type) = 0;
   void OnConnect(enum rdma_loop_status state);
   bool IsConnected();
 protected:
