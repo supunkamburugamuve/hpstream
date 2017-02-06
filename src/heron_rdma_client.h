@@ -40,6 +40,7 @@ public:
   // Users must explicitly invoke the Start method to be able to send requests
   // and receive responses.
   RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
+  RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop);
   virtual ~RDMAClient();
 
   // This starts the connect opereation.

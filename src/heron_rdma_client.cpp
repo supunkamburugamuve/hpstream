@@ -9,6 +9,11 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
   Init();
 }
 
+RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop)
+    : RDMABaseClient(opts, rdmaFabric, loop) {
+  Init();
+}
+
 RDMAClient::~RDMAClient() { delete message_rid_gen_; }
 
 void RDMAClient::Start() { Start_base(); }

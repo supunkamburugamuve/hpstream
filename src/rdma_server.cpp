@@ -25,6 +25,27 @@ RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
   this->eq_loop.valid = true;
 }
 
+RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop) {
+  this->options = opts;
+  this->info_hints = rdmaFabric->GetHints();
+  this->datagram_ = loop;
+  this->eventLoop_ = NULL;
+  this->pep = NULL;
+//  this->info_pep = rdmaFabric->GetInfo();
+  this->eq = NULL;
+  this->fabric = rdmaFabric->GetFabric();
+  this->eq_attr = {};
+  this->domain = NULL;
+  this->rdmaFabric = rdmaFabric;
+  // initialize this attribute, search weather this is correct
+  this->eq_attr.wait_obj = FI_WAIT_NONE;
+  this->eq_attr.size = 64;
+
+  this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };
+  this->eq_loop.event = CONNECTION;
+  this->eq_loop.valid = true;
+}
+
 RDMABaseServer::~RDMABaseServer() {}
 
 int RDMABaseServer::Start_Base(void) {
@@ -51,6 +72,27 @@ int RDMABaseServer::Start_Base(void) {
   } else if (options->provider == PSM2_PROVIDER_TYPE) {
 
   }
+  return 0;
+}
+
+int RDMABaseServer::AddChannel(uint32_t target_id, char *node, char *service) {
+  RDMAOptions opt;
+  opt.dst_addr = node;
+  opt.dst_port = service;
+  opt.src_addr = options->src_addr;
+  opt.src_port = options->src_port;
+  struct fi_info *target;
+
+  int ret = hps_utils_get_info_client(&opt, info_hints, &target);
+  if (ret) {
+    LOG(ERROR) << "Failed to get client information";
+    return ret;
+  }
+
+  RDMADatagramChannel *channel_ = datagram_->GetChannel(target_id, target);
+  RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_);
+  this->active_connections_.insert(con);
+  LOG(INFO) << "Created channel to stream id: " << target_id;
   return 0;
 }
 

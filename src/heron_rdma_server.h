@@ -33,6 +33,7 @@ public:
   // The Constructor simply inits the member variable.
   // Users must call Start method to start sending/receiving packets.
   RDMAServer(RDMAFabric *fabric, RDMAEventLoop* eventLoop, RDMAOptions *_options);
+  RDMAServer(RDMAFabric *fabric, RDMADatagram* eventLoop, RDMAOptions *_options);
 
   // Destructor.
   virtual ~RDMAServer();

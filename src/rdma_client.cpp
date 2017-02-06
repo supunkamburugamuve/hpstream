@@ -16,6 +16,25 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
   this->eventLoop_ = loop;
   this->options = opts;
   this->eq = NULL;
+  this->datagram_ = NULL;
+  this->fabric = rdmaFabric->GetFabric();
+  // this->info = rdmaFabric->GetInfo();
+  this->eq_attr = {};
+  this->eq_attr.wait_obj = FI_WAIT_NONE;
+  this->eq_attr.size = 64;
+  this->conn_ = NULL;
+  this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };;
+  this->eq_loop.event = CONNECTION;
+  this->eq_loop.valid = true;
+  this->state_ = INIT;
+}
+
+RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop) {
+  this->info_hints = rdmaFabric->GetHints();
+  this->datagram_ = loop;
+  this->eventLoop_ = NULL;
+  this->options = opts;
+  this->eq = NULL;
   this->fabric = rdmaFabric->GetFabric();
   // this->info = rdmaFabric->GetInfo();
   this->eq_attr = {};
@@ -162,7 +181,7 @@ int RDMABaseClient::CreateConnection() {
 }
 
 int RDMABaseClient::CreateChannel() {
-  channel_ = datagram_->GetChannel(target_id);
+  channel_ = datagram_->GetChannel(target_id, info);
   this->conn_ = CreateConnection(channel_, options, this->eventLoop_);
   LOG(INFO) << "Created channel to stream id: " << target_id;
   this->state_ = CONNECTED;
@@ -230,10 +249,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 }
 
 bool RDMABaseClient::IsConnected() {
-  if (options->provider == VERBS_PROVIDER_TYPE) {
-    return conn_ != NULL && connection_->isConnected();
-  }
-  return false;
+  return conn_ != NULL;
 }
 
 

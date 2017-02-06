@@ -8,6 +8,11 @@ RDMAServer::RDMAServer(RDMAFabric *fabric, RDMAEventLoop* eventLoop, RDMAOptions
   request_rid_gen_ = new REQID_Generator();
 }
 
+RDMAServer::RDMAServer(RDMAFabric *fabric, RDMADatagram* eventLoop, RDMAOptions* _options)
+    : RDMABaseServer(_options, fabric, eventLoop) {
+  request_rid_gen_ = new REQID_Generator();
+}
+
 RDMAServer::~RDMAServer() { delete request_rid_gen_; }
 
 sp_int32 RDMAServer::Start() { return Start_Base(); }

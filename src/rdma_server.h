@@ -14,6 +14,7 @@
 class RDMABaseServer {
 public:
   RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
+  RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop);
   virtual ~RDMABaseServer();
   /**
    * Start the server
@@ -38,6 +39,8 @@ public:
   // at a later time if using thread pool), The HandleConnectionClose
   // will contain a status of how the closing process went.
   void CloseConnection_Base(RDMABaseConnection* connection);
+
+  int AddChannel(uint32_t target_id, char *node, char *service);
 protected:
   // Instantiate a new Connection
   virtual RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
@@ -53,6 +56,9 @@ protected:
 
   // event loop associated with this server
   RDMAEventLoop *eventLoop_;
+
+  // the datagram loop
+  RDMADatagram *datagram_;
 
   // set of active connections
   std::set<RDMABaseConnection *> active_connections_;
