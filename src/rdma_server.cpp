@@ -69,8 +69,6 @@ int RDMABaseServer::Start_Base(void) {
       LOG(INFO) << "Failed to start accepting connections";
       return ret;
     }
-  } else if (options->provider == PSM2_PROVIDER_TYPE) {
-
   }
   return 0;
 }
