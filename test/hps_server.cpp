@@ -24,6 +24,7 @@ int connect() {
   clientOptions->options = 0;
   clientOptions->buf_size = BUFFER_SIZE;
   clientOptions->no_buffers = BUFFERS;
+  clientOptions->provider = PSM2_PROVIDER_TYPE;
 
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
@@ -31,6 +32,7 @@ int connect() {
   serverOptions->options = 0;
   serverOptions->buf_size = BUFFER_SIZE;
   serverOptions->no_buffers = BUFFERS;
+  serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
   server = new RDMAStMgrServer(eventLoop, serverOptions, serverFabric, clientOptions, &timer);
