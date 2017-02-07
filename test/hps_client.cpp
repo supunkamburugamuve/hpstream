@@ -23,11 +23,16 @@ int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
 }
 
 int connect3() {
+  options.buf_size = BUFFER_SIZE;
+  options.no_buffers = BUFFERS;
+  options.provider = PSM2_PROVIDER_TYPE;
+
   loopFabric = new RDMAFabric(&options);
   loopFabric->Init();
   eventLoop = new RDMAEventLoop(loopFabric);
   eventLoop->Start();
 
+  RDMADatagram *datagram = new RDMADatagram(&options, loopFabric, 1);
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
   serverOptions->src_addr = options.src_addr;
@@ -37,10 +42,9 @@ int connect3() {
   serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  server = new RDMAStMgrServer(eventLoop, serverOptions, serverFabric, NULL, &timer);
+  server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, NULL, &timer);
   server->Start();
   server->origin = true;
-
 
   RDMAOptions *clientOptions = new RDMAOptions();
   clientOptions->dst_addr = options.dst_addr;
@@ -53,7 +57,7 @@ int connect3() {
   clientFabric->Init();
 
   LOG(INFO) << "Started server";
-  client = new RDMAStMgrClient(eventLoop, clientOptions, clientFabric);
+  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric);
   client->Start();
   LOG(INFO) << "Started client";
 

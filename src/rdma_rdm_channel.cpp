@@ -112,6 +112,12 @@ int RDMADatagramChannel::start() {
   send_tag = (uint64_t)stream_id << 32 | (uint64_t) message_type;
   recv_tag = (uint64_t)receive_stream_id << 32 | (uint64_t) message_type;
 
+  uint64_t mask = 0;
+  for (int i = 0; i < 16; i++) {
+    mask = mask | ((uint64_t)1 << i);
+  }
+  tag_mask = ~mask;
+
   ret = AllocateBuffers();
   if (ret) {
     LOG(ERROR) << "Failed to allocate the buffers: " << ret;
@@ -215,10 +221,10 @@ ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   msg->iov_count = 1;
   msg->addr = remote_addr;
   msg->tag = send_tag;
-  msg->ignore = 0;
+  msg->ignore = tag_mask;
   msg->context = NULL;
 
-  ret = fi_tsendmsg(this->ep, (const fi_msg *) msg, 0);
+  ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
   rx_seq++;
@@ -239,10 +245,10 @@ ssize_t RDMADatagramChannel::PostRX(size_t size, int index) {
   msg->iov_count = 1;
   msg->addr = remote_addr;
   msg->tag = recv_tag;
-  msg->ignore = 0;
+  msg->ignore = tag_mask;
   msg->context = NULL;
 
-  ret = fi_recvmsg(this->ep, (const fi_msg *) msg, 0);
+  ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
   rx_seq++;

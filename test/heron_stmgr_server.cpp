@@ -20,6 +20,19 @@ RDMAStMgrServer::RDMAStMgrServer(RDMAEventLoop* eventLoop, RDMAOptions *_options
   timer_ = timer;
 }
 
+RDMAStMgrServer::RDMAStMgrServer(RDMADatagram* eventLoop, RDMAOptions *_options,
+                                 RDMAFabric *fabric, RDMAOptions *clientOptions, Timer *timer)
+    : RDMAServer(fabric, eventLoop, _options) {
+  // stmgr related handlers
+  InstallMessageHandler(&RDMAStMgrServer::HandleTupleStreamMessage);
+  LOG(INFO) << "Init server";
+  spouts_under_back_pressure_ = false;
+  count = 0;
+  rdma_client_ = NULL;
+  clientOptions_ = clientOptions;
+  timer_ = timer;
+}
+
 RDMAStMgrServer::~RDMAStMgrServer() {
   Stop();
 }

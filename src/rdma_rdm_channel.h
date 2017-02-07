@@ -19,7 +19,6 @@
 #include "options.h"
 #include "rdma_event_loop.h"
 #include "rdma_channel.h"
-#include "rdma_rdm.h"
 
 class RDMADatagramChannel : public RDMAChannel {
 public:
@@ -143,6 +142,7 @@ private:
   // the tag used by this communications
   uint64_t send_tag;
   uint64_t recv_tag;
+  uint64_t tag_mask;
 };
 
 

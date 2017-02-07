@@ -17,6 +17,14 @@ RDMAStMgrClient::RDMAStMgrClient(RDMAEventLoop* eventLoop, RDMAOptions* _options
   InstallResponseHandler(new proto::stmgr::TupleMessage(), &RDMAStMgrClient::HandleHelloResponse);
 }
 
+RDMAStMgrClient::RDMAStMgrClient(RDMADatagram* eventLoop, RDMAOptions* _options, RDMAFabric *fabric)
+    : RDMAClient(_options, fabric, eventLoop),
+      quit_(false),
+      ndropped_messages_(0) {
+  InstallMessageHandler(&RDMAStMgrClient::HandleTupleStreamMessage);
+  InstallResponseHandler(new proto::stmgr::TupleMessage(), &RDMAStMgrClient::HandleHelloResponse);
+}
+
 RDMAStMgrClient::~RDMAStMgrClient() {
   Stop();
 }

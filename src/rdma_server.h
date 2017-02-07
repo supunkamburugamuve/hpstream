@@ -10,6 +10,7 @@
 #include "rdma_event_loop.h"
 #include "rdma_fabric.h"
 #include "rdma_base_connection.h"
+#include "rdma_rdm.h"
 
 class RDMABaseServer {
 public:

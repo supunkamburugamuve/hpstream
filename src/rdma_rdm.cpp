@@ -30,19 +30,17 @@ static void *startRDMLoopThread(void *param) {
   return NULL;
 }
 
-RDMADatagram::RDMADatagram(RDMAOptions *opts, struct fi_info *info,
-                                       struct fid_fabric *fabric, struct fid_domain *domain,
-                                       RDMAEventLoop *loop) {
+RDMADatagram::RDMADatagram(RDMAOptions *opts, RDMAFabric *fabric, uint32_t stream_id) {
   this->options = opts;
-  this->info = info;
-  this->info_hints = info_hints;
-  this->fabric = fabric;
-  this->domain = domain;
-  this->eventLoop = loop;
+  this->info = fabric->GetInfo();
+  this->info_hints = fabric->GetHints();
+  this->fabric = fabric->GetFabric();
 
   this->txcq = NULL;
   this->rxcq = NULL;
   this->av = NULL;
+  this->av_attr.type = FI_AV_MAP;
+  this->av_attr.count = 1;
 
   this->ep = NULL;
   this->alias_ep = NULL;
@@ -65,6 +63,7 @@ RDMADatagram::RDMADatagram(RDMAOptions *opts, struct fi_info *info,
   this->rx_cq_cntr = 0;
 
   this->cq_attr.wait_obj = FI_WAIT_NONE;
+  this->stream_id = stream_id;
 }
 
 void RDMADatagram::Free() {
@@ -97,6 +96,41 @@ void RDMADatagram::Free() {
 int RDMADatagram::start() {
   LOG(INFO) << "Starting rdma connection";
   int ret;
+
+  ret = fi_domain(this->fabric, this->info, &this->domain, NULL);
+  if (ret) {
+    LOG(ERROR) << "fi_domain " << ret;
+    return ret;
+  }
+
+  ret = InitEndPoint();
+  if (ret) {
+    LOG(ERROR) << "Failed to initialize endpoint";
+    return ret;
+  }
+
+  ret = SetupQueues();
+  if (ret) {
+    LOG(ERROR) << "Failed to setup queues";
+    return ret;
+  }
+
+  ret = AllocateBuffers();
+  if (ret) {
+    LOG(ERROR) << "Failed to allocate the buffers";
+  }
+
+  ret = PostBuffers();
+  if (ret) {
+    LOG(ERROR) << "Failed to allocate the buffers";
+  }
+
+  uint64_t mask = 0;
+  for (int i = 0; i < 16; i++) {
+    mask = mask | ((uint64_t)1 << i);
+  }
+  tag_mask = ~mask;
+  recv_tag = (uint64_t) 0;
 
   //start the loop thread
   ret = pthread_create(&loopThreadId, NULL, &startRDMLoopThread, (void *) this);
@@ -251,9 +285,15 @@ int RDMADatagram::AllocateBuffers(void) {
   return 0;
 }
 
-int RDMADatagram::InitEndPoint(struct fid_ep *ep) {
+int RDMADatagram::InitEndPoint() {
   int ret;
-  this->ep = ep;
+
+  // create the end point for this connection
+  ret = fi_endpoint(domain, this->info, &ep, NULL);
+  if (ret) {
+    LOG(ERROR) << "fi_endpoint" << ret;
+    return ret;
+  }
 
   HPS_EP_BIND(ep, av, 0);
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
@@ -264,16 +304,12 @@ int RDMADatagram::InitEndPoint(struct fid_ep *ep) {
     LOG(ERROR) << "Failed to get cq fd for transmission";
     return ret;
   }
-  this->tx_loop.fid = tx_fd;
-  this->tx_loop.desc = &this->txcq->fid;
 
   ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
   if (ret) {
     LOG(ERROR) << "Failed to get cq fd for receive";
     return ret;
   }
-  this->rx_loop.fid = rx_fd;
-  this->rx_loop.desc = &this->rxcq->fid;
 
   ret = fi_enable(ep);
   if (ret) {
@@ -284,8 +320,7 @@ int RDMADatagram::InitEndPoint(struct fid_ep *ep) {
 }
 
 int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
-                 uint64_t flags, void *context)
-{
+                 uint64_t flags, void *context) {
   int ret;
 
   ret = fi_av_insert(av, addr, count, fi_addr, flags, context);
@@ -303,7 +338,8 @@ int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
 
 ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
   ssize_t ret;
-  uint64_t send_tag = (uint64_t)type << 16 | (uint64_t)send_id << 32;
+  uint64_t send_tag = 0;
+  send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   uint8_t *buf = recv_buf->GetBuffer(index);
   struct iovec *io = &(io_vectors[index]);
@@ -316,10 +352,10 @@ ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t se
   msg->iov_count = 1;
   msg->addr = addr;
   msg->tag = send_tag;
-  msg->ignore = control_mask;
+  msg->ignore = tag_mask;
   msg->context = NULL;
 
-  ret = fi_tsendmsg(this->ep, (const fi_msg *) msg, 0);
+  ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
   rx_seq++;
@@ -339,11 +375,11 @@ ssize_t RDMADatagram::PostRX(size_t size, int index) {
   msg->desc = (void **) fi_mr_desc(mr);
   msg->iov_count = 1;
   msg->addr = FI_ADDR_UNSPEC;
-  msg->tag = control_tag;
-  msg->ignore = control_mask;
+  msg->tag = recv_tag;
+  msg->ignore = tag_mask;
   msg->context = NULL;
 
-  ret = fi_recvmsg(this->ep, (const fi_msg *) msg, 0);
+  ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
   rx_seq++;
@@ -519,32 +555,11 @@ void RDMADatagram::OnRead(enum rdma_loop_status state) {
 }
 
 int RDMADatagram::ConnectionClosed() {
-  if (eventLoop->UnRegister(&rx_loop)) {
-    LOG(ERROR) << "Failed to un-register read from loop";
-  }
-
-  if (eventLoop->UnRegister(&tx_loop)) {
-    LOG(ERROR) << "Failed to un-register transmit from loop";
-  }
-
   Free();
   return 0;
 }
 
 int RDMADatagram::closeConnection() {
-  if (eventLoop->UnRegister(&rx_loop)) {
-    LOG(ERROR) << "Failed to un-register read from loop";
-  }
-
-  if (eventLoop->UnRegister(&tx_loop)) {
-    LOG(ERROR) << "Failed to un-register transmit from loop";
-  }
-
-  int ret = fi_shutdown(ep, 0);
-  if (ret) {
-    LOG(ERROR) << "Failed to shutdown connection";
-  }
-
   Free();
   return 0;
 }

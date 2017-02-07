@@ -26,8 +26,8 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
 }
 
 HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
-                                         RDMAEventLoop *loop, bool read_only)
-    : RDMABaseConnection(options, con, loop, read_only),
+                                         RDMAEventLoop *loop, ChannelType type)
+    : RDMABaseConnection(options, con, loop, type),
       mNumOutstandingPackets(0),
       mNumOutstandingBytes(0)
     , mPendingWritePackets(0) {

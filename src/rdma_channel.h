@@ -2,6 +2,7 @@
 #define RDMA_CHANNEL_H_
 
 #include "rdma_fabric.h"
+#include "rdma_event_loop.h"
 
 class RDMAChannel {
 public:

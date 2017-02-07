@@ -28,6 +28,8 @@ class RDMAStMgrServer : public RDMAServer {
 public:
   RDMAStMgrServer(RDMAEventLoop *eventLoop, RDMAOptions *_options, RDMAFabric *fabric,
                   RDMAOptions *clientOptions, Timer *timer);
+  RDMAStMgrServer(RDMADatagram *eventLoop, RDMAOptions *_options, RDMAFabric *fabric,
+                  RDMAOptions *clientOptions, Timer *timer);
 
   virtual ~RDMAStMgrServer();
 

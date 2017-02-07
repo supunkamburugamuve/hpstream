@@ -28,9 +28,7 @@
 
 class RDMADatagram {
 public:
-  RDMADatagram(RDMAOptions *opts,
-  struct fi_info *info, struct fid_fabric *fabric,
-  struct fid_domain *domain, RDMAEventLoop *loop);
+  RDMADatagram(RDMAOptions *opts, RDMAFabric *fabric, uint32_t stream_id);
   void Free();
 
   virtual ~RDMADatagram();
@@ -58,7 +56,7 @@ public:
   /**
    * Set and initialize the end point
    */
-  int InitEndPoint(fid_ep *ep);
+  int InitEndPoint();
 
   RDMADatagramChannel* GetChannel(uint32_t target_id, struct fi_info *target);
 private:
@@ -81,9 +79,6 @@ private:
   struct fid_cq *txcq, *rxcq;
   // receive cq fd and transmit cq fd
   int rx_fd, tx_fd;
-  // send and receive contexts
-  // loop info for transmit and recv
-  struct rdma_loop_info tx_loop, rx_loop;
   // buffer used for communication
   uint8_t *buf;
   uint8_t *w_buf;
@@ -104,12 +99,7 @@ private:
 
   // data structures for psm2
   struct fid_av *av;
-  struct fi_av_attr av_attr = {
-      .type = FI_AV_MAP,
-      .count = 1
-  };
-
-  RDMAEventLoop *eventLoop;
+  struct fi_av_attr av_attr;
 
   /** Private methods */
   int AllocateBuffers(void);
@@ -136,9 +126,9 @@ private:
   // remote rdm channels
   std::unordered_map<uint32_t, RDMADatagramChannel *> channels;
   // the tag used by control messages
-  uint64_t control_tag;
+  uint64_t recv_tag;
   // the control ignore bits
-  uint64_t control_mask;
+  uint64_t tag_mask;
 
   // array of io vectors
   struct iovec *io_vectors;
