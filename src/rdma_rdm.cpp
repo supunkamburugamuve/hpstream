@@ -124,7 +124,7 @@ int RDMADatagram::start() {
 
   ret = PostBuffers();
   if (ret) {
-    LOG(ERROR) << "Failed to allocate the buffers";
+    LOG(ERROR) << "Failed to post the buffers";
   }
   LOG(INFO) << "Posted buffers";
 
@@ -186,7 +186,7 @@ RDMADatagramChannel* RDMADatagram::CreateChannel(uint32_t target_id, struct fi_i
       return NULL;
     }
 
-    channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id, remote_addr);
+    channel = new RDMADatagramChannel(options, info, domain, ep, stream_id, target_id, remote_addr);
   }
   return channel;
 }
@@ -377,7 +377,7 @@ ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t se
   msg->addr = addr;
   msg->tag = send_tag;
   msg->ignore = tag_mask;
-  msg->context = &(recv_contexts[index]);
+  msg->context = &(tx_contexts[index]);
 
   ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
@@ -401,7 +401,7 @@ ssize_t RDMADatagram::PostRX(size_t size, int index) {
   msg->addr = FI_ADDR_UNSPEC;
   msg->tag = recv_tag;
   msg->ignore = tag_mask;
-  msg->context = &(tx_contexts[index]);
+  msg->context = &(recv_contexts[index]);
 
   if (ep->tagged == NULL) {
     LOG(ERROR) << "No tagged messaging";
@@ -464,7 +464,7 @@ int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint32_t
       LOG(ERROR) << "Failed to get target address information: " << ret;
       return NULL;
     }
-    RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id, remote_addr);
+    RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, ep, stream_id, target_id, remote_addr);
     channels[target_id] = channel;
 
     if (onRDMConnect) {

@@ -29,14 +29,14 @@
 
 
 RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
-                                         struct fid_domain *domain,
+                                         struct fid_domain *domain, struct fid_ep *ep,
                                          uint32_t stream_id, uint32_t recv_stream_id,
                                          fi_addr_t	remote_addr) {
   this->options = opts;
   this->info = info;
   this->domain = domain;
 
-  this->ep = NULL;
+  this->ep = ep;
   this->mr = NULL;
   this->w_mr = NULL;
 
@@ -206,6 +206,8 @@ int RDMADatagramChannel::AllocateBuffers(void) {
   this->recv_buf = new RDMABuffer(rx_buf, (uint32_t) rx_size, opts->no_buffers);
   this->io_vectors = new struct iovec[opts->no_buffers];
   this->tag_messages = new struct fi_msg_tagged[opts->no_buffers];
+  this->recv_contexts = new struct fi_context[opts->no_buffers];
+  this->tx_contexts = new struct fi_context[opts->no_buffers];
   return 0;
 }
 
@@ -224,7 +226,7 @@ ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   msg->addr = remote_addr;
   msg->tag = send_tag;
   msg->ignore = tag_mask;
-  msg->context = NULL;
+  msg->context = &(tx_contexts[index]);
 
   ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
@@ -248,7 +250,7 @@ ssize_t RDMADatagramChannel::PostRX(size_t size, int index) {
   msg->addr = remote_addr;
   msg->tag = recv_tag;
   msg->ignore = tag_mask;
-  msg->context = NULL;
+  msg->context = &(recv_contexts[index]);
 
   ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)

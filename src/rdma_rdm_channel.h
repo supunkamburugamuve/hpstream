@@ -24,7 +24,7 @@ class RDMADatagramChannel : public RDMAChannel {
 public:
 
   RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
-                      struct fid_domain *domain,
+                      struct fid_domain *domain, struct fid_ep *ep,
                       uint32_t stream_id, uint32_t recv_stream_id,
                       fi_addr_t	remote_addr);
   void Free();
@@ -141,6 +141,8 @@ private:
   struct iovec *io_vectors;
   // array of tag messages
   struct fi_msg_tagged *tag_messages;
+  struct fi_context *recv_contexts;
+  struct fi_context *tx_contexts;
   // the remote address
   fi_addr_t	remote_addr;
   // the tag used by this communications
