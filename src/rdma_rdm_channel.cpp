@@ -183,14 +183,16 @@ int RDMADatagramChannel::AllocateBuffers(void) {
 
   if (((info->mode & FI_LOCAL_MR) ||
        (info->caps & (FI_RMA | FI_ATOMIC)))) {
+    LOG(INFO) << "register memory with key: " << HPS_MR_KEY + receive_stream_id;
     ret = fi_mr_reg(domain, buf, rx_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY + receive_stream_id, 0, &mr, NULL);
+                    0, HPS_MR_KEY + 10 + receive_stream_id, 0, &mr, NULL);
     if (ret) {
       LOG(FATAL) << "Failed to register memory: " << ret;
       return ret;
     }
+    LOG(INFO) << "register memory with key: " << HPS_MR_KEY_W + receive_stream_id;
     ret = fi_mr_reg(domain, w_buf, tx_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY_W + receive_stream_id, 0, &w_mr, NULL);
+                    0, HPS_MR_KEY_W + 10 + receive_stream_id, 0, &w_mr, NULL);
     if (ret) {
       LOG(FATAL) << "Failed to register memory: " << ret;
       return ret;
@@ -496,7 +498,7 @@ int RDMADatagramChannel::ReadReady(ssize_t cq_count){
       onReadReady(0);
     }
   } else {
-    LOG(ERROR) << "Calling ReadRead withouth setting the callback function";
+    LOG(ERROR) << "Calling read without setting the callback function";
     return -1;
   }
   return 0;
@@ -521,7 +523,7 @@ int RDMADatagramChannel::WriteReady(ssize_t cq_ret){
       onWriteComplete(completed_bytes);
     }
   } else {
-    LOG(ERROR) << "Calling ReadRead withouth setting the callback function";
+    LOG(ERROR) << "Calling write without setting the callback function";
     return -1;
   }
   return 0;

@@ -187,9 +187,12 @@ RDMADatagramChannel* RDMADatagram::CreateChannel(uint32_t target_id, struct fi_i
     }
 
     channel = new RDMADatagramChannel(options, info, domain, stream_id, target_id, remote_addr);
-    channels[target_id] = channel;
   }
   return channel;
+}
+
+void RDMADatagram::AddChannel(uint32_t target_id, RDMADatagramChannel *channel) {
+  channels[target_id] = channel;
 }
 
 RDMADatagramChannel* RDMADatagram::GetChannel(uint32_t target_id) {
@@ -411,7 +414,7 @@ ssize_t RDMADatagram::PostRX(size_t size, int index) {
   return 0;
 }
 
-int RDMADatagram::SendAddressToRemote(uint32_t remote) {
+int RDMADatagram::SendAddressToRemote(fi_addr_t remote) {
   size_t addrlen;
   ssize_t ret;
   addrlen = send_buf->GetBufferSize();
@@ -423,8 +426,8 @@ int RDMADatagram::SendAddressToRemote(uint32_t remote) {
     LOG(ERROR) << "Failed to get network name";
     return (int) ret;
   }
-  RDMADatagramChannel *channel = GetChannel(remote);
-  ret = PostTX(addrlen, head, channel->GetRemoteAddress(), stream_id, 0);
+  LOG(INFO) << "Send address to remote: " << remote;
+  ret = PostTX(addrlen, head, remote, stream_id, 0);
   if (ret) {
     LOG(ERROR) << "Failed to send the address to remote";
     return (int) ret;

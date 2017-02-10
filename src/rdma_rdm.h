@@ -60,7 +60,8 @@ public:
 
   RDMADatagramChannel* CreateChannel(uint32_t target_id, struct fi_info *target);
   RDMADatagramChannel* GetChannel(uint32_t target_id);
-  int SendAddressToRemote(uint32_t target_id);
+  int SendAddressToRemote(fi_addr_t remote);
+  void AddChannel(uint32_t target_id, RDMADatagramChannel *channel);
   void SetRDMConnect(VCallback<uint32_t> connect) {
     this->onRDMConnect = connect;
   };
