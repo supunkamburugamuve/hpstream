@@ -101,6 +101,11 @@ private:
   int Connected(struct fi_eq_cm_entry *entry);
 
   /**
+   * Notification from a client in RDM
+   */
+  int OnRDMConnect(uint32_t stream_id);
+
+  /**
    * Start accepting connections
    */
   int StartAcceptingConnections();

@@ -184,13 +184,13 @@ int RDMADatagramChannel::AllocateBuffers(void) {
   if (((info->mode & FI_LOCAL_MR) ||
        (info->caps & (FI_RMA | FI_ATOMIC)))) {
     ret = fi_mr_reg(domain, buf, rx_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY, 0, &mr, NULL);
+                    0, HPS_MR_KEY + receive_stream_id, 0, &mr, NULL);
     if (ret) {
       LOG(FATAL) << "Failed to register memory: " << ret;
       return ret;
     }
     ret = fi_mr_reg(domain, w_buf, tx_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY_W, 0, &w_mr, NULL);
+                    0, HPS_MR_KEY_W + receive_stream_id, 0, &w_mr, NULL);
     if (ret) {
       LOG(FATAL) << "Failed to register memory: " << ret;
       return ret;

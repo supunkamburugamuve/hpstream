@@ -58,7 +58,15 @@ public:
    */
   int InitEndPoint();
 
-  RDMADatagramChannel* GetChannel(uint32_t target_id, struct fi_info *target);
+  RDMADatagramChannel* CreateChannel(uint32_t target_id, struct fi_info *target);
+  RDMADatagramChannel* GetChannel(uint32_t target_id);
+  int SendAddressToRemote(uint32_t target_id);
+  void SetRDMConnect(VCallback<uint32_t> connect) {
+    this->onRDMConnect = connect;
+  };
+
+  int Wait();
+  int Stop();
 private:
   // options for initialization
   RDMAOptions *options;
@@ -121,7 +129,8 @@ private:
    */
   ssize_t PostRX(size_t size, int index);
 
-  int HandleConnect(uint16_t connect_type, int bufer_index);
+  int HandleConnect(uint16_t connect_type, int bufer_index, uint32_t target_id);
+  int SendConfirmToRemote(fi_addr_t remote);
 
   // remote rdm channels
   std::unordered_map<uint32_t, RDMADatagramChannel *> channels;
@@ -134,6 +143,10 @@ private:
   struct iovec *io_vectors;
   // array of tag messages
   struct fi_msg_tagged *tag_messages;
+  struct fi_context *recv_contexts;
+  struct fi_context *tx_contexts;
+  VCallback<uint32_t> onRDMConnect;
+  VCallback<uint32_t> onRDMConfirm;
 
   pthread_t loopThreadId;
   bool run;

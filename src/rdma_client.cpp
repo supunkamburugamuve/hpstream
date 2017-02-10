@@ -181,9 +181,16 @@ int RDMABaseClient::CreateConnection() {
 }
 
 int RDMABaseClient::CreateChannel() {
-  channel_ = datagram_->GetChannel(target_id, info);
+  channel_ = datagram_->CreateChannel(target_id, info);
   this->conn_ = CreateConnection(channel_, options, this->eventLoop_, WRITE_ONLY);
   LOG(INFO) << "Created channel to stream id: " << target_id;
+
+  int ret = datagram_->SendAddressToRemote(target_id);
+  if (ret) {
+    LOG(ERROR) << "Failed to send the address to remote: " << target_id;
+    return ret;
+  }
+
   this->state_ = CONNECTED;
   return 0;
 }
@@ -249,7 +256,7 @@ int RDMABaseClient::Connected(struct fi_eq_cm_entry *entry) {
 }
 
 bool RDMABaseClient::IsConnected() {
-  return conn_ != NULL;
+  return state_ == CONNECTED;
 }
 
 

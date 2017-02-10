@@ -44,6 +44,9 @@ RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADa
   this->eq_loop.callback = [this](enum rdma_loop_status state) { return this->OnConnect(state); };
   this->eq_loop.event = CONNECTION;
   this->eq_loop.valid = true;
+
+  auto cb = [this](uint32_t stream) { return this->OnRDMConnect(stream); };
+  loop->SetRDMConnect(cb);
 }
 
 RDMABaseServer::~RDMABaseServer() {}
@@ -87,10 +90,19 @@ int RDMABaseServer::AddChannel(uint32_t target_id, char *node, char *service) {
     return ret;
   }
 
-  RDMADatagramChannel *channel_ = datagram_->GetChannel(target_id, target);
+  RDMADatagramChannel *channel_ = datagram_->CreateChannel(target_id, target);
   RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_, READ_ONLY);
   this->active_connections_.insert(con);
   LOG(INFO) << "Created channel to stream id: " << target_id;
+  return 0;
+}
+
+int RDMABaseServer::OnRDMConnect(uint32_t stream_id) {
+  RDMADatagramChannel *channel_ = datagram_->GetChannel(stream_id);
+  RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_, READ_ONLY);
+  this->active_connections_.insert(con);
+  HandleNewConnection_Base(con);
+  LOG(INFO) << "Created channel to stream id: " << stream_id;
   return 0;
 }
 

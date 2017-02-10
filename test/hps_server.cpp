@@ -3,8 +3,8 @@
 #include "heron_stmgr_server.h"
 
 RDMAOptions options;
-RDMAEventLoop *eventLoop;
-RDMAFabric *loopFabric;
+// RDMAEventLoop *eventLoop;
+//RDMAFabric *loopFabric;
 RDMAStMgrClient *client;
 RDMAStMgrServer *server;
 Timer timer;
@@ -17,12 +17,13 @@ int connect() {
   options.provider = PSM2_PROVIDER_TYPE;
 
   int ret = 0;
-  loopFabric = new RDMAFabric(&options);
-  loopFabric->Init();
-  eventLoop = new RDMAEventLoop(loopFabric);
-  eventLoop->Start();
+//  loopFabric = new RDMAFabric(&options);
+//  loopFabric->Init();
+  // eventLoop = new RDMAEventLoop(loopFabric);
+  // eventLoop->Start();
 
-  RDMADatagram *datagram = new RDMADatagram(&options, loopFabric, 0);
+
+
   RDMAOptions *clientOptions = new RDMAOptions();
   clientOptions->dst_addr = options.dst_addr;
   clientOptions->dst_port = options.dst_port;
@@ -30,8 +31,8 @@ int connect() {
   clientOptions->buf_size = BUFFER_SIZE;
   clientOptions->no_buffers = BUFFERS;
   clientOptions->provider = PSM2_PROVIDER_TYPE;
-  client = new RDMAStMgrClient(datagram, clientOptions, loopFabric);
-  client->Start();
+//  client = new RDMAStMgrClient(datagram, clientOptions, loopFabric);
+//  client->Start();
 
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
@@ -42,14 +43,16 @@ int connect() {
   serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
+  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 0);
+  datagram->start();
   server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
   server->Start();
-  server->AddChannel(1, options.dst_addr, options.dst_port);
-  server->origin = true;
-  server->setRDMAClient(client);
+  //server->AddChannel(1, options.dst_addr, options.dst_port);
+  server->origin = false;
+//  server->setRDMAClient(client);
 
   LOG(INFO) << "Started server";
-  eventLoop->Wait();
+  datagram->Wait();
   return ret;
 }
 

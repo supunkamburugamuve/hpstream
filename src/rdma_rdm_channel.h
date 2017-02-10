@@ -53,6 +53,10 @@ public:
 
   char *getIPAddress();
 
+  fi_addr_t GetRemoteAddress() {
+    return remote_addr;
+  }
+
   int setOnWriteComplete(VCallback<uint32_t> onWriteComplete);
 
   int registerRead(VCallback<int> onWrite);
