@@ -506,7 +506,7 @@ int RDMADatagram::TransmitComplete() {
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
       return 0;
     }
-
+    LOG(INFO) << "Transmit complete " << cq_ret;
     if (cq_ret > 0) {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
