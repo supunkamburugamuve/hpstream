@@ -48,7 +48,7 @@ void RDMAStMgrServer::HandleNewConnection(HeronRDMAConnection* _conn) {
   if (!origin) {
     RDMAFabric *clientFabric = new RDMAFabric(clientOptions_);
     clientFabric->Init();
-    rdma_client_ = new RDMAStMgrClient(eventLoop_, clientOptions_, clientFabric);
+    rdma_client_ = new RDMAStMgrClient(datagram_, clientOptions_, clientFabric, 1);
     rdma_client_->Start();
   }
 }

@@ -23,7 +23,7 @@ int RDMAFabric::Init() {
     info_hints->fabric_attr->prov_name = strdup(PSM2_PROVIDER);
     info_hints->ep_attr->type = FI_EP_RDM;
     info_hints->caps = FI_TAGGED | FI_RMA;
-    info_hints->mode = FI_CONTEXT | FI_LOCAL_MR;
+    info_hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_RX_CQ_DATA;
   }
   ret = hps_utils_get_info(this->options, this->info_hints, &this->info);
   if (ret) {

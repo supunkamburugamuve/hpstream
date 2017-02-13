@@ -103,6 +103,15 @@ int RDMADatagram::start() {
   LOG(INFO) << "Starting rdma loo[  ";
   int ret;
 
+  uint64_t mask = 0;
+  for (int i = 0; i < 16; i++) {
+    mask = mask | ((uint64_t)1 << i);
+  }
+  tag_mask = ~mask;
+  recv_tag = (uint64_t) 0;
+  LOG(INFO) << "Mask of stream id: " << stream_id << " mask: " << tag_mask;
+
+
   ret = fi_domain(this->fabric, this->info, &this->domain, NULL);
   if (ret) {
     LOG(ERROR) << "fi_domain " << ret;
@@ -127,13 +136,6 @@ int RDMADatagram::start() {
     LOG(ERROR) << "Failed to post the buffers";
   }
   LOG(INFO) << "Posted buffers";
-
-  uint64_t mask = 0;
-  for (int i = 0; i < 16; i++) {
-    mask = mask | ((uint64_t)1 << i);
-  }
-  tag_mask = ~mask;
-  recv_tag = (uint64_t) 0;
 
   //start the loop thread
   ret = pthread_create(&loopThreadId, NULL, &startRDMLoopThread, (void *) this);
@@ -186,6 +188,8 @@ RDMADatagramChannel* RDMADatagram::CreateChannel(uint32_t target_id, struct fi_i
       return NULL;
     }
 
+    LOG(INFO) << "Remote address of target:" << target_id << " = " << remote_addr;
+
     channel = new RDMADatagramChannel(options, info, domain, ep, stream_id, target_id, remote_addr);
   }
   return channel;
@@ -215,7 +219,7 @@ int RDMADatagram::SetupQueues() {
   // we use the context, not the counter
   cq_attr.format = FI_CQ_FORMAT_TAGGED;
   // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_UNSPEC;
+  cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   cq_attr.size = send_buf->GetNoOfBuffers();
   ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
@@ -225,7 +229,7 @@ int RDMADatagram::SetupQueues() {
   }
 
   // create a file descriptor wait cq set
-  cq_attr.wait_obj = FI_WAIT_UNSPEC;
+  cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   LOG(INFO) << "RQ Attr size: " << info->rx_attr->size;
   cq_attr.size = send_buf->GetNoOfBuffers();
@@ -323,18 +327,6 @@ int RDMADatagram::InitEndPoint() {
   HPS_EP_BIND(ep, txcq, FI_TRANSMIT);
   HPS_EP_BIND(ep, rxcq, FI_RECV);
 
-  ret = hps_utils_get_cq_fd(this->options, txcq, &tx_fd);
-  if (ret) {
-    LOG(ERROR) << "Failed to get cq fd for transmission";
-    return ret;
-  }
-
-  ret = hps_utils_get_cq_fd(this->options, rxcq, &rx_fd);
-  if (ret) {
-    LOG(ERROR) << "Failed to get cq fd for receive";
-    return ret;
-  }
-
   ret = fi_enable(ep);
   if (ret) {
     LOG(ERROR) << "Failed to enable endpoint " << ret;
@@ -375,6 +367,7 @@ ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t se
   msg->desc = (void **) fi_mr_desc(mr);
   msg->iov_count = 1;
   msg->addr = addr;
+  LOG(INFO) << "Transmitting buffer with tag: " << send_tag << " and mask: " << tag_mask << " to: " << addr;
   msg->tag = send_tag;
   msg->ignore = tag_mask;
   msg->context = &(tx_contexts[index]);
@@ -382,13 +375,14 @@ ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t se
   ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
-  rx_seq++;
+  tx_seq++;
   return 0;
 }
 
 ssize_t RDMADatagram::PostRX(size_t size, int index) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
+  memset(msg, 0, sizeof (struct fi_msg_tagged));
   uint8_t *buf = recv_buf->GetBuffer(index);
   struct iovec *io = &(io_vectors[index]);
 
@@ -402,7 +396,7 @@ ssize_t RDMADatagram::PostRX(size_t size, int index) {
   msg->tag = recv_tag;
   msg->ignore = tag_mask;
   msg->context = &(recv_contexts[index]);
-
+  LOG(INFO) << "Posting buffer with tag: " << recv_tag << " and mask: " << tag_mask;
   if (ep->tagged == NULL) {
     LOG(ERROR) << "No tagged messaging";
   }
@@ -432,6 +426,9 @@ int RDMADatagram::SendAddressToRemote(fi_addr_t remote) {
     LOG(ERROR) << "Failed to send the address to remote";
     return (int) ret;
   }
+  send_buf->IncrementFilled(1);
+  // increment the head
+  send_buf->IncrementSubmitted(1);
   return 0;
 }
 
@@ -495,10 +492,9 @@ int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint32_t
 int RDMADatagram::TransmitComplete() {
   struct fi_cq_tagged_entry comp;
   ssize_t cq_ret;
-  RDMABuffer *sbuf = this->send_buf;
   // lets get the number of completions
-  size_t max_completions = tx_seq - tx_cq_cntr;
-  size_t completions_count = 0;
+  uint64_t max_completions = tx_seq - tx_cq_cntr;
+  uint64_t completions_count = 0;
 
   while (completions_count < max_completions) {
     cq_ret = fi_cq_read(txcq, &comp, 1);
@@ -511,8 +507,8 @@ int RDMADatagram::TransmitComplete() {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
       uint32_t stream_id = ((uint32_t) (comp.tag >> 32));
+      this->tx_cq_cntr += cq_ret;
       if (type == 0) {       // control message
-        this->tx_cq_cntr += cq_ret;
         for (int i = 0; i < cq_ret; i++) {
           if (this->send_buf->IncrementBase((uint32_t) cq_ret)) {
             LOG(ERROR) << "Failed to increment buffer data pointer";
@@ -539,7 +535,6 @@ int RDMADatagram::TransmitComplete() {
           }
         }
       }
-
     } else if (cq_ret < 0) {
       // okay we have an error
       if (cq_ret == -FI_EAVAIL) {
@@ -572,9 +567,8 @@ int RDMADatagram::ReceiveComplete() {
   struct fi_cq_tagged_entry comp;
   RDMABuffer *recvBuf = this->recv_buf;
   // lets get the number of completions
-  size_t max_completions = rx_seq - rx_cq_cntr;
-  uint64_t read_available = recvBuf->GetFilledBuffers();
-  size_t current_count = 0;
+  uint64_t max_completions = rx_seq - rx_cq_cntr;
+  uint64_t current_count = 0;
   while (current_count < max_completions) {
     // we can expect up to this
     cq_ret = fi_cq_read(rxcq, &comp, 1);

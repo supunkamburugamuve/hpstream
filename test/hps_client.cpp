@@ -57,7 +57,7 @@ int connect3() {
   clientFabric->Init();
 
   LOG(INFO) << "Started server";
-  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric);
+  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric, 0);
   client->Start();
   LOG(INFO) << "Started client";
 
@@ -97,7 +97,7 @@ int connectPSM2() {
   serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 0);
+  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 1);
   datagram->start();
   server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
   server->origin = true;
@@ -105,9 +105,12 @@ int connectPSM2() {
 
   RDMAFabric *clientFabric = new RDMAFabric(clientOptions);
   clientFabric->Init();
-  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric);
+  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric, 0);
   client->Start();
   //server->AddChannel(1, options.dst_addr, options.dst_port);
+  while (!client->IsConnected()) {
+    sleep(1);
+  }
   return 0;
 }
 

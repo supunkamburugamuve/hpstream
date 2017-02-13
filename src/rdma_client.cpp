@@ -29,7 +29,7 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
   this->state_ = INIT;
 }
 
-RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop) {
+RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop, uint32_t target_id) {
   this->info_hints = rdmaFabric->GetHints();
   this->datagram_ = loop;
   this->eventLoop_ = NULL;

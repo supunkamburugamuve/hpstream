@@ -9,8 +9,8 @@ RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop 
   Init();
 }
 
-RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop)
-    : RDMABaseClient(opts, rdmaFabric, loop) {
+RDMAClient::RDMAClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop, uint32_t target_id)
+    : RDMABaseClient(opts, rdmaFabric, loop, target_id) {
   Init();
 }
 

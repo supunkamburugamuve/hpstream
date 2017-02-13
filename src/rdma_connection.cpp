@@ -152,7 +152,7 @@ int RDMAConnection::SetupQueues() {
   // create a file descriptor wait cq set
   cq_attr.wait_obj = FI_WAIT_FD;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
-  cq_attr.size = send_buf->GetNoOfBuffers();
+  cq_attr.size = info->tx_attr->size;
   ret = fi_cq_open(domain, &cq_attr, &txcq, &txcq);
   if (ret) {
     LOG(ERROR) << "fi_cq_open for send " << ret;
@@ -163,7 +163,7 @@ int RDMAConnection::SetupQueues() {
   cq_attr.wait_obj = FI_WAIT_FD;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   LOG(INFO) << "RQ Attr size: " << info->rx_attr->size;
-  cq_attr.size = send_buf->GetNoOfBuffers();
+  cq_attr.size = info->rx_attr->size;
   ret = fi_cq_open(domain, &cq_attr, &rxcq, &rxcq);
   if (ret) {
     LOG(ERROR) << "fi_cq_open for receive " << ret;

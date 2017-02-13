@@ -117,6 +117,7 @@ int RDMADatagramChannel::start() {
     mask = mask | ((uint64_t)1 << i);
   }
   tag_mask = ~mask;
+  LOG(INFO) << "Mask of stream id: " << stream_id << " target_id: " << receive_stream_id << " mask: " << tag_mask;
 
   ret = AllocateBuffers();
   if (ret) {
@@ -231,7 +232,7 @@ ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
-  rx_seq++;
+  tx_seq++;
   return 0;
 }
 
