@@ -229,6 +229,7 @@ int RDMADatagram::SetupQueues() {
   }
 
   // create a file descriptor wait cq set
+  cq_attr.format = FI_CQ_FORMAT_TAGGED;
   cq_attr.wait_obj = FI_WAIT_NONE;
   cq_attr.wait_cond = FI_CQ_COND_NONE;
   LOG(INFO) << "RQ Attr size: " << info->rx_attr->size;
@@ -352,56 +353,80 @@ int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
   return 0;
 }
 
+//ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
+//  ssize_t ret;
+//  uint64_t send_tag = 0;
+//  send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
+//  struct fi_msg_tagged *msg = &(tag_messages[index]);
+//  uint8_t *buf = recv_buf->GetBuffer(index);
+//  struct iovec *io = &(io_vectors[index]);
+//
+//  io->iov_len = size;
+//  io->iov_base = buf;
+//
+//  msg->msg_iov = io;
+//  msg->desc = (void **) fi_mr_desc(mr);
+//  msg->iov_count = 1;
+//  msg->addr = addr;
+//  LOG(INFO) << "Transmitting buffer with tag: " << send_tag << " and mask: " << tag_mask << " to: " << addr;
+//  msg->tag = send_tag;
+//  msg->ignore = tag_mask;
+//  msg->context = &(tx_contexts[index]);
+//
+//  ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
+//  if (ret)
+//    return ret;
+//  tx_seq++;
+//  return 0;
+//}
+
 ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
   ssize_t ret;
   uint64_t send_tag = 0;
   send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
-  struct fi_msg_tagged *msg = &(tag_messages[index]);
-  uint8_t *buf = recv_buf->GetBuffer(index);
-  struct iovec *io = &(io_vectors[index]);
-
-  io->iov_len = size;
-  io->iov_base = buf;
-
-  msg->msg_iov = io;
-  msg->desc = (void **) fi_mr_desc(mr);
-  msg->iov_count = 1;
-  msg->addr = addr;
-  LOG(INFO) << "Transmitting buffer with tag: " << send_tag << " and mask: " << tag_mask << " to: " << addr;
-  msg->tag = send_tag;
-  msg->ignore = tag_mask;
-  msg->context = &(tx_contexts[index]);
-
-  ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
+  ret = fi_tsend(this->ep, buf, size, fi_mr_desc(mr), addr, send_tag, &(tx_contexts[index]));
   if (ret)
     return ret;
   tx_seq++;
   return 0;
 }
 
+//ssize_t RDMADatagram::PostRX(size_t size, int index) {
+//  ssize_t ret;
+//  struct fi_msg_tagged *msg = &(tag_messages[index]);
+//  memset(msg, 0, sizeof (struct fi_msg_tagged));
+//  uint8_t *buf = recv_buf->GetBuffer(index);
+//  struct iovec *io = &(io_vectors[index]);
+//
+//  io->iov_len = size;
+//  io->iov_base = buf;
+//
+//  msg->msg_iov = io;
+//  msg->desc = (void **) fi_mr_desc(mr);
+//  msg->iov_count = 1;
+//  msg->addr = FI_ADDR_UNSPEC;
+//  msg->tag = recv_tag;
+//  msg->ignore = tag_mask;
+//  msg->context = &(recv_contexts[index]);
+//  LOG(INFO) << "Posting buffer with tag: " << recv_tag << " and mask: " << tag_mask;
+//  if (ep->tagged == NULL) {
+//    LOG(ERROR) << "No tagged messaging";
+//  }
+//
+//  ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
+//  if (ret)
+//    return ret;
+//  rx_seq++;
+//  return 0;
+//}
+
 ssize_t RDMADatagram::PostRX(size_t size, int index) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   memset(msg, 0, sizeof (struct fi_msg_tagged));
   uint8_t *buf = recv_buf->GetBuffer(index);
-  struct iovec *io = &(io_vectors[index]);
 
-  io->iov_len = size;
-  io->iov_base = buf;
-
-  msg->msg_iov = io;
-  msg->desc = (void **) fi_mr_desc(mr);
-  msg->iov_count = 1;
-  msg->addr = FI_ADDR_UNSPEC;
-  msg->tag = recv_tag;
-  msg->ignore = tag_mask;
-  msg->context = &(recv_contexts[index]);
-  LOG(INFO) << "Posting buffer with tag: " << recv_tag << " and mask: " << tag_mask;
-  if (ep->tagged == NULL) {
-    LOG(ERROR) << "No tagged messaging";
-  }
-
-  ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
+  ret = fi_trecv(this->ep, buf, size, fi_mr_desc(mr), 0, recv_tag, tag_mask, &(recv_contexts[index]));
   if (ret)
     return ret;
   rx_seq++;
