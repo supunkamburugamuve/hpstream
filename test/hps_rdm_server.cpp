@@ -3,8 +3,8 @@
 #include "heron_stmgr_server.h"
 
 RDMAOptions options;
-RDMAEventLoop *eventLoop;
-RDMAFabric *loopFabric;
+// RDMAEventLoop *eventLoop;
+//RDMAFabric *loopFabric;
 RDMAStMgrClient *client;
 RDMAStMgrServer *server;
 Timer timer;
@@ -12,11 +12,17 @@ Timer timer;
 #define SIZE_ 10000
 
 int connect() {
+  options.buf_size = BUFFER_SIZE;
+  options.no_buffers = BUFFERS;
+  options.provider = PSM2_PROVIDER_TYPE;
+
   int ret = 0;
-  loopFabric = new RDMAFabric(&options);
-  loopFabric->Init();
-  eventLoop = new RDMAEventLoop(loopFabric);
-  eventLoop->Start();
+//  loopFabric = new RDMAFabric(&options);
+//  loopFabric->Init();
+  // eventLoop = new RDMAEventLoop(loopFabric);
+  // eventLoop->Start();
+
+
 
   RDMAOptions *clientOptions = new RDMAOptions();
   clientOptions->dst_addr = options.dst_addr;
@@ -24,6 +30,9 @@ int connect() {
   clientOptions->options = 0;
   clientOptions->buf_size = BUFFER_SIZE;
   clientOptions->no_buffers = BUFFERS;
+  clientOptions->provider = PSM2_PROVIDER_TYPE;
+//  client = new RDMAStMgrClient(datagram, clientOptions, loopFabric);
+//  client->Start();
 
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
@@ -31,14 +40,19 @@ int connect() {
   serverOptions->options = 0;
   serverOptions->buf_size = BUFFER_SIZE;
   serverOptions->no_buffers = BUFFERS;
+  serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, clientOptions, &timer);
+  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 0);
+  datagram->start();
+  server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
   server->Start();
+  //server->AddChannel(1, options.dst_addr, options.dst_port);
   server->origin = false;
+//  server->setRDMAClient(client);
 
   LOG(INFO) << "Started server";
-  eventLoop->Wait();
+  datagram->Wait();
   return ret;
 }
 
@@ -63,7 +77,7 @@ int main(int argc, char **argv) {
   int op;
   options.buf_size = BUFFER_SIZE;
   options.no_buffers = BUFFERS;
-  signal(SIGINT, INThandler);
+//  signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {

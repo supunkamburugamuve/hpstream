@@ -118,18 +118,18 @@ int RDMADatagram::start() {
     return ret;
   }
 
-  ret = InitEndPoint();
-  if (ret) {
-    LOG(ERROR) << "Failed to initialize endpoint";
-    return ret;
-  }
-
   ret = SetupQueues();
   if (ret) {
     LOG(ERROR) << "Failed to setup queues";
     return ret;
   }
   LOG(INFO) << "Queues setup";
+
+  ret = InitEndPoint();
+  if (ret) {
+    LOG(ERROR) << "Failed to initialize endpoint";
+    return ret;
+  }
 
   ret = PostBuffers();
   if (ret) {
@@ -345,7 +345,7 @@ int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
     LOG(ERROR) << "fi_av_insert " << ret;
     return ret;
   } else if (ret != count) {
-    LOG(ERROR) << "fi_av_insert: number of addresses inserted = %d;"
+    LOG(ERROR) << "fi_av_insert: number of addresses inserted"
                " number of addresses given: " << count << "," << ret;
     return -EXIT_FAILURE;
   }
@@ -353,70 +353,46 @@ int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
   return 0;
 }
 
-//ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
-//  ssize_t ret;
-//  uint64_t send_tag = 0;
-//  send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
-//  struct fi_msg_tagged *msg = &(tag_messages[index]);
-//  uint8_t *buf = recv_buf->GetBuffer(index);
-//  struct iovec *io = &(io_vectors[index]);
-//
-//  io->iov_len = size;
-//  io->iov_base = buf;
-//
-//  msg->msg_iov = io;
-//  msg->desc = (void **) fi_mr_desc(mr);
-//  msg->iov_count = 1;
-//  msg->addr = addr;
-//  LOG(INFO) << "Transmitting buffer with tag: " << send_tag << " and mask: " << tag_mask << " to: " << addr;
-//  msg->tag = send_tag;
-//  msg->ignore = tag_mask;
-//  msg->context = &(tx_contexts[index]);
-//
-//  ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
-//  if (ret)
-//    return ret;
-//  tx_seq++;
-//  return 0;
-//}
-
 ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
   ssize_t ret;
   uint64_t send_tag = 0;
   send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
-  ret = fi_tsend(this->ep, buf, size, fi_mr_desc(mr), addr, send_tag, &(tx_contexts[index]));
+  struct fi_msg_tagged *msg = &(tag_messages[index]);
+  uint8_t *buf = send_buf->GetBuffer(index);
+  struct iovec *io = &(io_vectors[index]);
+
+  io->iov_len = size;
+  io->iov_base = buf;
+
+  msg->msg_iov = io;
+  msg->desc = (void **) fi_mr_desc(mr);
+  msg->iov_count = 1;
+  msg->addr = addr;
+  LOG(INFO) << "Transmitting buffer with tag: " << send_tag << " and mask: " << tag_mask << " to: " << addr;
+  msg->tag = send_tag;
+  msg->ignore = tag_mask;
+  msg->context = &(tx_contexts[index]);
+
+  for (int i = 0; i < size; i++) {
+    printf("%d ", buf[i]);
+  }
+  printf("\n");
+
+  ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
   tx_seq++;
   return 0;
 }
 
-//ssize_t RDMADatagram::PostRX(size_t size, int index) {
+//ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
 //  ssize_t ret;
-//  struct fi_msg_tagged *msg = &(tag_messages[index]);
-//  memset(msg, 0, sizeof (struct fi_msg_tagged));
-//  uint8_t *buf = recv_buf->GetBuffer(index);
-//  struct iovec *io = &(io_vectors[index]);
-//
-//  io->iov_len = size;
-//  io->iov_base = buf;
-//
-//  msg->msg_iov = io;
-//  msg->desc = (void **) fi_mr_desc(mr);
-//  msg->iov_count = 1;
-//  msg->addr = FI_ADDR_UNSPEC;
-//  msg->tag = recv_tag;
-//  msg->ignore = tag_mask;
-//  msg->context = &(recv_contexts[index]);
-//  LOG(INFO) << "Posting buffer with tag: " << recv_tag << " and mask: " << tag_mask;
-//  if (ep->tagged == NULL) {
-//    LOG(ERROR) << "No tagged messaging";
-//  }
-//
-//  ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
+//  uint64_t send_tag = 0;
+//  send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
+//  ret = fi_tsend(this->ep, buf, size, fi_mr_desc(mr), addr, send_tag, &(tx_contexts[index]));
 //  if (ret)
 //    return ret;
-//  rx_seq++;
+//  tx_seq++;
 //  return 0;
 //}
 
@@ -425,13 +401,42 @@ ssize_t RDMADatagram::PostRX(size_t size, int index) {
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   memset(msg, 0, sizeof (struct fi_msg_tagged));
   uint8_t *buf = recv_buf->GetBuffer(index);
+  struct iovec *io = &(io_vectors[index]);
 
-  ret = fi_trecv(this->ep, buf, size, fi_mr_desc(mr), 0, recv_tag, tag_mask, &(recv_contexts[index]));
+  io->iov_len = size;
+  io->iov_base = buf;
+
+  msg->msg_iov = io;
+  msg->desc = (void **) fi_mr_desc(mr);
+  msg->iov_count = 1;
+  msg->addr = FI_ADDR_UNSPEC;
+  msg->tag = recv_tag;
+  msg->ignore = tag_mask;
+  msg->context = &(recv_contexts[index]);
+  LOG(INFO) << "Posting buffer with tag: " << recv_tag << " and mask: " << tag_mask;
+  if (ep->tagged == NULL) {
+    LOG(ERROR) << "No tagged messaging";
+  }
+
+  ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
   rx_seq++;
   return 0;
 }
+
+//ssize_t RDMADatagram::PostRX(size_t size, int index) {
+//  ssize_t ret;
+//  struct fi_msg_tagged *msg = &(tag_messages[index]);
+//  memset(msg, 0, sizeof (struct fi_msg_tagged));
+//  uint8_t *buf = recv_buf->GetBuffer(index);
+//
+//  ret = fi_trecv(this->ep, buf, size, fi_mr_desc(mr), 0, recv_tag, tag_mask, &(recv_contexts[index]));
+//  if (ret)
+//    return ret;
+//  rx_seq++;
+//  return 0;
+//}
 
 int RDMADatagram::SendAddressToRemote(fi_addr_t remote) {
   size_t addrlen;
@@ -445,14 +450,17 @@ int RDMADatagram::SendAddressToRemote(fi_addr_t remote) {
     LOG(ERROR) << "Failed to get network name";
     return (int) ret;
   }
-  LOG(INFO) << "Send address to remote: " << remote;
+  for (int i = 0; i < addrlen; i++) {
+    printf("%d ", send_buffer[i]);
+  }
+  printf("\n");
+  LOG(INFO) << "Send address to remote: " << remote << " with buff: " << head << " length: " << addrlen;
   ret = PostTX(addrlen, head, remote, stream_id, 0);
   if (ret) {
     LOG(ERROR) << "Failed to send the address to remote";
     return (int) ret;
   }
   send_buf->IncrementFilled(1);
-  // increment the head
   send_buf->IncrementSubmitted(1);
   return 0;
 }
@@ -472,10 +480,15 @@ int RDMADatagram::SendConfirmToRemote(fi_addr_t remote) {
 
 int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint32_t target_id) {
   int ret;
+  LOG(INFO) << "Handle connect type: " << connect_type << " target id: " << target_id << " buffer index: " << bufer_index;
   // server receive the connection information
   if (connect_type == 0) {
     fi_addr_t remote_addr;
     uint8_t *buf = recv_buf->GetBuffer(bufer_index);
+    for (int i = 0; i < 16; i++) {
+      printf("%d ", buf[i]);
+    }
+    printf("\n");
     ret = AVInsert(buf, 1, &remote_addr, 0, NULL);
     if (ret) {
       LOG(ERROR) << "Failed to get target address information: " << ret;
@@ -616,6 +629,7 @@ int RDMADatagram::ReceiveComplete() {
         uint16_t control_type = (uint16_t) (comp.tag >> 16);
         // initial contact
         uint32_t tail = recvBuf->GetBase();
+        LOG(INFO) << "Received complete with size: " << comp.len;
         HandleConnect(control_type, tail, stream_id);
       } else if (type == 1) {  // data message
         // pick te correct channel

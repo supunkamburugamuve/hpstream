@@ -23,23 +23,28 @@ int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
 }
 
 int connect3() {
+  options.buf_size = BUFFER_SIZE;
+  options.no_buffers = BUFFERS;
+  options.provider = PSM2_PROVIDER_TYPE;
+
   loopFabric = new RDMAFabric(&options);
   loopFabric->Init();
   eventLoop = new RDMAEventLoop(loopFabric);
   eventLoop->Start();
 
+  RDMADatagram *datagram = new RDMADatagram(&options, loopFabric, 1);
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
   serverOptions->src_addr = options.src_addr;
   serverOptions->options = 0;
   serverOptions->buf_size = BUFFER_SIZE;
   serverOptions->no_buffers = BUFFERS;
+  serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  server = new RDMAStMgrServer(eventLoop, serverOptions, loopFabric, NULL, &timer);
+  server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, NULL, &timer);
   server->Start();
   server->origin = true;
-
 
   RDMAOptions *clientOptions = new RDMAOptions();
   clientOptions->dst_addr = options.dst_addr;
@@ -47,11 +52,12 @@ int connect3() {
   clientOptions->options = 0;
   clientOptions->buf_size = BUFFER_SIZE;
   clientOptions->no_buffers = BUFFERS;
+  clientOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *clientFabric = new RDMAFabric(clientOptions);
   clientFabric->Init();
 
   LOG(INFO) << "Started server";
-  client = new RDMAStMgrClient(eventLoop, clientOptions, clientFabric);
+  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric, 0);
   client->Start();
   LOG(INFO) << "Started client";
 
@@ -60,6 +66,52 @@ int connect3() {
   }
   LOG(INFO) << "Server connected";
   return 1;
+}
+
+int connectPSM2() {
+  options.buf_size = BUFFER_SIZE;
+  options.no_buffers = BUFFERS;
+  options.provider = PSM2_PROVIDER_TYPE;
+
+  int ret = 0;
+//  loopFabric = new RDMAFabric(&options);
+//  loopFabric->Init();
+  // eventLoop = new RDMAEventLoop(loopFabric);
+  // eventLoop->Start();
+
+  RDMAOptions *clientOptions = new RDMAOptions();
+  clientOptions->dst_addr = options.dst_addr;
+  clientOptions->dst_port = options.dst_port;
+  clientOptions->options = 0;
+  clientOptions->buf_size = BUFFER_SIZE;
+  clientOptions->no_buffers = BUFFERS;
+  clientOptions->provider = PSM2_PROVIDER_TYPE;
+
+
+  RDMAOptions *serverOptions = new RDMAOptions();
+  serverOptions->src_port = options.src_port;
+  serverOptions->src_addr = options.src_addr;
+  serverOptions->options = 0;
+  serverOptions->buf_size = BUFFER_SIZE;
+  serverOptions->no_buffers = BUFFERS;
+  serverOptions->provider = PSM2_PROVIDER_TYPE;
+  RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
+  serverFabric->Init();
+  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 1);
+  datagram->start();
+  server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
+  server->origin = true;
+  server->Start();
+
+  RDMAFabric *clientFabric = new RDMAFabric(clientOptions);
+  clientFabric->Init();
+  client = new RDMAStMgrClient(datagram, clientOptions, clientFabric, 0);
+  client->Start();
+  //server->AddChannel(1, options.dst_addr, options.dst_port);
+  while (!client->IsConnected()) {
+    sleep(1);
+  }
+  return 0;
 }
 
 int exchange3() {
@@ -109,7 +161,7 @@ int main(int argc, char **argv) {
   int op;
   options.buf_size = BUFFER_SIZE;
   options.no_buffers = BUFFERS;
-  signal(SIGINT, INThandler);
+//  signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {
@@ -128,7 +180,7 @@ int main(int argc, char **argv) {
     printf("dst addr: %s\n", options.dst_addr);
   }
 
-  connect3();
+  connectPSM2();
   exchange3();
   return 0;
 }
