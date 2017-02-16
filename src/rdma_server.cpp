@@ -100,6 +100,7 @@ int RDMABaseServer::AddChannel(uint32_t target_id, char *node, char *service) {
 int RDMABaseServer::OnRDMConnect(uint32_t stream_id) {
   RDMADatagramChannel *channel_ = datagram_->GetChannel(stream_id);
   RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_, READ_ONLY);
+  con->start();
   this->active_connections_.insert(con);
   HandleNewConnection_Base(con);
   LOG(INFO) << "Created channel to stream id: " << stream_id;

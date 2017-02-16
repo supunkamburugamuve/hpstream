@@ -17,7 +17,7 @@ RDMAStMgrClient::RDMAStMgrClient(RDMAEventLoop* eventLoop, RDMAOptions* _options
   InstallResponseHandler(new proto::stmgr::TupleMessage(), &RDMAStMgrClient::HandleHelloResponse);
 }
 
-RDMAStMgrClient::RDMAStMgrClient(RDMADatagram* eventLoop, RDMAOptions* _options, RDMAFabric *fabric, uint32_t target_id)
+RDMAStMgrClient::RDMAStMgrClient(RDMADatagram* eventLoop, RDMAOptions* _options, RDMAFabric *fabric, uint16_t target_id)
     : RDMAClient(_options, fabric, eventLoop, target_id),
       quit_(false),
       ndropped_messages_(0) {

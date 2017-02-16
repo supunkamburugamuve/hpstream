@@ -30,7 +30,7 @@
 
 RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
                                          struct fid_domain *domain, struct fid_ep *ep,
-                                         uint32_t stream_id, uint32_t recv_stream_id,
+                                         uint16_t stream_id, uint16_t recv_stream_id,
                                          fi_addr_t	remote_addr) {
   this->options = opts;
   this->info = info;
@@ -56,8 +56,9 @@ RDMADatagramChannel::RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info
   this->total_used_credit = 0;
   this->credit_used_checkpoint = 0;
   this->stream_id = stream_id;
-  this->receive_stream_id = recv_stream_id;
+  this->target_stream_id = recv_stream_id;
   this->remote_addr = remote_addr;
+  this->started = false;
 }
 
 RDMADatagramChannel::~RDMADatagramChannel() {
@@ -106,18 +107,26 @@ int RDMADatagramChannel::setOnWriteComplete(VCallback<uint32_t> onWriteComplete)
 int RDMADatagramChannel::start() {
   int ret = 0;
 
+  if (started) {
+    return 0;
+  }
+
   uint16_t message_type = 1;
   send_tag = 0;
+  recv_tag = 0;
   // create the receive tag and send tag
-  send_tag = (uint64_t)stream_id << 32 | (uint64_t) message_type;
-  recv_tag = (uint64_t)receive_stream_id << 32 | (uint64_t) message_type;
+  send_tag = (uint64_t)stream_id << 32 | (uint64_t)target_stream_id << 48 | (uint64_t) message_type;
+  recv_tag = (uint64_t)target_stream_id << 32 | (uint64_t)stream_id << 48 | (uint64_t) message_type;
+
+  LOG(INFO) << "***************** recv_tag" << recv_tag;
+  LOG(INFO) << "***************** send_tag" << send_tag;
 
   uint64_t mask = 0;
   for (int i = 0; i < 16; i++) {
     mask = mask | ((uint64_t)1 << i);
   }
   tag_mask = ~mask;
-  LOG(INFO) << "Mask of stream id: " << stream_id << " target_id: " << receive_stream_id << " mask: " << tag_mask;
+  LOG(INFO) << "Mask of stream id: " << stream_id << " target_id: " << target_stream_id << " mask: " << tag_mask;
 
   ret = AllocateBuffers();
   if (ret) {
@@ -129,6 +138,7 @@ int RDMADatagramChannel::start() {
     LOG(ERROR) << "Failed to post the buffers: " << ret;
     return ret;
   }
+  started = true;
   return 0;
 }
 
@@ -148,6 +158,15 @@ int RDMADatagramChannel::PostBuffers() {
     }
     rBuf->IncrementSubmitted(1);
   }
+
+  this->self_credit = rBuf->GetNoOfBuffers();
+  this->peer_credit = rBuf->GetNoOfBuffers()  - 1;
+  this->total_sent_credit = rBuf->GetNoOfBuffers() - 1;
+  this->total_used_credit = 0;
+  this->credit_used_checkpoint = 0;
+  this->credit_messages_ = new bool[noBufs];
+  this->waiting_for_credit = false;
+  memset(this->credit_messages_, 0, sizeof(bool) * noBufs);
 
   return 0;
 }
@@ -184,16 +203,16 @@ int RDMADatagramChannel::AllocateBuffers(void) {
 
   if (((info->mode & FI_LOCAL_MR) ||
        (info->caps & (FI_RMA | FI_ATOMIC)))) {
-    LOG(INFO) << "register memory with key: " << HPS_MR_KEY + receive_stream_id;
+    LOG(INFO) << "register memory with key: " << HPS_MR_KEY + target_stream_id;
     ret = fi_mr_reg(domain, buf, rx_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY + 10 + receive_stream_id, 0, &mr, NULL);
+                    0, HPS_MR_KEY + 10 + target_stream_id, 0, &mr, NULL);
     if (ret) {
       LOG(FATAL) << "Failed to register memory: " << ret;
       return ret;
     }
-    LOG(INFO) << "register memory with key: " << HPS_MR_KEY_W + receive_stream_id;
+    LOG(INFO) << "register memory with key: " << HPS_MR_KEY_W + target_stream_id;
     ret = fi_mr_reg(domain, w_buf, tx_size, hps_utils_caps_to_mr_access(info->caps),
-                    0, HPS_MR_KEY_W + 10 + receive_stream_id, 0, &w_mr, NULL);
+                    0, HPS_MR_KEY_W + 10 + target_stream_id, 0, &w_mr, NULL);
     if (ret) {
       LOG(FATAL) << "Failed to register memory: " << ret;
       return ret;
@@ -215,7 +234,7 @@ int RDMADatagramChannel::AllocateBuffers(void) {
 ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
-  uint8_t *buf = recv_buf->GetBuffer(index);
+  uint8_t *buf = send_buf->GetBuffer(index);
   struct iovec *io = &(io_vectors[index]);
 
   io->iov_len = size;
@@ -228,6 +247,8 @@ ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   msg->tag = send_tag;
   msg->ignore = tag_mask;
   msg->context = &(tx_contexts[index]);
+
+  LOG(INFO) << "Sending message with tag: " << send_tag << " mask: " << tag_mask;
 
   ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
@@ -253,6 +274,7 @@ ssize_t RDMADatagramChannel::PostRX(size_t size, int index) {
   msg->ignore = tag_mask;
   msg->context = &(recv_contexts[index]);
 
+  LOG(INFO) << "Post receive buffer with tag: " << recv_tag << " mask: " << tag_mask;
   ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
@@ -426,6 +448,7 @@ int RDMADatagramChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write)
   uint32_t error_count = 0;
   bool credit_set;
   uint32_t buf_size = sbuf->GetBufferSize() - 8;
+  LOG(INFO) << "Peer credit: " << this->peer_credit;
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   uint32_t free_buffs = sbuf->GetNoOfBuffers() - sbuf->GetFilledBuffers();
@@ -501,7 +524,7 @@ int RDMADatagramChannel::ReadReady(ssize_t cq_count){
       onReadReady(0);
     }
   } else {
-    LOG(ERROR) << "Calling read without setting the callback function";
+     LOG(ERROR) << "Calling read without setting the callback function";
     return -1;
   }
   return 0;

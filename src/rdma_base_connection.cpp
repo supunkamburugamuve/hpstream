@@ -23,14 +23,16 @@ int32_t RDMABaseConnection::start() {
     LOG(ERROR) << "Connection not in INIT State, hence cannot start: " << mState;
     return -1;
   }
-
+  LOG(INFO) << "Creating base connection";
   mOnWrite = [this](int fd) { return this->handleWrite(fd); };
   mOnRead = [this](int fd) { return this->handleRead(fd); };
 
   if (channel_type == READ_ONLY || channel_type == READ_WRITE) {
+    LOG(INFO) << "Reigster read";
     mRdmaConnection->registerRead(mOnRead);
   }
   if (channel_type == WRITE_ONLY || channel_type == READ_WRITE) {
+    LOG(INFO) << "Reigster write";
     mRdmaConnection->registerWrite(mOnWrite);
   }
 

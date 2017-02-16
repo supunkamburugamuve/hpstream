@@ -14,7 +14,7 @@ class RDMABaseClient {
 public:
   enum ClientState {INIT = 0, DISCONNECTED, CONNECTING, CONNECTED };
   RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEventLoop *loop);
-  RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop, uint32_t target_id);
+  RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop, uint16_t target_id);
   int Start_base(void);
   int Stop_base();
   // Instantiate a new connection
@@ -65,7 +65,7 @@ private:
   // the fabric
   struct fid_fabric *fabric;
   struct fid_domain *domain;
-  uint32_t target_id;
+  uint16_t target_id;
 
 
   int Connected(fi_eq_cm_entry *entry);

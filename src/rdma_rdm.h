@@ -22,13 +22,13 @@
 
 /**
  * We use tag messagging
- * | 16                   | 16              | 32                 |
- * | Type - control, data | stream id       |                    |
+ * | 16                       | 16       | 16               | 16
+ * | Type - control=0, data=1 | sub type | target_stream_id | stream_id
  */
 
 class RDMADatagram {
 public:
-  RDMADatagram(RDMAOptions *opts, RDMAFabric *fabric, uint32_t stream_id);
+  RDMADatagram(RDMAOptions *opts, RDMAFabric *fabric, uint16_t stream_id);
   void Free();
 
   virtual ~RDMADatagram();
@@ -58,10 +58,10 @@ public:
    */
   int InitEndPoint();
 
-  RDMADatagramChannel* CreateChannel(uint32_t target_id, struct fi_info *target);
-  RDMADatagramChannel* GetChannel(uint32_t target_id);
-  int SendAddressToRemote(fi_addr_t remote);
-  void AddChannel(uint32_t target_id, RDMADatagramChannel *channel);
+  RDMADatagramChannel* CreateChannel(uint16_t target_id, struct fi_info *target);
+  RDMADatagramChannel* GetChannel(uint16_t target_id);
+  int SendAddressToRemote(fi_addr_t remote, uint16_t target_id);
+  void AddChannel(uint16_t target_id, RDMADatagramChannel *channel);
   void SetRDMConnect(VCallback<uint32_t> connect) {
     this->onRDMConnect = connect;
   };
@@ -71,7 +71,7 @@ public:
 private:
   // options for initialization
   RDMAOptions *options;
-  uint32_t stream_id;
+  uint16_t stream_id;
   // fabric information obtained
   struct fi_info *info;
   // hints to be used to obtain fabric information
@@ -124,17 +124,17 @@ private:
   /**
  * Transmit a buffer
  */
-  ssize_t PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type);
+  ssize_t PostTX(size_t size, int index, fi_addr_t addr, uint16_t target_id, uint16_t type);
   /**
    * Post a receive buffer
    */
   ssize_t PostRX(size_t size, int index);
 
-  int HandleConnect(uint16_t connect_type, int bufer_index, uint32_t target_id);
+  int HandleConnect(uint16_t connect_type, int bufer_index, uint16_t target_id);
   int SendConfirmToRemote(fi_addr_t remote);
 
   // remote rdm channels
-  std::unordered_map<uint32_t, RDMADatagramChannel *> channels;
+  std::unordered_map<uint16_t, RDMADatagramChannel *> channels;
   // the tag used by control messages
   uint64_t recv_tag;
   // the control ignore bits

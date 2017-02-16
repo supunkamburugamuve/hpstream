@@ -29,7 +29,7 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric,
   this->state_ = INIT;
 }
 
-RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop, uint32_t target_id) {
+RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADatagram *loop, uint16_t target_id) {
   this->info_hints = rdmaFabric->GetHints();
   this->datagram_ = loop;
   this->eventLoop_ = NULL;
@@ -45,6 +45,7 @@ RDMABaseClient::RDMABaseClient(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADa
   this->eq_loop.event = CONNECTION;
   this->eq_loop.valid = true;
   this->state_ = INIT;
+  this->target_id = target_id;
 }
 
 void RDMABaseClient::OnConnect(enum rdma_loop_status state) {
@@ -187,7 +188,7 @@ int RDMABaseClient::CreateChannel() {
   this->conn_ = CreateConnection(channel_, options, this->eventLoop_, WRITE_ONLY);
   LOG(INFO) << "Created channel to stream id: " << target_id;
 
-  int ret = datagram_->SendAddressToRemote(channel_->GetRemoteAddress());
+  int ret = datagram_->SendAddressToRemote(channel_->GetRemoteAddress(), target_id);
   if (ret) {
     LOG(ERROR) << "Failed to send the address to remote: " << target_id;
     return ret;

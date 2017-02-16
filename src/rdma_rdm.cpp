@@ -30,7 +30,7 @@ static void *startRDMLoopThread(void *param) {
   return NULL;
 }
 
-RDMADatagram::RDMADatagram(RDMAOptions *opts, RDMAFabric *fabric, uint32_t stream_id) {
+RDMADatagram::RDMADatagram(RDMAOptions *opts, RDMAFabric *fabric, uint16_t stream_id) {
   this->options = opts;
   this->info = fabric->GetInfo();
   this->info_hints = fabric->GetHints();
@@ -176,7 +176,7 @@ void RDMADatagram::Loop() {
   }
 }
 
-RDMADatagramChannel* RDMADatagram::CreateChannel(uint32_t target_id, struct fi_info *target) {
+RDMADatagramChannel* RDMADatagram::CreateChannel(uint16_t target_id, struct fi_info *target) {
   fi_addr_t remote_addr;
   int ret;
   RDMADatagramChannel *channel;
@@ -195,12 +195,12 @@ RDMADatagramChannel* RDMADatagram::CreateChannel(uint32_t target_id, struct fi_i
   return channel;
 }
 
-void RDMADatagram::AddChannel(uint32_t target_id, RDMADatagramChannel *channel) {
+void RDMADatagram::AddChannel(uint16_t target_id, RDMADatagramChannel *channel) {
   channels[target_id] = channel;
 }
 
-RDMADatagramChannel* RDMADatagram::GetChannel(uint32_t target_id) {
-  std::unordered_map<std::uint32_t, RDMADatagramChannel*>::const_iterator it = channels.find(target_id);
+RDMADatagramChannel* RDMADatagram::GetChannel(uint16_t target_id) {
+  std::unordered_map<std::uint16_t, RDMADatagramChannel*>::const_iterator it = channels.find(target_id);
   if (it == channels.end()) {
     return NULL;
   } else {
@@ -353,10 +353,10 @@ int RDMADatagram::AVInsert(void *addr, size_t count, fi_addr_t *fi_addr,
   return 0;
 }
 
-ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint32_t send_id, uint16_t type) {
+ssize_t RDMADatagram::PostTX(size_t size, int index, fi_addr_t addr, uint16_t target_id, uint16_t type) {
   ssize_t ret;
   uint64_t send_tag = 0;
-  send_tag |= (uint64_t)type << 16 | (uint64_t)send_id << 32;
+  send_tag |= (uint64_t)type << 16 | (uint64_t)target_id << 48 | (uint64_t)stream_id << 32;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   uint8_t *buf = send_buf->GetBuffer(index);
   struct iovec *io = &(io_vectors[index]);
@@ -438,7 +438,7 @@ ssize_t RDMADatagram::PostRX(size_t size, int index) {
 //  return 0;
 //}
 
-int RDMADatagram::SendAddressToRemote(fi_addr_t remote) {
+int RDMADatagram::SendAddressToRemote(fi_addr_t remote, uint16_t target_id) {
   size_t addrlen;
   ssize_t ret;
   addrlen = send_buf->GetBufferSize();
@@ -469,39 +469,43 @@ int RDMADatagram::SendConfirmToRemote(fi_addr_t remote) {
   ssize_t ret;
   uint32_t head = 0;
   head = send_buf->NextWriteIndex();
-
-  ret = PostTX(1, head, remote, stream_id, 0);
+  LOG(INFO) << "Send connect confirm to remote: " << remote;
+  ret = PostTX(1, head, remote, stream_id, 1);
   if (ret) {
     LOG(ERROR) << "Failed to send the address to remote";
     return (int) ret;
   }
+  send_buf->IncrementFilled(1);
+  send_buf->IncrementSubmitted(1);
   return 0;
 }
 
-int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint32_t target_id) {
+int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint16_t target_id) {
   int ret;
   LOG(INFO) << "Handle connect type: " << connect_type << " target id: " << target_id << " buffer index: " << bufer_index;
   // server receive the connection information
   if (connect_type == 0) {
     fi_addr_t remote_addr;
-    uint8_t *buf = recv_buf->GetBuffer(bufer_index);
-    for (int i = 0; i < 16; i++) {
-      printf("%d ", buf[i]);
-    }
-    printf("\n");
-    ret = AVInsert(buf, 1, &remote_addr, 0, NULL);
-    if (ret) {
-      LOG(ERROR) << "Failed to get target address information: " << ret;
-      return NULL;
-    }
-    ret = AVInsert(buf, 1, &remote_addr, 0, NULL);
-    if (ret) {
-      LOG(ERROR) << "Failed to get target address information: " << ret;
-      return NULL;
-    }
-    RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, ep, stream_id, target_id, remote_addr);
-    channels[target_id] = channel;
+    RDMADatagramChannel *pChannel = GetChannel(target_id);
+    if (pChannel == NULL) {
+      uint8_t *buf = recv_buf->GetBuffer(bufer_index);
+      for (int i = 0; i < 16; i++) {
+        printf("%d ", buf[i]);
+      }
+      printf("\n");
+      ret = AVInsert(buf, 1, &remote_addr, 0, NULL);
+      if (ret) {
+        LOG(ERROR) << "Failed to get target address information: " << ret;
+        return NULL;
+      }
 
+      RDMADatagramChannel *channel = new RDMADatagramChannel(options, info, domain, ep, stream_id, target_id,
+                                                             remote_addr);
+      channels[target_id] = channel;
+    } else {
+      remote_addr = pChannel->GetRemoteAddress();
+    }
+    
     if (onRDMConnect) {
       onRDMConnect(target_id);
     } else {
@@ -544,7 +548,8 @@ int RDMADatagram::TransmitComplete() {
     if (cq_ret > 0) {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
-      uint32_t stream_id = ((uint32_t) (comp.tag >> 32));
+      uint16_t stream_id = ((uint16_t) (comp.tag >> 32));
+      uint16_t target_stream_id = ((uint16_t) (comp.tag >> 48));
       this->tx_cq_cntr += cq_ret;
       if (type == 0) {       // control message
         for (int i = 0; i < cq_ret; i++) {
@@ -560,10 +565,10 @@ int RDMADatagram::TransmitComplete() {
         }
       } else if (type == 1) {  // data message
         // pick te correct channel
-        std::unordered_map<uint32_t, RDMADatagramChannel *>::const_iterator it
-            = channels.find(stream_id);
+        std::unordered_map<uint16_t, RDMADatagramChannel *>::const_iterator it
+            = channels.find(target_stream_id);
         if (it == channels.end()) {
-          LOG(ERROR) << "Un-expected stream id in tag: " << stream_id;
+          LOG(ERROR) << "Un-expected stream id in tag: " << target_stream_id;
           return -1;
         } else {
           RDMADatagramChannel *channel = it->second;
@@ -618,7 +623,7 @@ int RDMADatagram::ReceiveComplete() {
     if (cq_ret > 0) {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
-      uint32_t stream_id = ((uint32_t) (comp.tag >> 32));
+      uint16_t stream_id = ((uint16_t) (comp.tag >> 32));
       if (type == 0) {       // control message
         this->rx_cq_cntr += cq_ret;
         if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
@@ -633,7 +638,7 @@ int RDMADatagram::ReceiveComplete() {
         HandleConnect(control_type, tail, stream_id);
       } else if (type == 1) {  // data message
         // pick te correct channel
-        std::unordered_map<uint32_t, RDMADatagramChannel *>::const_iterator it
+        std::unordered_map<uint16_t, RDMADatagramChannel *>::const_iterator it
             = channels.find(stream_id);
         if (it == channels.end()) {
           LOG(ERROR) << "Un-expected stream id in tag: " << stream_id;

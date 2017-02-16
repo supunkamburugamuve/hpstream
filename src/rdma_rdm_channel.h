@@ -25,7 +25,7 @@ public:
 
   RDMADatagramChannel(RDMAOptions *opts, struct fi_info *info,
                       struct fid_domain *domain, struct fid_ep *ep,
-                      uint32_t stream_id, uint32_t recv_stream_id,
+                      uint16_t stream_id, uint16_t recv_stream_id,
                       fi_addr_t	remote_addr);
   void Free();
 
@@ -71,8 +71,8 @@ public:
 private:
   // options for initialization
   RDMAOptions *options;
-  uint32_t stream_id;
-  uint32_t receive_stream_id;
+  uint16_t stream_id;
+  uint16_t target_stream_id;
   // fabric information obtained
   struct fi_info *info;
   // the fabric
@@ -149,6 +149,7 @@ private:
   uint64_t send_tag;
   uint64_t recv_tag;
   uint64_t tag_mask;
+  bool started;
 };
 
 
