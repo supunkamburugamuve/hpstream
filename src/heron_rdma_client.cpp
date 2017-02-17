@@ -170,7 +170,7 @@ void RDMAClient::InternalSendResponse(RDMAOutgoingPacket* _packet) {
 
 void RDMAClient::OnNewPacket(RDMAIncomingPacket* _ipkt) {
   std::string typname;
-
+  LOG(INFO) << "New packet";
   if (_ipkt->UnPackString(&typname) != 0) {
     HeronRDMAConnection* conn = static_cast<HeronRDMAConnection*>(conn_);
     LOG(FATAL) << "UnPackString failed from connection ";

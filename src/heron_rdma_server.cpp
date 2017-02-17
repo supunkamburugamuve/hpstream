@@ -117,6 +117,8 @@ void RDMAServer::OnNewPacket(HeronRDMAConnection* _connection, RDMAIncomingPacke
     return;
   }
 
+  LOG(INFO) << "New packet";
+
   std::string typname;
   if (_packet->UnPackString(&typname) != 0) {
     LOG(ERROR) << "UnPackString failed from connection " << _connection << " from hostport "
