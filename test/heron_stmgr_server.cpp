@@ -72,7 +72,7 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
 //    }
     count++;
   }
-  LOG(INFO) << "Received message ......";
+//  LOG(INFO) << "Received message ......" << count;
 
   char *name = new char[100];
   sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");

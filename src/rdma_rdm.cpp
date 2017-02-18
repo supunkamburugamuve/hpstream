@@ -559,7 +559,7 @@ int RDMADatagram::TransmitComplete() {
             return 1;
           }
         }
-        LOG(INFO) << "Transmit complete control";
+//        LOG(INFO) << "Transmit complete control";
       } else if (type == 1) {  // data message
         // pick te correct channel
         std::unordered_map<uint16_t, RDMADatagramChannel *>::const_iterator it
@@ -570,13 +570,13 @@ int RDMADatagram::TransmitComplete() {
         } else {
           RDMADatagramChannel *channel = it->second;
           if (control_type == 0) {
-            LOG(INFO) << "Transmit complete write ready";
+//            LOG(INFO) << "Transmit complete write ready";
             if (channel->WriteReady(cq_ret)) {
               LOG(ERROR) << "Failed to read";
               return -1;
             }
           } else if (control_type == 1) {
-            LOG(INFO) << "Transmit complete credit ready";
+//            LOG(INFO) << "Transmit complete credit ready";
             // credit message
             channel->CreditWriteComplete();
           } else {
@@ -652,11 +652,13 @@ int RDMADatagram::ReceiveComplete() {
         } else {
           RDMADatagramChannel *channel = it->second;
           if (control_type == 0) {
+//            LOG(INFO) << "Data read complete";
             if (channel->ReadReady(cq_ret)) {
               LOG(ERROR) << "Failed to read";
               return -1;
             }
           } else if (control_type == 1) {
+//            LOG(INFO) << "Credit read complete";
             channel->CreditReadComplete();
           } else {
             LOG(WARNING) << "Unexpected control type";
