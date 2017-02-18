@@ -544,12 +544,13 @@ int RDMADatagram::TransmitComplete() {
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
       return 0;
     }
-    LOG(INFO) << "Transmit complete " << cq_ret;
+    // LOG(INFO) << "Transmit complete " << cq_ret;
     if (cq_ret > 0) {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
       uint16_t stream_id = ((uint16_t) (comp.tag >> 32));
       uint16_t target_stream_id = ((uint16_t) (comp.tag >> 48));
+      uint16_t control_type = (uint16_t) (comp.tag >> 16);
       this->tx_cq_cntr += cq_ret;
       if (type == 0) {       // control message
         for (int i = 0; i < cq_ret; i++) {
@@ -558,11 +559,7 @@ int RDMADatagram::TransmitComplete() {
             return 1;
           }
         }
-        uint16_t control_type = (uint16_t) (comp.tag >> 16);
-        // initial contact
-        if (control_type == 0) {
-          LOG(INFO) << "Sent the connect message";
-        }
+        LOG(INFO) << "Transmit complete control";
       } else if (type == 1) {  // data message
         // pick te correct channel
         std::unordered_map<uint16_t, RDMADatagramChannel *>::const_iterator it
@@ -572,9 +569,18 @@ int RDMADatagram::TransmitComplete() {
           return -1;
         } else {
           RDMADatagramChannel *channel = it->second;
-          if (channel->WriteReady(cq_ret)) {
-            LOG(ERROR) << "Failed to read";
-            return -1;
+          if (control_type == 0) {
+            LOG(INFO) << "Transmit complete write ready";
+            if (channel->WriteReady(cq_ret)) {
+              LOG(ERROR) << "Failed to read";
+              return -1;
+            }
+          } else if (control_type == 1) {
+            LOG(INFO) << "Transmit complete credit ready";
+            // credit message
+            channel->CreditWriteComplete();
+          } else {
+            LOG(WARNING) << "Un-expected control type";
           }
         }
       }
@@ -618,12 +624,13 @@ int RDMADatagram::ReceiveComplete() {
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
       break;
     }
-    LOG(INFO) << "Receive complete " << cq_ret;
+    // LOG(INFO) << "Receive complete " << cq_ret;
 
     if (cq_ret > 0) {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
       uint16_t stream_id = ((uint16_t) (comp.tag >> 32));
+      uint16_t control_type = (uint16_t) (comp.tag >> 16);
       if (type == 0) {       // control message
         this->rx_cq_cntr += cq_ret;
         if (this->recv_buf->IncrementFilled((uint32_t) cq_ret)) {
@@ -631,7 +638,6 @@ int RDMADatagram::ReceiveComplete() {
           return 1;
         }
 
-        uint16_t control_type = (uint16_t) (comp.tag >> 16);
         // initial contact
         uint32_t tail = recvBuf->GetBase();
         LOG(INFO) << "Received complete with size: " << comp.len;
@@ -645,9 +651,15 @@ int RDMADatagram::ReceiveComplete() {
           return -1;
         } else {
           RDMADatagramChannel *channel = it->second;
-          if (channel->ReadReady(cq_ret)) {
-            LOG(ERROR) << "Failed to read";
-            return -1;
+          if (control_type == 0) {
+            if (channel->ReadReady(cq_ret)) {
+              LOG(ERROR) << "Failed to read";
+              return -1;
+            }
+          } else if (control_type == 1) {
+            channel->CreditReadComplete();
+          } else {
+            LOG(WARNING) << "Unexpected control type";
           }
         }
       }
@@ -678,14 +690,6 @@ int RDMADatagram::ReceiveComplete() {
 }
 
 RDMADatagram::~RDMADatagram() {}
-
-void RDMADatagram::OnWrite(enum rdma_loop_status state) {
-  TransmitComplete();
-}
-
-void RDMADatagram::OnRead(enum rdma_loop_status state) {
-  ReceiveComplete();
-}
 
 int RDMADatagram::ConnectionClosed() {
   Free();

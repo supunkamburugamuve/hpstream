@@ -112,14 +112,13 @@ int RDMADatagramChannel::start() {
   }
 
   uint16_t message_type = 1;
+  uint16_t credit_type = 1;
   send_tag = 0;
   recv_tag = 0;
   // create the receive tag and send tag
   send_tag = (uint64_t)stream_id << 32 | (uint64_t)target_stream_id << 48 | (uint64_t) message_type;
+  send_credit_tag = (uint64_t)stream_id << 32 | (uint64_t)target_stream_id << 48 | (uint64_t) message_type | (uint64_t) credit_type << 16;
   recv_tag = (uint64_t)target_stream_id << 32 | (uint64_t)stream_id << 48 | (uint64_t) message_type;
-
-  LOG(INFO) << "***************** recv_tag" << recv_tag;
-  LOG(INFO) << "***************** send_tag" << send_tag;
 
   uint64_t mask = 0;
   for (int i = 0; i < 16; i++) {
@@ -160,8 +159,8 @@ int RDMADatagramChannel::PostBuffers() {
   }
 
   this->self_credit = rBuf->GetNoOfBuffers();
-  this->peer_credit = rBuf->GetNoOfBuffers()  - 1;
-  this->total_sent_credit = rBuf->GetNoOfBuffers() - 1;
+  this->peer_credit = rBuf->GetNoOfBuffers()  - 2;
+  this->total_sent_credit = rBuf->GetNoOfBuffers() - 2;
   this->total_used_credit = 0;
   this->credit_used_checkpoint = 0;
   this->credit_messages_ = new bool[noBufs];
@@ -231,7 +230,7 @@ int RDMADatagramChannel::AllocateBuffers(void) {
   return 0;
 }
 
-ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
+ssize_t RDMADatagramChannel::PostTX(size_t size, int index, uint64_t tag) {
   ssize_t ret;
   struct fi_msg_tagged *msg = &(tag_messages[index]);
   uint8_t *buf = send_buf->GetBuffer(index);
@@ -244,11 +243,11 @@ ssize_t RDMADatagramChannel::PostTX(size_t size, int index) {
   msg->desc = (void **) fi_mr_desc(mr);
   msg->iov_count = 1;
   msg->addr = remote_addr;
-  msg->tag = send_tag;
+  msg->tag = tag;
   msg->ignore = tag_mask;
   msg->context = &(tx_contexts[index]);
 
-  LOG(INFO) << "Sending message with tag: " << send_tag << " mask: " << tag_mask;
+  // LOG(INFO) << "Sending message with tag: " << send_tag << " mask: " << tag_mask;
 
   ret = fi_tsendmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
@@ -274,7 +273,7 @@ ssize_t RDMADatagramChannel::PostRX(size_t size, int index) {
   msg->ignore = tag_mask;
   msg->context = &(recv_contexts[index]);
 
-  LOG(INFO) << "Post receive buffer with tag: " << recv_tag << " mask: " << tag_mask;
+  // LOG(INFO) << "Post receive buffer with tag: " << recv_tag << " mask: " << tag_mask;
   ret = fi_trecvmsg(this->ep, (const fi_msg_tagged *) msg, 0);
   if (ret)
     return ret;
@@ -322,10 +321,12 @@ int RDMADatagramChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       if (waiting_for_credit) {
         onWriteReady(0);
       }
+      LOG(INFO) << "Received message with credit: " << *credit << " peer credit: " << peer_credit;
       // lets mark it zero in case we are not moving to next buffer
       *credit = 0;
+    } else {
+      LOG(INFO) << "Received message with credit: " << *credit << " peer credit: " << peer_credit;
     }
-
     // now lets see how much data we need to copy from this buffer
     need_copy = (*length) - current_read_indx;
     // now lets see how much we can copy
@@ -368,15 +369,16 @@ int RDMADatagramChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
     }
     this->total_used_credit++;
     rbuf->IncrementSubmitted(1);
-    int32_t available_credit = total_used_credit - credit_used_checkpoint;
-    if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
-      if (available_credit > noOfBuffers - 1) {
-        LOG(ERROR) << "Credit should never be greater than no of buffers available: "
-                   << available_credit << " > " << noOfBuffers;
-      }
-      postCredit();
-    }
     submittedBuffers++;
+  }
+
+  int32_t available_credit = total_used_credit - credit_used_checkpoint;
+  if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
+    if (available_credit > noOfBuffers - 1) {
+      LOG(ERROR) << "Credit should never be greater than no of buffers available: "
+                 << available_credit << " > " << noOfBuffers;
+    }
+    postCredit();
   }
 
   return 0;
@@ -401,16 +403,17 @@ int RDMADatagramChannel::postCredit() {
     // send the credit with the write
     int32_t *sent_credit = (int32_t *) (current_buf + sizeof(uint32_t));
     int32_t available_credit = total_used_credit - credit_used_checkpoint;
-    if (available_credit > sbuf->GetNoOfBuffers() - 1) {
+    if (available_credit > sbuf->GetNoOfBuffers() - 2) {
       LOG(ERROR) << "Available credit > no of buffers, something is wrong: "
                  << available_credit << " > " << sbuf->GetNoOfBuffers();
-      available_credit = sbuf->GetNoOfBuffers() - 1;
+      available_credit = sbuf->GetNoOfBuffers() - 2;
     }
     *sent_credit = available_credit;
+    LOG(INFO) << "Posting credit: " << available_credit;
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
-    ssize_t ret = PostTX(sizeof(uint32_t) + sizeof(int32_t), head);
+    ssize_t ret = PostTX(sizeof(uint32_t) + sizeof(int32_t), head, send_credit_tag);
     if (!ret) {
       total_sent_credit += available_credit;
       credit_used_checkpoint += available_credit;
@@ -448,11 +451,11 @@ int RDMADatagramChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write)
   uint32_t error_count = 0;
   bool credit_set;
   uint32_t buf_size = sbuf->GetBufferSize() - 8;
-  LOG(INFO) << "Peer credit: " << this->peer_credit;
+  // LOG(INFO) << "Peer credit: " << this->peer_credit;
   // we need to send everything by using the buffers available
   uint64_t free_space = sbuf->GetAvailableWriteSpace();
   uint32_t free_buffs = sbuf->GetNoOfBuffers() - sbuf->GetFilledBuffers();
-  while (sent_size < size && free_space > 0 && this->peer_credit > 0 && free_buffs > 1) {
+  while (sent_size < size && free_space > 0 && this->peer_credit > 0 && free_buffs > 2) {
     credit_set = false;
     // we have space in the buffers
     head = sbuf->NextWriteIndex();
@@ -471,12 +474,13 @@ int RDMADatagramChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write)
     } else {
       *sent_credit = -1;
     }
+    LOG(INFO) << "Write data with credit: " << *sent_credit << " total_used_credit: " << total_used_credit << " credit_used_checkpoint: " << credit_used_checkpoint ;
 
     memcpy(current_buf + sizeof(uint32_t) + sizeof(int32_t), buf + sent_size, current_size);
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, current_size);
     // send the current buffer
-    ssize_t ret = PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), head);
+    ssize_t ret = PostTX(current_size + sizeof(uint32_t) + sizeof(int32_t), head, send_tag);
     if (!ret) {
       if (credit_set) {
         total_sent_credit += available_credit;
@@ -515,6 +519,10 @@ int RDMADatagramChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write)
 int RDMADatagramChannel::ReadReady(ssize_t cq_count){
   if (onReadReady != NULL) {
     this->rx_cq_cntr += cq_count;
+    if (recv_buf->GetFilledBuffers() > 0) {
+      onReadReady(0);
+    }
+
     if (this->recv_buf->IncrementFilled((uint32_t) cq_count)) {
       LOG(ERROR) << "Failed to increment buffer data pointer";
       return 1;
@@ -534,6 +542,12 @@ int RDMADatagramChannel::WriteReady(ssize_t cq_ret){
   uint32_t completed_bytes = 0;
   if (onWriteReady != NULL) {
     this->tx_cq_cntr += cq_ret;
+    uint64_t free_space = send_buf->GetAvailableWriteSpace();
+    if (free_space > 0) {
+//    LOG(INFO) << "Caling write ready";
+      onWriteReady(0);
+    }
+
     for (int i = 0; i < cq_ret; i++) {
       uint32_t base = this->send_buf->GetBase();
       completed_bytes += this->send_buf->getContentSize(base);
@@ -543,14 +557,109 @@ int RDMADatagramChannel::WriteReady(ssize_t cq_ret){
       }
     }
 
-    onWriteReady(0);
     if (onWriteComplete != NULL && completed_bytes > 0) {
       // call the calback with the completed bytes
       onWriteComplete(completed_bytes);
     }
+
+    free_space = send_buf->GetAvailableWriteSpace();
+    if (free_space > 0) {
+//    LOG(INFO) << "Caling write ready";
+      onWriteReady(0);
+    }
   } else {
     LOG(ERROR) << "Calling write without setting the callback function";
     return -1;
+  }
+  return 0;
+}
+
+int RDMADatagramChannel::CreditWriteComplete(){
+  this->tx_cq_cntr += 1;
+  if (this->send_buf->IncrementBase((uint32_t) 1)) {
+    LOG(ERROR) << "Failed to increment buffer data pointer";
+    return 1;
+  }
+  uint32_t noOfBuffers = recv_buf->GetNoOfBuffers();
+  int32_t available_credit = total_used_credit - credit_used_checkpoint;
+  // LOG(INFO) << "Credit write: " << available_credit << " self_credit: " << self_credit << " write space: " << send_buf->GetFilledBuffers();
+  if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
+    if (available_credit > noOfBuffers - 1) {
+      LOG(ERROR) << "Credit should never be greater than no of buffers available: "
+                 << available_credit << " > " << noOfBuffers;
+    }
+    postCredit();
+  }
+  return 0;
+}
+
+int RDMADatagramChannel::CreditReadComplete(){
+  ssize_t ret = 0;
+  uint32_t base;
+  uint32_t submittedBuffers;
+  uint32_t noOfBuffers;
+  uint32_t index = 0;
+  // go through the buffers
+  RDMABuffer *rbuf = this->recv_buf;
+  // now lock the buffer
+  if (rbuf->GetFilledBuffers() == 0) {
+    return 0;
+  }
+
+  uint32_t tail = rbuf->GetBase();
+  uint32_t buffers_filled = rbuf->GetFilledBuffers();
+  // need to copy
+  if (buffers_filled > 0) {
+    uint8_t *b = rbuf->GetBuffer(tail);
+    uint32_t *length;
+    // first read the amount of data in the buffer
+    length = (uint32_t *) b;
+
+    if (length != 0) {
+      LOG(ERROR) << "Credit message with length != 0";
+      return 0;
+    }
+
+    int32_t *credit = (int32_t *) (b + sizeof(uint32_t));
+    LOG(INFO) << "Credit read " << *credit;
+    // update the peer credit with the latest
+    if (*credit > 0) {
+      this->peer_credit += *credit;
+      if (this->peer_credit > rbuf->GetNoOfBuffers() - 1) {
+        this->peer_credit = rbuf->GetNoOfBuffers() - 1;
+      }
+      if (waiting_for_credit) {
+        onWriteReady(0);
+      }
+    }
+    credit_messages_[tail] = length <= 0;
+    // advance the base pointer
+    rbuf->IncrementBase(1);
+  }
+
+
+  base = rbuf->GetBase();
+  submittedBuffers = rbuf->GetSubmittedBuffers();
+  noOfBuffers = rbuf->GetNoOfBuffers();
+  while (submittedBuffers < noOfBuffers) {
+    index = (base + submittedBuffers) % noOfBuffers;
+    ret = PostRX(rbuf->GetBufferSize(), index);
+    if (ret && ret != -FI_EAGAIN) {
+      LOG(ERROR) << "Failed to post the receive buffer: " << ret;
+      return (int) ret;
+    }
+    this->total_used_credit++;
+    rbuf->IncrementSubmitted(1);
+    submittedBuffers++;
+  }
+
+  int32_t available_credit = total_used_credit - credit_used_checkpoint;
+  if ((available_credit >= (noOfBuffers / 2 - 1)) && self_credit > 0) {
+    if (available_credit > noOfBuffers - 1) {
+      LOG(ERROR) << "Credit should never be greater than no of buffers available: "
+                 << available_credit << " > " << noOfBuffers;
+    }
+    postCredit();
   }
   return 0;
 }

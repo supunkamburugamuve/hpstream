@@ -10,6 +10,7 @@ RDMAEventLoop *eventLoop;
 RDMAFabric *loopFabric;
 RDMAStMgrClient *client;
 RDMAStMgrServer *server;
+RDMADatagram *datagram;
 Timer timer;
 
 #define SIZE_ 10000
@@ -32,7 +33,7 @@ int connect3() {
   eventLoop = new RDMAEventLoop(loopFabric);
   eventLoop->Start();
 
-  RDMADatagram *datagram = new RDMADatagram(&options, loopFabric, 1);
+  datagram = new RDMADatagram(&options, loopFabric, 1);
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
   serverOptions->src_addr = options.src_addr;
@@ -97,7 +98,7 @@ int connectPSM2() {
   serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 1);
+  datagram = new RDMADatagram(&options, serverFabric, 1);
   datagram->start();
   server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
   server->origin = true;
@@ -118,7 +119,7 @@ int exchange3() {
   sleep(2);
   LOG(INFO) << "Start sending messages **************************** ";
   timer.reset();
-  for (int i = -1; i < 10; i++) {
+  for (int i = -1; i < 1000; i++) {
     char *name = new char[100];
     // LOG(INFO) << "Sending message";
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -130,7 +131,7 @@ int exchange3() {
     client->SendTupleStreamMessage(message);
     delete []name;
   }
-  eventLoop->Wait();
+  datagram->Wait();
   return 0;
 }
 

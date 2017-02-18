@@ -81,8 +81,10 @@ RDMABaseConnection* RDMAServer::CreateConnection(RDMAChannel* endpoint, RDMAOpti
                                                  RDMAEventLoop* ss, ChannelType type) {
   // Create the connection object and register our callbacks on various events.
   HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss, type);
-  auto npcb = [conn, this](RDMAIncomingPacket* packet) { this->OnNewPacket(conn, packet); };
-  conn->registerForNewPacket(npcb);
+  if (type == READ_ONLY || type == READ_WRITE) {
+    auto npcb = [conn, this](RDMAIncomingPacket *packet) { this->OnNewPacket(conn, packet); };
+    conn->registerForNewPacket(npcb);
+  }
 
   // Backpressure reliever - will point to the inheritor of this class in case the virtual function
   // is implemented in the inheritor
@@ -116,8 +118,6 @@ void RDMAServer::OnNewPacket(HeronRDMAConnection* _connection, RDMAIncomingPacke
     _connection->closeConnection();
     return;
   }
-
-  LOG(INFO) << "New packet";
 
   std::string typname;
   if (_packet->UnPackString(&typname) != 0) {

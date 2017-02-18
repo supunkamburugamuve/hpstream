@@ -31,8 +31,11 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
       mNumOutstandingPackets(0),
       mNumOutstandingBytes(0)
     , mPendingWritePackets(0) {
-  this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
-    return this->writeComplete(complets); });
+  if (type == READ_ONLY || type == READ_WRITE) {
+    this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
+      return this->writeComplete(complets);
+    });
+  }
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
   mIncomingPacket = new RDMAIncomingPacket(1024*1024);
   mCausedBackPressure = false;
@@ -189,7 +192,6 @@ int32_t HeronRDMAConnection::readFromEndPoint(int fd) {
     int32_t read_status = ReadPacket();
     if (read_status == 0) {
       // Packet was succcessfully read.
-      LOG(INFO) << "Read packet done";
       RDMAIncomingPacket *packet = mIncomingPacket;
       mIncomingPacket = new RDMAIncomingPacket(mRdmaOptions->max_packet_size_);
       mReceivedPackets.push_back(packet);
@@ -198,7 +200,6 @@ int32_t HeronRDMAConnection::readFromEndPoint(int fd) {
         return 0;
       }
     } else if (read_status > 0) {
-      LOG(INFO) << "Read packet partially";
       // packet was read partially
       return 0;
     } else {
@@ -215,7 +216,6 @@ int32_t HeronRDMAConnection::ReadPacket() {
     int32_t read_status = 0;
     read_status = readData((uint8_t *) (mIncomingPacket->header_ + mIncomingPacket->position_),
                            RDMAPacketHeader::header_size() - mIncomingPacket->position_, &read);
-    LOG(INFO) << "Read packet " << read_status;
     if (read_status != 0) {
       // Header read is either partial or had an error
       return read_status;
@@ -256,13 +256,11 @@ int32_t HeronRDMAConnection::ReadPacket() {
     retval = readData((uint8_t *) (mIncomingPacket->data_ + mIncomingPacket->position_),
                       RDMAPacketHeader::get_packet_size(mIncomingPacket->header_) -
                       mIncomingPacket->position_, &read);
-    LOG(INFO) << "Read packet " << retval;
     if (retval != 0) {
       return retval;
     } else {
       // now check weather we have read evrything we need
       mIncomingPacket->position_ += read;
-      LOG(INFO) << "Read packet expected: " << RDMAPacketHeader::get_packet_size(mIncomingPacket->header_) << " read: " << mIncomingPacket->position_;
       if (RDMAPacketHeader::get_packet_size(mIncomingPacket->header_) ==
           mIncomingPacket->position_) {
         mIncomingPacket->position_ = 0;
@@ -280,9 +278,9 @@ void HeronRDMAConnection::handleDataRead() {
   while (!mReceivedPackets.empty()) {
     RDMAIncomingPacket* packet = mReceivedPackets.front();
     if (mOnNewPacket) {
-      LOG(INFO) << "Packet read complete";
       mOnNewPacket(packet);
     } else {
+      LOG(WARNING) << "Packet read complete and dropping";
       delete packet;
     }
     mReceivedPackets.pop_front();

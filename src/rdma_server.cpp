@@ -76,7 +76,7 @@ int RDMABaseServer::Start_Base(void) {
   return 0;
 }
 
-int RDMABaseServer::AddChannel(uint32_t target_id, char *node, char *service) {
+int RDMABaseServer::AddChannel(uint16_t target_id, char *node, char *service) {
   RDMAOptions opt;
   opt.dst_addr = node;
   opt.dst_port = service;
@@ -97,7 +97,7 @@ int RDMABaseServer::AddChannel(uint32_t target_id, char *node, char *service) {
   return 0;
 }
 
-int RDMABaseServer::OnRDMConnect(uint32_t stream_id) {
+int RDMABaseServer::OnRDMConnect(uint16_t stream_id) {
   RDMADatagramChannel *channel_ = datagram_->GetChannel(stream_id);
   RDMABaseConnection *con = CreateConnection(channel_, options, this->eventLoop_, READ_ONLY);
   con->start();

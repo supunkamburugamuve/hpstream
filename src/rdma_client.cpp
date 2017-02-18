@@ -175,7 +175,7 @@ int RDMABaseClient::CreateConnection() {
   }
 
   this->state_ = CONNECTING;
-  this->conn_ = CreateConnection(con, options, this->eventLoop_, READ_ONLY);
+  this->conn_ = CreateConnection(con, options, this->eventLoop_, READ_WRITE);
   this->connection_ = con;
   LOG(INFO) << "Wating for connection completion";
   return 0;

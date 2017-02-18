@@ -41,7 +41,7 @@ public:
   // will contain a status of how the closing process went.
   void CloseConnection_Base(RDMABaseConnection* connection);
 
-  int AddChannel(uint32_t target_id, char *node, char *service);
+  int AddChannel(uint16_t target_id, char *node, char *service);
 protected:
   // Instantiate a new Connection
   virtual RDMABaseConnection* CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
@@ -103,7 +103,7 @@ private:
   /**
    * Notification from a client in RDM
    */
-  int OnRDMConnect(uint32_t stream_id);
+  int OnRDMConnect(uint16_t stream_id);
 
   /**
    * Start accepting connections

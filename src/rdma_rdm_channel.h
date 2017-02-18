@@ -68,6 +68,8 @@ public:
   uint64_t ReadCompleteCount() { return rx_cq_cntr; };
   uint64_t WritePostCount() { return tx_seq; }
   uint64_t WriteCompleteCount() { return tx_cq_cntr; };
+  int CreditWriteComplete();
+  int CreditReadComplete();
 private:
   // options for initialization
   RDMAOptions *options;
@@ -103,7 +105,7 @@ private:
   /**
    * Transmit a buffer
    */
-  ssize_t PostTX(size_t size, int index);
+  ssize_t PostTX(size_t size, int index, uint64_t tag);
   /**
    * Post a receive buffer
    */
@@ -148,6 +150,7 @@ private:
   // the tag used by this communications
   uint64_t send_tag;
   uint64_t recv_tag;
+  uint64_t send_credit_tag;
   uint64_t tag_mask;
   bool started;
 };

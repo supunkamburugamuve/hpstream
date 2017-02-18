@@ -53,9 +53,10 @@ sp_int32 RDMAClient::RemoveTimer(sp_int64 timer_id) { return 0;}
 
 RDMABaseConnection* RDMAClient::CreateConnection(RDMAChannel* endpoint, RDMAOptions* options,
                                                  RDMAEventLoop* ss, ChannelType type) {
-  HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss);
-
-  conn->registerForNewPacket([this](RDMAIncomingPacket* pkt) { this->OnNewPacket(pkt); });
+  HeronRDMAConnection* conn = new HeronRDMAConnection(options, endpoint, ss, type);
+  if (type == READ_ONLY || type == READ_WRITE) {
+    conn->registerForNewPacket([this](RDMAIncomingPacket *pkt) { this->OnNewPacket(pkt); });
+  }
   // Backpressure reliever - will point to the inheritor of this class in case the virtual function
   // is implemented in the inheritor
   auto backpressure_reliever_ = [this](HeronRDMAConnection* cn) {
