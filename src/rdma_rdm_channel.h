@@ -121,19 +121,14 @@ private:
   VCallback<int> onWriteReady;
   VCallback<int> onReadReady;
 
-  // credits for the flow control of messages
-  // credit for this side, we have posted this many buffers
-  int32_t self_credit;
-  // this is the last sent credit to the peer
-  int32_t total_sent_credit;
   // number of messages received after last sent credit
-  int32_t total_used_credit;
+  uint64_t total_used_credit;
   // at which total credit, we sent the credit to the other side
-  int32_t credit_used_checkpoint;
+  uint64_t credit_used_checkpoint;
   // credit of the peer as we know it
   // when we transmit a message, we reduce the peer credit until
   // the peer notifies us with its new credit
-  int32_t peer_credit;
+  uint32_t peer_credit;
   // if a write is waiting for credit
   bool waiting_for_credit;
   // an temporary array to hold weather we received a credit message or not

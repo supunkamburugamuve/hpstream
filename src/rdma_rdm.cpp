@@ -539,6 +539,7 @@ int RDMADatagram::TransmitComplete() {
   uint64_t completions_count = 0;
 
   while (completions_count < max_completions) {
+    // LOG(INFO) << "CQ Read transmit";
     cq_ret = fi_cq_read(txcq, &comp, 1);
 
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
@@ -619,6 +620,7 @@ int RDMADatagram::ReceiveComplete() {
   uint64_t max_completions = rx_seq - rx_cq_cntr;
   uint64_t current_count = 0;
   while (current_count < max_completions) {
+    // LOG(INFO) << "CQ Read recv";
     // we can expect up to this
     cq_ret = fi_cq_read(rxcq, &comp, 1);
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
