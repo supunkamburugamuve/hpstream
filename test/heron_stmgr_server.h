@@ -98,6 +98,8 @@ private:
   RDMAOptions *clientOptions_;
 
   Timer *timer_;
+
+  int type;
 };
 
 #endif  // SRC_CPP_SVCS_STMGR_SRC_MANAGER_STMGR_SERVER_H_

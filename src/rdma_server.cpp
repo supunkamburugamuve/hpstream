@@ -9,6 +9,7 @@ RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMAEv
   this->options = opts;
   this->info_hints = rdmaFabric->GetHints();
   this->eventLoop_ = loop;
+  this->datagram_ = NULL;
   this->pep = NULL;
 //  this->info_pep = rdmaFabric->GetInfo();
   this->eq = NULL;
@@ -45,7 +46,7 @@ RDMABaseServer::RDMABaseServer(RDMAOptions *opts, RDMAFabric *rdmaFabric, RDMADa
   this->eq_loop.event = CONNECTION;
   this->eq_loop.valid = true;
 
-  auto cb = [this](uint32_t stream) { return this->OnRDMConnect(stream); };
+  auto cb = [this](uint16_t stream) { return this->OnRDMConnect(stream); };
   loop->SetRDMConnect(cb);
 }
 
