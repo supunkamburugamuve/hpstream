@@ -318,11 +318,11 @@ int RDMADatagramChannel::ReadData(uint8_t *buf, uint32_t size, uint32_t *read) {
       if (waiting_for_credit) {
         onWriteReady(0);
       }
-//      LOG(INFO) << "Received message with credit: " << *credit << " peer credit: " << peer_credit;
+      LOG(INFO) << "Received message with credit: " << *credit << " peer credit: " << peer_credit;
       // lets mark it zero in case we are not moving to next buffer
       *credit = 0;
     } else {
-//      LOG(INFO) << "Received message with credit: " << *credit << " peer credit: " << peer_credit;
+      LOG(INFO) << "Received message with credit: " << *credit << " peer credit: " << peer_credit;
     }
     // now lets see how much data we need to copy from this buffer
     need_copy = (*length) - current_read_indx;
@@ -403,13 +403,13 @@ int RDMADatagramChannel::postCredit() {
     // send the credit with the write
     uint32_t *sent_credit = (uint32_t *) (current_buf + sizeof(uint32_t));
     uint32_t available_credit = (uint32_t) (total_used_credit - credit_used_checkpoint);
-    if (available_credit > sbuf->GetNoOfBuffers() - 1) {
+    if (available_credit > sbuf->GetNoOfBuffers() - 2) {
       LOG(ERROR) << "Available credit > no of buffers, something is wrong: "
                  << available_credit << " > " << sbuf->GetNoOfBuffers();
-      available_credit = sbuf->GetNoOfBuffers() - 1;
+      available_credit = sbuf->GetNoOfBuffers() - 2;
     }
     *sent_credit = available_credit;
-//    LOG(INFO) << "Posting credit: " << available_credit << " filled: " << sbuf->GetFilledBuffers();
+    LOG(INFO) << "Posting credit: " << available_credit << " filled: " << sbuf->GetFilledBuffers();
     // set the data size in the buffer
     sbuf->setBufferContentSize(head, 0);
     // send the current buffer
@@ -431,8 +431,8 @@ int RDMADatagramChannel::postCredit() {
       }
     }
   } else {
-//    LOG(ERROR) << "Free space not available to post credit "
-//               << " peer: " << peer_credit << "tuc: " << total_used_credit << " cuc: " << credit_used_checkpoint;
+    LOG(ERROR) << "Free space not available to post credit "
+               << " peer: " << peer_credit << "tuc: " << total_used_credit << " cuc: " << credit_used_checkpoint;
   }
 
   return 0;
@@ -471,14 +471,14 @@ int RDMADatagramChannel::WriteData(uint8_t *buf, uint32_t size, uint32_t *write)
       if (available_credit > sbuf->GetNoOfBuffers() - 2) {
         LOG(ERROR) << "Available credit > no of buffers, something is wrong: "
                    << available_credit << " > " << sbuf->GetNoOfBuffers();
-        available_credit = sbuf->GetNoOfBuffers() - 1;
+        available_credit = sbuf->GetNoOfBuffers() - 2;
       }
       *sent_credit =  available_credit;
       credit_set = true;
     } else {
       *sent_credit = 0;
     }
-//    LOG(INFO) << "Write credit: " << *sent_credit << " tuc: " << total_used_credit << " cuc: " << credit_used_checkpoint << " peer: " << peer_credit << " filled: " << sbuf->GetFilledBuffers();
+    LOG(INFO) << "Write credit: " << *sent_credit << " tuc: " << total_used_credit << " cuc: " << credit_used_checkpoint << " peer: " << peer_credit << " filled: " << sbuf->GetFilledBuffers();
 
     memcpy(current_buf + sizeof(uint32_t) + sizeof(int32_t), buf + sent_size, current_size);
     // set the data size in the buffer
@@ -628,7 +628,7 @@ int RDMADatagramChannel::CreditReadComplete(){
     }
 
     uint32_t *credit = (uint32_t *) (b + sizeof(uint32_t));
-//    LOG(INFO) << "Credit Received message with credit: " << *credit << " peer credit: " << peer_credit;
+    LOG(INFO) << "Credit Received message with credit: " << *credit << " peer credit: " << peer_credit;
     // update the peer credit with the latest
     if (*credit > 0) {
 //      LOG(INFO) << "Incrementing peer credit: " << peer_credit << " by: " << *credit;

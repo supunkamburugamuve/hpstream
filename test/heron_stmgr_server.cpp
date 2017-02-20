@@ -87,14 +87,14 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   message->set_time(_message->time());
 
   if (rdma_client_ != NULL) {
-    rdma_client_->SendMessage(message);
+    //rdma_client_->SendMessage(message);
   }
   delete _message;
   delete[] name;
   // SendMessage(_conn, (*message));
   // delete message;
   //printf("%d\n", (count % 1000));
-  if ((count % 10000) == 0) {
+  if ((count % 1000) == 0) {
     printf("count %d %lf\n", count, timer_->elapsed());
   }
 }

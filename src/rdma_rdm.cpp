@@ -537,23 +537,23 @@ int RDMADatagram::TransmitComplete() {
   // lets get the number of completions
   uint64_t max_completions = tx_seq - tx_cq_cntr;
   uint64_t completions_count = 0;
-
+  printf("CQ Read trans: %ld \n", max_completions);
   while (completions_count < max_completions) {
-    // LOG(INFO) << "CQ Read transmit";
+
     cq_ret = fi_cq_read(txcq, &comp, 1);
 
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
       return 0;
     }
-    // LOG(INFO) << "Transmit complete " << cq_ret;
+    LOG(INFO) << "Transmit complete " << cq_ret;
     if (cq_ret > 0) {
       // extract the type of message
       uint16_t type = (uint16_t) comp.tag;
       uint16_t stream_id = ((uint16_t) (comp.tag >> 32));
       uint16_t target_stream_id = ((uint16_t) (comp.tag >> 48));
       uint16_t control_type = (uint16_t) (comp.tag >> 16);
-      this->tx_cq_cntr += cq_ret;
       if (type == 0) {       // control message
+        this->tx_cq_cntr += cq_ret;
         for (int i = 0; i < cq_ret; i++) {
           if (this->send_buf->IncrementBase((uint32_t) cq_ret)) {
             LOG(ERROR) << "Failed to increment buffer data pointer";
@@ -618,6 +618,7 @@ int RDMADatagram::ReceiveComplete() {
   RDMABuffer *recvBuf = this->recv_buf;
   // lets get the number of completions
   uint64_t max_completions = rx_seq - rx_cq_cntr;
+  printf("CQ Read recv: %ld \n", max_completions);
   uint64_t current_count = 0;
   while (current_count < max_completions) {
     // LOG(INFO) << "CQ Read recv";
@@ -626,7 +627,7 @@ int RDMADatagram::ReceiveComplete() {
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
       break;
     }
-    // LOG(INFO) << "Receive complete " << cq_ret;
+     LOG(INFO) << "Receive complete " << cq_ret;
 
     if (cq_ret > 0) {
       // extract the type of message
