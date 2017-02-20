@@ -74,7 +74,9 @@ int32_t HeronRDMAConnection::sendPacket(RDMAOutgoingPacket* packet,
   }
   // LOG(INFO) << "Connect Un-LOCK";
   pthread_mutex_unlock(&lock);
-  // writeIntoEndPoint(0);
+  if (channel_type == READ_WRITE) {
+    writeIntoEndPoint(0);
+  }
   return 0;
 }
 

@@ -122,6 +122,8 @@ protected:
 
   // The underlying event loop
   RDMAEventLoop* mEventLoop;
+
+  ChannelType channel_type;
 private:
   // Internal callback that is invoked when a read event happens on a
   // connected sate.
@@ -152,7 +154,6 @@ private:
   VCallback<int> mOnWrite;
 
   bool mCanCloseConnection;
-  ChannelType channel_type;
 };
 
 #endif  // RDMA_BASE_CONNECTION_H_
