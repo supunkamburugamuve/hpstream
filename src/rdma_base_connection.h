@@ -7,7 +7,7 @@
 #include "rdma_event_loop.h"
 #include "rdma_connection.h"
 #include "network_error.h"
-#include "rdma_rdm_channel.h"
+#include "rdma_rdm.h"
 
 using namespace std;
 

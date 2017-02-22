@@ -31,7 +31,7 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
       mNumOutstandingPackets(0),
       mNumOutstandingBytes(0)
     , mPendingWritePackets(0) {
-  if (type == READ_ONLY || type == READ_WRITE) {
+  if (type == WRITE_ONLY || type == READ_WRITE) {
     this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
       return this->writeComplete(complets);
     });
@@ -145,8 +145,11 @@ int32_t HeronRDMAConnection::writeIntoEndPoint(int fd) {
   int current_packet = 0;
   // LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
+  int packets = 0;
+  // LOG(ERROR) << "Size: " << mOutstandingPackets.size();
   for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
     // LOG(INFO) << "Write data";
+    packets++;
     if (current_packet++ < mPendingWritePackets) {
       // we have written this packet already and waiting for write completion
       continue;

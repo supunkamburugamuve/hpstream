@@ -24,6 +24,8 @@ public:
   size_t buf_size;
   // no of buffers
   uint32_t no_buffers;
+  // maximum number of connections
+  uint32_t max_connections;
 
   RDMAOptions();
   void Free();

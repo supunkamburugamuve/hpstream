@@ -65,18 +65,19 @@ void RDMAStMgrServer::HandleConnectionClose(HeronRDMAConnection* _conn, NetworkE
 void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
                                            proto::stmgr::TupleMessage* _message) {
 //  LOG(INFO) << _message->id() << " " << _message->data();
-  if (_message->id() == -1) {
-    count = 0;
-    if (!origin) {
-      timer_->reset();
-    }
-  } else {
-//    if (count != _message->id()) {
-//      LOG(ERROR) << "Invalid message sequence, count: " << count << " id: " << _message->id();
+//  if (_message->id() == -1) {
+//    count = 0;
+//    if (!origin) {
+//      timer_->reset();
 //    }
-    count++;
-  }
-//  LOG(INFO) << "Received message ......" << count;
+//  } else {
+////    if (count != _message->id()) {
+////      LOG(ERROR) << "Invalid message sequence, count: " << count << " id: " << _message->id();
+////    }
+//    count++;
+//  }
+  count++;
+   // LOG(INFO) << "Received message ......" << count;
 
   char *name = new char[100];
   sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
@@ -94,7 +95,7 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   // SendMessage(_conn, (*message));
   // delete message;
   //printf("%d\n", (count % 1000));
-  if ((count % 1000) == 0) {
+  if ((count % 50000) == 0) {
     printf("count %d %lf\n", count, timer_->elapsed());
   }
 }
