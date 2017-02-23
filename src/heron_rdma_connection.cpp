@@ -16,7 +16,7 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
     : RDMABaseConnection(options, con, loop),
       mNumOutstandingPackets(0),
       mNumOutstandingBytes(0)
-    , mPendingWritePackets(0) {
+    , mNumPendingWritePackets(0) {
   this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
     return this->writeComplete(complets); });
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
@@ -30,7 +30,7 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
     : RDMABaseConnection(options, con, loop, type),
       mNumOutstandingPackets(0),
       mNumOutstandingBytes(0)
-    , mPendingWritePackets(0) {
+    , mNumPendingWritePackets(0) {
   if (type == WRITE_ONLY || type == READ_WRITE) {
     this->mRdmaConnection->setOnWriteComplete([this](uint32_t complets) {
       return this->writeComplete(complets);
@@ -95,17 +95,17 @@ int HeronRDMAConnection::writeComplete(ssize_t numWritten) {
   mNumOutstandingBytes -= numWritten;
 //  LOG(INFO) << "Write complete " << numWritten;
   pthread_mutex_lock(&lock);
-  while (numWritten > 0 && mPendingWritePackets > 0) {
-    auto pr = mOutstandingPackets.front();
+  while (numWritten > 0 && mNumPendingWritePackets > 0) {
+    auto pr = mPendingPackets.front();
     int32_t bytesLeftForThisPacket = RDMAPacketHeader::get_packet_size(pr.first->get_header()) +
                                      RDMAPacketHeader::header_size() - pr.first->position_;
     // This iov structure was completely written as instructed
     if (numWritten >= bytesLeftForThisPacket) {
       // This whole packet has been consumed
       // mSentPackets.push_back(pr);
-      mOutstandingPackets.pop_front();
+      mPendingPackets.pop_front();
       mNumOutstandingPackets--;
-      mPendingWritePackets--;
+      mNumPendingWritePackets--;
       numWritten -= bytesLeftForThisPacket;
       if (pr.second) {
         pr.second(OK);
@@ -146,18 +146,19 @@ int32_t HeronRDMAConnection::writeIntoEndPoint(int fd) {
   // LOG(INFO) << "Connect LOCK";
   pthread_mutex_lock(&lock);
   int packets = 0;
-  // LOG(ERROR) << "Size: " << mOutstandingPackets.size();
-  for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
+//  for (auto iter = mOutstandingPackets.begin(); iter != mOutstandingPackets.end(); ++iter) {
+  while (mOutstandingPackets.size() > 0) {
     // LOG(INFO) << "Write data";
+    auto iter = mOutstandingPackets.front();
     packets++;
-    if (current_packet++ < mPendingWritePackets) {
+    if (current_packet++ < mNumPendingWritePackets) {
       // we have written this packet already and waiting for write completion
       continue;
     }
 
-    buf = iter->first->get_header() + iter->first->position_;
-    size_to_write = RDMAPacketHeader::get_packet_size(iter->first->get_header()) +
-                    RDMAPacketHeader::header_size() - iter->first->position_;
+    buf = iter.first->get_header() + iter.first->position_;
+    size_to_write = RDMAPacketHeader::get_packet_size(iter.first->get_header()) +
+                    RDMAPacketHeader::header_size() - iter.first->position_;
     // try to write the data
     write_status = writeData((uint8_t *) buf, size_to_write, &current_write);
 //    LOG(INFO) << "current_packet=" << current_packet << " size_to_write="
@@ -171,11 +172,13 @@ int32_t HeronRDMAConnection::writeIntoEndPoint(int fd) {
 
     // we have written this fully to the buffers
     if (current_write == size_to_write) {
-      mPendingWritePackets++;
-      iter->first->position_ = 0;
+      mNumPendingWritePackets++;
+      mPendingPackets.push_back(iter);
+      mOutstandingPackets.pop_front();
+      iter.first->position_ = 0;
     } else {
       // partial write
-      iter->first->position_ += current_write;
+      iter.first->position_ += current_write;
     }
 
     // iter++;
@@ -187,6 +190,7 @@ int32_t HeronRDMAConnection::writeIntoEndPoint(int fd) {
       break;
     }
   }
+//  LOG(ERROR) << "Iterated through: " << packets;
   pthread_mutex_unlock(&lock);
   return 0;
 }

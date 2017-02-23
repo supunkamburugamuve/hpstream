@@ -622,6 +622,7 @@ int RDMADatagram::TransmitComplete() {
     RDMADatagramChannel *channel = it->second;
     // we call ready in case we haven't read all the data from the buffers
     if (channel->WriteReady()) {
+//      LOG(ERROR) << "Write to endpoint";
       channel->WriteData();
     }
   }

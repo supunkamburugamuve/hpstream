@@ -76,6 +76,9 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
 ////    }
 //    count++;
 //  }
+  if (count == 0) {
+    timer_->reset();
+  }
   count++;
    // LOG(INFO) << "Received message ......" << count;
 
@@ -95,7 +98,7 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   // SendMessage(_conn, (*message));
   // delete message;
   //printf("%d\n", (count % 1000));
-  if ((count % 50000) == 0) {
+  if ((count % 10000) == 0) {
     printf("count %d %lf\n", count, timer_->elapsed());
   }
 }

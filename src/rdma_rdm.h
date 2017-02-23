@@ -254,6 +254,7 @@ private:
   uint64_t send_credit_tag;
   uint64_t tag_mask;
   bool started;
+  Timer t;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef CONNECTION_H_
 #define CONNECTION_H_
 
+#include <deque>
 #include "rdma_base_connection.h"
 #include "rdma_packet.h"
 
@@ -79,11 +80,12 @@ private:
   int32_t ReadPacket();
 
   // The list of outstanding packets that need to be sent.
-  std::list<std::pair<RDMAOutgoingPacket*, VCallback<NetworkErrorCode>>> mOutstandingPackets;
+  std::deque<std::pair<RDMAOutgoingPacket*, VCallback<NetworkErrorCode>>> mOutstandingPackets;
+  std::deque<std::pair<RDMAOutgoingPacket*, VCallback<NetworkErrorCode>>> mPendingPackets;
   int32_t mNumOutstandingPackets;  // primarily because list's size is linear
   int32_t mNumOutstandingBytes;
   // number of packets we have written, but waiting for completion of the write
-  sp_int32 mPendingWritePackets;
+  sp_int32 mNumPendingWritePackets;
 
   // The list of packets that have been sent but not yet been reported to the higher layer
   std::list<std::pair<RDMAOutgoingPacket*, VCallback<NetworkErrorCode>>> mSentPackets;

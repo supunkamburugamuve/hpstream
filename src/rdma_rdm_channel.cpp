@@ -419,7 +419,7 @@ int RDMADatagramChannel::CreditReadComplete(){
       // LOG(INFO) << "Incrementing peer credit: " << peer_credit << " by: " << *credit;
       this->peer_credit += *credit;
       if (this->peer_credit > max_buffers - 2) {
-        // LOG(WARNING) << "Peer credit greater than number of buffers adjusting";
+        LOG(WARNING) << "Peer credit greater than number of buffers adjusting";
         this->peer_credit = max_buffers - 2;
       }
       if (waiting_for_credit) {

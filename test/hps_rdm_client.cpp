@@ -119,7 +119,7 @@ int exchange3() {
   sleep(2);
   LOG(INFO) << "Start sending messages **************************** ";
   timer.reset();
-  for (int i = -1; i < 10000000; i++) {
+  for (int i = -1; i < 1000000; i++) {
     char *name = new char[100];
     // LOG(INFO) << "Sending message";
     sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -131,6 +131,7 @@ int exchange3() {
     client->SendTupleStreamMessage(message);
     delete []name;
   }
+  LOG(INFO) << "Done putting messages";
   datagram->Wait();
   return 0;
 }
