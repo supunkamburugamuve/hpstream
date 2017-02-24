@@ -116,7 +116,7 @@ private:
   uint8_t mNumEnqueuesWithBufferFull;
 
   // the thread lock
-  pthread_mutex_t lock;
+  pthread_spinlock_t lock;
 };
 
 #endif
