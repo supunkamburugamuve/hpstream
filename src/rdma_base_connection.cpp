@@ -28,11 +28,9 @@ int32_t RDMABaseConnection::start() {
   mOnRead = [this](int fd) { return this->handleRead(fd); };
 
   if (channel_type == READ_ONLY || channel_type == READ_WRITE) {
-    LOG(INFO) << "Reigster read";
     mRdmaConnection->registerRead(mOnRead);
   }
   if (channel_type == WRITE_ONLY || channel_type == READ_WRITE) {
-    LOG(INFO) << "Reigster write";
     mRdmaConnection->registerWrite(mOnWrite);
   }
 
