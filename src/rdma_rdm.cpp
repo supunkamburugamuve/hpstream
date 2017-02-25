@@ -544,10 +544,6 @@ int RDMADatagram::TransmitComplete() {
   // lets get the number of completions
   uint64_t max_completions = tx_seq - tx_cq_cntr;
   uint64_t completions_count = 0;
-  if (max_completions > send_buf->GetNoOfBuffers()) {
-    printf("CQ Read trans: %ld \n", max_completions);
-  }
-  Timer t;
   while (completions_count < max_completions) {
     cq_ret = fi_cq_read(txcq, &comp, 1);
 //    cq_ret = fi_cq_read(txcq, comp, send_buf->GetNoOfBuffers());
@@ -555,18 +551,9 @@ int RDMADatagram::TransmitComplete() {
       return 0;
     }
 //  LOG(INFO) << "Transmit complete: " << cq_ret;
-//  for (int k = 0; k < cq_ret; k++) {
-//    struct fi_cq_tagged_entry *comp = completions[i];
-    // LOG(INFO) << "Transmit complete " << cq_ret;
     if (cq_ret > 0) {
 //      LOG(INFO) << "Transmit complete " << cq_ret;
-      // extract the type of message
-//      uint16_t type = (uint16_t) comp[k].tag;
-//      uint16_t stream_id = ((uint16_t) (comp[k].tag >> 32));
-//      uint16_t target_stream_id = ((uint16_t) (comp[k].tag >> 48));
-//      uint16_t control_type = (uint16_t) (comp[k].tag >> 16);
       uint16_t type = (uint16_t) comp.tag;
-      uint16_t stream_id = ((uint16_t) (comp.tag >> 32));
       uint16_t target_stream_id = ((uint16_t) (comp.tag >> 48));
       uint16_t control_type = (uint16_t) (comp.tag >> 16);
       this->tx_cq_cntr += cq_ret;
@@ -653,11 +640,7 @@ int RDMADatagram::ReceiveComplete() {
   RDMABuffer *recvBuf = this->recv_buf;
   // lets get the number of completions
   uint64_t max_completions = rx_seq - rx_cq_cntr;
-  if (max_completions > recvBuf->GetNoOfBuffers()) {
-    printf("CQ Read recv: %ld \n", max_completions);
-  }
   uint64_t current_count = 0;
-  Timer t;
    while (current_count < max_completions) {
     // we can expect up to this
     cq_ret = fi_cq_read(rxcq, &comp, 1);

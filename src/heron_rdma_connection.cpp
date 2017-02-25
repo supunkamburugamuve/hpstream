@@ -142,7 +142,7 @@ int32_t HeronRDMAConnection::writeIntoEndPoint(int fd) {
   uint32_t current_write = 0, total_write = 0;
   int write_status = 0;
   // LOG(INFO) << "Write to endpoint";
-  int current_packet = 0;
+//  int current_packet = 0;
   // LOG(INFO) << "Connect LOCK";
   pthread_spin_lock(&lock);
   int packets = 0;
@@ -151,10 +151,6 @@ int32_t HeronRDMAConnection::writeIntoEndPoint(int fd) {
     // LOG(INFO) << "Write data";
     auto iter = mOutstandingPackets.front();
     packets++;
-    if (current_packet++ < mNumPendingWritePackets) {
-      // we have written this packet already and waiting for write completion
-      continue;
-    }
 
     buf = iter.first->get_header() + iter.first->position_;
     size_to_write = RDMAPacketHeader::get_packet_size(iter.first->get_header()) +

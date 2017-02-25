@@ -31,6 +31,7 @@ RDMAIncomingPacket::RDMAIncomingPacket(char* _data) {
   data_ = new char[RDMAPacketHeader::get_packet_size(header_)];
   memcpy(data_, _data + RDMAPacketHeader::header_size(), RDMAPacketHeader::get_packet_size(header_));
   position_ = 0;
+
 }
 
 RDMAIncomingPacket::~RDMAIncomingPacket() { delete[] data_; }

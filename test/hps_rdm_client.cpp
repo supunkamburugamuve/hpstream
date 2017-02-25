@@ -119,17 +119,15 @@ int exchange3() {
   sleep(2);
   LOG(INFO) << "Start sending messages **************************** ";
   timer.reset();
+  std::string name(500, '0');
   for (int i = -1; i < 1000000; i++) {
-    char *name = new char[100];
     // LOG(INFO) << "Sending message";
-    sprintf(name, "Helooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
     message->set_name(name);
     message->set_id(i);
     message->set_data(name);
     message->set_time(timer.currentTime());
     client->SendTupleStreamMessage(message);
-    delete []name;
   }
   LOG(INFO) << "Done putting messages";
   datagram->Wait();

@@ -8,7 +8,7 @@
 #include "heron_rdma_connection.h"
 #include "rdma_server.h"
 #include "ridgen.h"
-
+#include <message.pb.h>
 /*
  * Server class definition
  * Given a host/port, the server binds and listens on that host/port
@@ -174,6 +174,14 @@ private:
     }
     CHECK(m->IsInitialized());
 
+//    char *name = new char[100];
+//    sprintf(name, "Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
+//    proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
+//    message->set_name(name);
+//    message->set_id(1);
+//    message->set_data(name);
+//    message->set_time(10.2);
+//
     std::function<void()> cb = std::bind(method, _t, _conn, m);
 
     cb();

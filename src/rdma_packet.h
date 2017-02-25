@@ -96,6 +96,11 @@ private:
 
   // The pointer to the data.
   char* data_;
+
+  // weather we hare read directly to the protobuf
+  bool direct_proto_;
+
+  google::protobuf::Message* _proto;
 };
 
 /*
@@ -166,6 +171,11 @@ private:
 
   // The packet size as specified in the constructor.
   uint32_t total_packet_size_;
+
+  // weather we hare read directly to the protobuf
+  bool direct_proto_;
+
+  google::protobuf::Message* _proto;
 };
 
 #endif  // PACKET_H_
