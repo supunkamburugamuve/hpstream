@@ -203,6 +203,10 @@ public:
   int ReadReady(ssize_t cq_read);
   int WriteData();
   int PostCreditIfNeeded();
+  int WriteData(RDMAOutgoingPacket *packet, uint32_t *write);
+  int ReadData(RDMAIncomingPacket *packet, uint32_t *read);
+  uint32 MaxWritableBufferSize();
+  int setOnIncomingPacketPackReady(VCallback<RDMAIncomingPacket *> onIncomingPacketPack);
 
   int CreditWriteCompleted();
   int CreditReadComplete();
@@ -232,6 +236,7 @@ private:
   VCallback<uint32_t> onWriteComplete;
   VCallback<int> onWriteReady;
   VCallback<int> onReadReady;
+  VCallback<RDMAIncomingPacket *> onIncomingPacketPackReady;
 
   // the max credit this channel entitled to
   uint32_t max_buffers;

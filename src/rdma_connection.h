@@ -19,6 +19,7 @@
 #include "utils.h"
 #include "options.h"
 #include "rdma_event_loop.h"
+#include "rdma_packet.h"
 
 class RDMAConnection : public RDMAChannel {
 public:
@@ -36,8 +37,12 @@ public:
    * Send the content in the buffer. Use multiple buffers if needed to send
    */
   int WriteData(uint8_t *buf, uint32_t size, uint32_t *write);
+  int WriteData(RDMAOutgoingPacket *packet, uint32_t *write);
 
   int ReadData(uint8_t *buf, uint32_t size, uint32_t *read);
+  int ReadData(RDMAIncomingPacket *packet, uint32_t *read);
+  uint32 MaxWritableBufferSize();
+  int setOnIncomingPacketPackReady(VCallback<RDMAIncomingPacket *> onIncomingPacketPack);
 
   bool DataAvailableForRead();
 
@@ -133,6 +138,7 @@ private:
   VCallback<uint32_t> onWriteComplete;
   VCallback<int> onWriteReady;
   VCallback<int> onReadReady;
+  VCallback<RDMAIncomingPacket *> onIncomingPacketPackReady;
 
   // credits for the flow control of messages
   // credit for this side, we have posted this many buffers

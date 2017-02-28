@@ -91,7 +91,7 @@ void RDMAStMgrServer::HandleTupleStreamMessage(HeronRDMAConnection* _conn,
   message->set_time(_message->time());
 
   if (rdma_client_ != NULL) {
-    //rdma_client_->SendMessage(message);
+    // rdma_client_->SendMessage(message);
   }
   delete _message;
   delete[] name;

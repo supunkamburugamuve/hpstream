@@ -45,6 +45,8 @@ public:
    */
   void registerForNewPacket(VCallback<RDMAIncomingPacket*> cb);
 
+  void registerForPacking(VCallback<RDMAIncomingPacket*> cb);
+
   /**
    * The back pressure starter and reliever are used to communicate to the
    * server whether this connection is under a queue build up or not
@@ -98,6 +100,7 @@ private:
 
   // The user registered callbacks
   VCallback<RDMAIncomingPacket*> mOnNewPacket;
+  VCallback<RDMAIncomingPacket*> mOnIncomingPacketBuild;
   // This call back gets registered from the Server and gets called once the conneciton pipe
   // becomes free (outstanding bytes go to 0)
   VCallback<HeronRDMAConnection*> mOnConnectionBufferEmpty;

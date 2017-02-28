@@ -65,14 +65,15 @@ int connect3() {
 int exchange3() {
   sleep(2);
   timer.reset();
-  std::string name(500, '0');
+  std::string name(500000, '0');
+
   for (int i = -1; i < 10000000; i++) {
-    // LOG(INFO) << "Sending message";
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
     message->set_name(name);
-    message->set_id(i);
+    message->set_id(0);
     message->set_data(name);
     message->set_time(timer.currentTime());
+    // LOG(INFO) << "Sending message";
     client->SendTupleStreamMessage(message);
   }
   eventLoop->Wait();
@@ -107,7 +108,7 @@ int main(int argc, char **argv) {
   int op;
   options.buf_size = BUFFER_SIZE;
   options.no_buffers = BUFFERS;
-  signal(SIGINT, INThandler);
+//  signal(SIGINT, INThandler);
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {

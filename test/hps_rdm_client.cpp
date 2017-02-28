@@ -119,7 +119,7 @@ int exchange3() {
   sleep(2);
   LOG(INFO) << "Start sending messages **************************** ";
   timer.reset();
-  std::string name(500, '0');
+  std::string name(500000, '0');
   for (int i = -1; i < 1000000; i++) {
     // LOG(INFO) << "Sending message";
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();
