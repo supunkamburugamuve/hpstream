@@ -39,7 +39,7 @@ HeronRDMAConnection::HeronRDMAConnection(RDMAOptions *options, RDMAChannel *con,
   this->mWriteBatchsize = __SYSTEM_NETWORK_DEFAULT_WRITE_BATCH_SIZE__;
   mIncomingPacket = new RDMAIncomingPacket(1024*1024*10);
   mCausedBackPressure = false;
-  pthread_spin_init(&lock, NULL);
+  pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE);
 }
 
 HeronRDMAConnection::~HeronRDMAConnection() { }
