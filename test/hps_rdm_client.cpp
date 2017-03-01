@@ -12,7 +12,7 @@ RDMAStMgrClient *client;
 RDMAStMgrServer *server;
 RDMADatagram *datagram;
 Timer timer;
-
+int streamId_client = 1;
 #define SIZE_ 10000
 
 int64_t get_elapsed(const struct timespec *b, const struct timespec *a) {
@@ -33,7 +33,7 @@ int connect3() {
   eventLoop = new RDMAEventLoop(loopFabric);
   eventLoop->Start();
 
-  datagram = new RDMADatagram(&options, loopFabric, 1);
+  datagram = new RDMADatagram(&options, loopFabric, streamId_client);
   RDMAOptions *serverOptions = new RDMAOptions();
   serverOptions->src_port = options.src_port;
   serverOptions->src_addr = options.src_addr;
@@ -166,13 +166,17 @@ int main(int argc, char **argv) {
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {
-      default:
-        rdma_parse_addr_opts(op, optarg, &options);
+      case 'k':
+        streamId_client = std::stoi(optarg);
+        printf("Stream id: %d\n", streamId_client);
         break;
       case '?':
       case 'h':
         fprintf(stderr, "Help not implemented\n");
         return 0;
+      default:
+        rdma_parse_addr_opts(op, optarg, &options);
+        break;
     }
   }
 

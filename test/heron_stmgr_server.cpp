@@ -45,7 +45,7 @@ sp_string RDMAStMgrServer::MakeBackPressureCompIdMetricName(const sp_string& ins
 void RDMAStMgrServer::HandleNewConnection(HeronRDMAConnection* _conn) {
   // There is nothing to be done here. Instead we wait
   // for the register/hello
-  if (!origin) {
+  if (!origin && !rdma_client_) {
     RDMAFabric *clientFabric = new RDMAFabric(clientOptions_);
     clientFabric->Init();
     if (datagram_ != NULL) {

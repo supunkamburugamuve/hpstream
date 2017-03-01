@@ -501,7 +501,8 @@ int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint16_t
         LOG(ERROR) << "Failed to get target address information: " << ret;
         return NULL;
       }
-
+      LOG(INFO) << "Creating channel with stream id: " << stream_id << " target id: " << target_id
+                << " remote: " << remote_addr << " buffs: " << buffs_per_channel;
       RDMADatagramChannel *channel = new RDMADatagramChannel(options, stream_id, target_id,
                                                              remote_addr, recv_buf, send_buf, this, buffs_per_channel);
       channels[target_id] = channel;

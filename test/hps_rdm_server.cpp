@@ -8,6 +8,7 @@ RDMAOptions options;
 RDMAStMgrClient *client;
 RDMAStMgrServer *server;
 Timer timer;
+int streamId = 0;
 
 #define SIZE_ 10000
 
@@ -41,9 +42,10 @@ int connect() {
   serverOptions->buf_size = BUFFER_SIZE;
   serverOptions->no_buffers = BUFFERS;
   serverOptions->provider = PSM2_PROVIDER_TYPE;
+  serverOptions->max_connections = 2;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, 0);
+  RDMADatagram *datagram = new RDMADatagram(&options, serverFabric, streamId);
   datagram->start();
   server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
   server->Start();
@@ -81,13 +83,17 @@ int main(int argc, char **argv) {
   // parse the options
   while ((op = getopt(argc, argv, "ho:" ADDR_OPTS INFO_OPTS)) != -1) {
     switch (op) {
-      default:
-        rdma_parse_addr_opts(op, optarg, &options);
+      case 'k':
+        streamId = std::stoi(optarg);
+        printf("Stream id: %d\n", streamId);
         break;
       case '?':
       case 'h':
         fprintf(stderr, "Help not implemented\n");
         return 0;
+      default:
+        rdma_parse_addr_opts(op, optarg, &options);
+        break;
     }
   }
 

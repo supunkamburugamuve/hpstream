@@ -8,7 +8,7 @@
 #include "rdma_server.h"
 
 #define ADDR_OPTS "b:p:s:a:r:"
-#define INFO_OPTS "n:f:e:"
+#define INFO_OPTS "n:f:e:k:"
 
 #define BUFFERS 128
 #define BUFFER_SIZE 1024 * 1024 * 100 * 20
