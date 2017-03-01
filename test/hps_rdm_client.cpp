@@ -73,6 +73,7 @@ int connectPSM2() {
   options.buf_size = BUFFER_SIZE;
   options.no_buffers = BUFFERS;
   options.provider = PSM2_PROVIDER_TYPE;
+  options.max_connections = 2;
 
   int ret = 0;
 //  loopFabric = new RDMAFabric(&options);
@@ -98,7 +99,7 @@ int connectPSM2() {
   serverOptions->provider = PSM2_PROVIDER_TYPE;
   RDMAFabric *serverFabric = new RDMAFabric(serverOptions);
   serverFabric->Init();
-  datagram = new RDMADatagram(&options, serverFabric, 1);
+  datagram = new RDMADatagram(&options, serverFabric, streamId_client);
   datagram->start();
   server = new RDMAStMgrServer(datagram, serverOptions, serverFabric, clientOptions, &timer);
   server->origin = true;
@@ -127,7 +128,7 @@ int exchange3() {
     message->set_id(i);
     message->set_data(name);
     message->set_time(timer.currentTime());
-    client->SendTupleStreamMessage(message);
+    // client->SendTupleStreamMessage(message);
   }
   LOG(INFO) << "Done putting messages";
   datagram->Wait();

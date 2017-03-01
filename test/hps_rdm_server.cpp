@@ -16,6 +16,7 @@ int connect() {
   options.buf_size = BUFFER_SIZE;
   options.no_buffers = BUFFERS;
   options.provider = PSM2_PROVIDER_TYPE;
+  options.max_connections = 2;
 
   int ret = 0;
 //  loopFabric = new RDMAFabric(&options);

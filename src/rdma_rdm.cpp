@@ -516,7 +516,6 @@ int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint16_t
       LOG(ERROR) << "Received connect but callback is not set";
       return -1;
     }
-    this->recv_buf->IncrementBase(1);
     ret = SendConfirmToRemote(remote_addr);
     if (ret) {
       LOG(ERROR) << "Failed to send confirmation";
@@ -530,10 +529,9 @@ int RDMADatagram::HandleConnect(uint16_t connect_type, int bufer_index, uint16_t
       LOG(ERROR) << "Received connect confirm but callback is not set";
       return -1;
     }
-    this->recv_buf->IncrementBase(1);
   }
 
-  this->recv_buf->IncrementBase(1);
+  // this->recv_buf->IncrementBase(1);
 
   return 0;
 }
@@ -546,6 +544,7 @@ int RDMADatagram::TransmitComplete() {
   uint64_t max_completions = tx_seq - tx_cq_cntr;
   uint64_t completions_count = 0;
   while (completions_count < max_completions) {
+    memset(&comp, 0, sizeof(struct fi_cq_tagged_entry));
     cq_ret = fi_cq_read(txcq, &comp, 1);
 //    cq_ret = fi_cq_read(txcq, comp, send_buf->GetNoOfBuffers());
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
@@ -643,6 +642,7 @@ int RDMADatagram::ReceiveComplete() {
   uint64_t max_completions = rx_seq - rx_cq_cntr;
   uint64_t current_count = 0;
    while (current_count < max_completions) {
+     memset(&comp, 0, sizeof(struct fi_cq_tagged_entry));
     // we can expect up to this
     cq_ret = fi_cq_read(rxcq, &comp, 1);
     if (cq_ret == 0 || cq_ret == -FI_EAGAIN) {
@@ -669,6 +669,7 @@ int RDMADatagram::ReceiveComplete() {
         LOG(INFO) << "Received complete with size: " << comp.len;
         HandleConnect(control_type, tail, stream_id);
         PostRX(recvBuf->GetBufferSize(), tail);
+        recvBuf->IncrementBase(1);
       } else if (type == 1) {  // data message
         // pick te correct channel
         std::unordered_map<uint16_t, RDMADatagramChannel *>::const_iterator it
