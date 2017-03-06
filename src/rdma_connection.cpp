@@ -187,10 +187,10 @@ int RDMAConnection::AllocateBuffers(void) {
 
   tx_size = opts->buf_size;
   rx_size = opts->buf_size;
-  if (tx_size > info->ep_attr->max_msg_size) {
+  if (tx_size > (info->ep_attr->max_msg_size) / opts->no_buffers) {
     LOG(WARNING) << "Buffer size is greater than max message size, adjusting";
-    tx_size = info->ep_attr->max_msg_size;
-    rx_size = info->ep_attr->max_msg_size;
+    tx_size = info->ep_attr->max_msg_size * opts->no_buffers;
+    rx_size = info->ep_attr->max_msg_size * opts->no_buffers;
   }
 
   buf = (uint8_t *)malloc(rx_size);

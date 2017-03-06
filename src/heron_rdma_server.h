@@ -154,10 +154,12 @@ private:
         delete m;
         CloseConnection(_conn);
         return;
-        _ipkt->SetProtoc(m);
         CHECK(m->IsInitialized());
       }
+      LOG(INFO) << "Unpacking message";
+      _ipkt->SetProtoc(m);
     } else {
+      LOG(INFO) << "Unpacking not ready";
       m = (M *)_ipkt->GetProtoc();
     }
 
@@ -185,6 +187,9 @@ private:
       CHECK(m->IsInitialized());
     } else {
       m = (M *)_ipkt->GetProtoc();
+      if (!m) {
+        LOG(INFO) << "Message is NULL in packet";
+      }
     }
 
     std::function<void()> cb = std::bind(method, _t, _conn, m);
