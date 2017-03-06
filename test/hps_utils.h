@@ -10,8 +10,8 @@
 #define ADDR_OPTS "b:p:s:a:r:"
 #define INFO_OPTS "n:f:e:k:"
 
-#define BUFFERS 128
-#define BUFFER_SIZE 1024 * 1024 * 100 * 20
+#define BUFFERS 10
+#define BUFFER_SIZE 1024 * 1024 * 20
 
 struct test_size_param {
   uint32_t size;
