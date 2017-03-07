@@ -65,7 +65,7 @@ int connect3() {
 int exchange3() {
   sleep(2);
   timer.reset();
-  std::string name(500000, '0');
+  std::string name(32000, '0');
 
   for (int i = -1; i < 10000000; i++) {
     proto::stmgr::TupleMessage *message = new proto::stmgr::TupleMessage();

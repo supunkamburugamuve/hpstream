@@ -143,11 +143,13 @@ private:
   template <typename T, typename M>
   void dispatchRequest(T* _t, void (T::*method)(REQID id, HeronRDMAConnection* conn, M*), HeronRDMAConnection* _conn,
                        RDMAIncomingPacket* _ipkt) {
-    REQID rid;
     M* m;
-    if (_ipkt->GetUnPackReady()) {
+    REQID *rid;
+    if (_ipkt->GetUnPackReady() != UNPACKED) {
       m = new M();
-      CHECK(_ipkt->UnPackREQID(&rid) == 0) << "REQID unpacking failed";
+      rid = new REQID();
+      CHECK(_ipkt->UnPackREQID(rid) == 0) << "REQID unpacking failed";
+      _ipkt->SetRid(rid);
       if (_ipkt->UnPackProtocolBuffer(m) != 0) {
         // We could not decode the pb properly
         std::cerr << "Could not decode protocol buffer of type " << m->GetTypeName();
@@ -156,25 +158,28 @@ private:
         return;
         CHECK(m->IsInitialized());
       }
-      LOG(INFO) << "Unpacking message";
       _ipkt->SetProtoc(m);
     } else {
-      LOG(INFO) << "Unpacking not ready";
       m = (M *)_ipkt->GetProtoc();
+      rid = _ipkt->GetReqID();
     }
 
-    std::function<void()> cb = std::bind(method, _t, rid, _conn, m);
+    if (_ipkt->GetUnPackReady() != UNPACK_ONLY) {
+      std::function<void()> cb = std::bind(method, _t, *rid, _conn, m);
 
-    cb();
+      cb();
+    }
   }
 
   template <typename T, typename M>
   void dispatchMessage(T* _t, void (T::*method)(HeronRDMAConnection* conn, M*), HeronRDMAConnection* _conn,
                        RDMAIncomingPacket* _ipkt) {
-    REQID rid;
-    CHECK(_ipkt->UnPackREQID(&rid) == 0) << "REQID unpacking failed";
     M* m;
-    if (_ipkt->GetUnPackReady()) {
+    REQID *rid;
+    if (_ipkt->GetUnPackReady() != UNPACKED) {
+      rid = new REQID();
+      CHECK(_ipkt->UnPackREQID(rid) == 0) << "REQID unpacking failed";
+      _ipkt->SetRid(rid);
       m = new M();
       if (_ipkt->UnPackProtocolBuffer(m) != 0) {
         // We could not decode the pb properly
@@ -188,13 +193,15 @@ private:
     } else {
       m = (M *)_ipkt->GetProtoc();
       if (!m) {
-        LOG(INFO) << "Message is NULL in packet";
+        LOG(WARNING) << "Message is NULL in packet";
       }
     }
 
-    std::function<void()> cb = std::bind(method, _t, _conn, m);
+    if (_ipkt->GetUnPackReady() != UNPACK_ONLY) {
+      std::function<void()> cb = std::bind(method, _t, _conn, m);
 
-    cb();
+      cb();
+    }
   }
 
   void InternalSendRequest(HeronRDMAConnection* _conn, google::protobuf::Message* _request, sp_int64 _msecs,

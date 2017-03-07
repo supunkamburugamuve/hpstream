@@ -306,26 +306,27 @@ int32_t HeronRDMAConnection::ReadPacket() {
     // The header has been completely read. Read the data
     int32_t retval = 0;
     if (mIncomingPacket->direct_proto_) {
-      retval = readData(mIncomingPacket, &read);
+      return readData(mIncomingPacket, &read);
     } else {
       retval = readData((uint8_t *) (mIncomingPacket->data_ + mIncomingPacket->position_),
                         RDMAPacketHeader::get_packet_size(mIncomingPacket->header_) -
                         mIncomingPacket->position_, &read);
-    }
-    if (retval != 0) {
-      return retval;
-    } else {
-      // now check weather we have read evrything we need
-      mIncomingPacket->position_ += read;
-      if (RDMAPacketHeader::get_packet_size(mIncomingPacket->header_) ==
-          mIncomingPacket->position_) {
-        mIncomingPacket->position_ = 0;
-        return 0;
+      if (retval != 0) {
+        return retval;
       } else {
-        return RDMAPacketHeader::get_packet_size(mIncomingPacket->header_)
-               - mIncomingPacket->position_;
+        // now check weather we have read evrything we need
+        mIncomingPacket->position_ += read;
+        if (RDMAPacketHeader::get_packet_size(mIncomingPacket->header_) ==
+            mIncomingPacket->position_) {
+          mIncomingPacket->position_ = 0;
+          return 0;
+        } else {
+          return RDMAPacketHeader::get_packet_size(mIncomingPacket->header_)
+                 - mIncomingPacket->position_;
+        }
       }
     }
+
   }
   return 1;
 }

@@ -11,7 +11,7 @@
 #define INFO_OPTS "n:f:e:k:"
 
 #define BUFFERS 10
-#define BUFFER_SIZE 1024 * 1024 * 20
+#define BUFFER_SIZE 1024 * 640
 
 struct test_size_param {
   uint32_t size;
